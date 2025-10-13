@@ -67,17 +67,17 @@ export function ProblemSolution() {
                 const cardStyles = [
                   {
                     color: '#9fa49e',
-                    image: '/images/Pictures/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg',
+                    image: '/images/Pictures/Fotos/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg',
                     pattern: { size: '40px 40px', type: 'radial-gradient(circle at 2px 2px, currentColor 0.8px, transparent 0.8px)' }
                   },
                   {
                     color: '#a3a8a2',
-                    image: '/images/Pictures/max-harlynking-PGoEi8jL5BA-unsplash.jpg',
+                    image: '/images/Pictures/Fotos/max-harlynking-PGoEi8jL5BA-unsplash.jpg',
                     pattern: { size: '30px 30px', type: 'repeating-linear-gradient(45deg, currentColor 0, currentColor 0.5px, transparent 0.5px, transparent 15px)' }
                   },
                   {
                     color: '#242424',
-                    image: '/images/Pictures/maximilian-jaenicke-wOtTh39V83g-unsplash.jpg',
+                    image: '/images/Pictures/Fotos/maximilian-jaenicke-wOtTh39V83g-unsplash.jpg',
                     pattern: { size: '25px 25px', type: 'linear-gradient(45deg, currentColor 1px, transparent 1px), linear-gradient(-45deg, currentColor 1px, transparent 1px)' }
                   }
                 ];
@@ -131,17 +131,17 @@ export function ProblemSolution() {
                 const cardStyles = [
                   {
                     color: '#50504f',
-                    image: '/images/Pictures/adrian-pelletier-QHJytUzTEkU-unsplash.jpg',
+                    image: '/images/Pictures/Fotos/adrian-pelletier-QHJytUzTEkU-unsplash.jpg',
                     pattern: { size: '35px 35px', type: 'repeating-linear-gradient(-30deg, currentColor 0, currentColor 0.5px, transparent 0.5px, transparent 17px)' }
                   },
                   {
                     color: '#9fa49e',
-                    image: '/images/Pictures/ahmed-ununfDqAXJA-unsplash.jpg',
+                    image: '/images/Pictures/Fotos/ahmed-ununfDqAXJA-unsplash.jpg',
                     pattern: { size: '28px 28px', type: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 1px)' }
                   },
                   {
                     color: '#a3a8a2',
-                    image: '/images/Pictures/hossein-nasr-g-rjNqX4Vfk-unsplash.jpg',
+                    image: '/images/Pictures/Fotos/hossein-nasr-g-rjNqX4Vfk-unsplash.jpg',
                     pattern: { size: '32px 16px', type: 'repeating-linear-gradient(0deg, currentColor 0, currentColor 0.5px, transparent 0.5px, transparent 16px)' }
                   }
                 ];

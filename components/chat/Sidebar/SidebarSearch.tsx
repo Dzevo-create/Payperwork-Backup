@@ -3,19 +3,26 @@
 import { Search } from "lucide-react";
 
 interface SidebarSearchProps {
-  onSearchClick?: () => void;
+  onClick?: () => void;
 }
 
-export function SidebarSearch({ onSearchClick }: SidebarSearchProps) {
+export function SidebarSearch({ onClick }: SidebarSearchProps) {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Remove focus from button after click to prevent active state
+    e.currentTarget.blur();
+    onClick?.();
+  };
+
   return (
     <div className="px-2 py-0">
       <button
-        onClick={onSearchClick}
-        className="w-full p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 hover:scale-[1.02] flex items-center justify-start gap-2"
-        aria-label="Chat suchen"
+        onClick={handleClick}
+        className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 group focus:outline-none"
       >
-        <Search className="w-4 h-4 text-pw-black/60" />
-        <span className="text-sm text-pw-black/70">Chat suchen</span>
+        <Search className="w-4 h-4 text-pw-black/60 group-hover:text-pw-black/80 transition-colors" />
+        <span className="text-pw-black/70 group-hover:text-pw-black/90 transition-colors">
+          Chat durchsuchen...
+        </span>
       </button>
     </div>
   );

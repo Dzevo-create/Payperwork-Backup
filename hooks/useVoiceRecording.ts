@@ -1,0 +1,102 @@
+import { useState, useRef } from "react";
+import { useToast } from "@/hooks/useToast";
+
+export function useVoiceRecording() {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const toast = useToast();
+
+  const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
+    setIsTranscribing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Transcription failed");
+      }
+
+      const data = await response.json();
+      return data.text;
+    } catch (error) {
+      console.error("Transcription error:", error);
+      toast.error("Transkription fehlgeschlagen. Bitte erneut versuchen.");
+      return "";
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const startRecording = async (): Promise<void> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const text = await transcribeAudio(audioBlob);
+
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach((track) => track.stop());
+
+        // Return transcribed text via callback
+        if (text && onTranscriptionComplete) {
+          onTranscriptionComplete(text);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      toast.error("Mikrofon-Zugriff fehlgeschlagen. Bitte Berechtigung erteilen.");
+    }
+  };
+
+  const stopRecording = (): void => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const toggleRecording = (): void => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  // Callback for transcription complete
+  let onTranscriptionComplete: ((text: string) => void) | null = null;
+
+  const setOnTranscriptionComplete = (callback: (text: string) => void) => {
+    onTranscriptionComplete = callback;
+  };
+
+  return {
+    isRecording,
+    isTranscribing,
+    startRecording,
+    stopRecording,
+    toggleRecording,
+    setOnTranscriptionComplete,
+  };
+}

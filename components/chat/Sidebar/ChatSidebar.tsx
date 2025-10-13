@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { X, Search, Settings, User, MessageSquare, MoreVertical, Trash2, Copy, Edit2, LogOut, Moon, Bell } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { X, Search, Settings, User, MessageSquare, MoreVertical, Trash2, Copy, Edit2, LogOut, Moon, Bell, Library } from "lucide-react";
 import { SidebarHeader } from "./SidebarHeader";
 import { NewChatButton } from "./NewChatButton";
 import { SidebarSearch } from "./SidebarSearch";
 import { SidebarFooter } from "./SidebarFooter";
+import { SearchModal } from "./SearchModal";
+import { useLibraryStore } from "@/store/libraryStore.v2";
 
 interface Message {
   id: string;
@@ -27,7 +30,6 @@ interface ChatSidebarProps {
   onClose?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
-  onSearchClick?: () => void;
   onNewChat?: () => void;
   conversations?: Conversation[];
   currentConversationId?: string | null;
@@ -42,7 +44,6 @@ export function ChatSidebar({
   onClose,
   isCollapsed = false,
   onToggleCollapse,
-  onSearchClick,
   onNewChat,
   conversations = [],
   currentConversationId,
@@ -56,10 +57,39 @@ export function ChatSidebar({
   const [editingTitle, setEditingTitle] = useState("");
   const [showCollapsedSettings, setShowCollapsedSettings] = useState(false);
   const [showCollapsedProfile, setShowCollapsedProfile] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const collapsedSettingsRef = useRef<HTMLDivElement>(null);
   const collapsedProfileRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const unseenCount = useLibraryStore((state) => state.unseenCount);
+
+  // Only show active conversation if we're on the chat page
+  const isOnChatPage = pathname === "/chat" || pathname === "/";
+
+  // Sort conversations with useMemo to prevent jumping
+  const sortedConversations = useMemo(() => {
+    return [...conversations].sort((a, b) => {
+      const timeA = new Date(a.updatedAt).getTime();
+      const timeB = new Date(b.updatedAt).getTime();
+
+      // Primary sort: by time
+      if (timeB !== timeA) {
+        return timeB - timeA;
+      }
+
+      // Secondary sort: by ID for stability
+      return a.id.localeCompare(b.id);
+    });
+  }, [conversations]);
+
+  // Handle navigation from search modal
+  const handleNavigateToChat = (conversationId: string, messageId?: string) => {
+    onLoadConversation?.(conversationId);
+    // TODO: Scroll to messageId if provided
+  };
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -138,13 +168,6 @@ export function ChatSidebar({
             >
               <span className="text-lg font-bold text-pw-black/60">+</span>
             </button>
-            <button
-              onClick={onSearchClick}
-              className="p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-colors"
-              aria-label="Search"
-            >
-              <Search className="w-4 h-4 text-pw-black/60" />
-            </button>
           </div>
         ) : (
           <>
@@ -152,7 +175,25 @@ export function ChatSidebar({
             <NewChatButton onClick={onNewChat} />
 
             {/* Search */}
-            <SidebarSearch onSearchClick={onSearchClick} />
+            <SidebarSearch onClick={() => setIsSearchModalOpen(true)} />
+
+            {/* Library Link */}
+            <div className="px-2 pb-2">
+              <button
+                onClick={() => router.push("/library")}
+                className="w-full p-3 rounded-lg hover:bg-pw-black/20 active:bg-pw-black/30 transition-all duration-200 flex items-center gap-3 group relative"
+              >
+                <Library className="w-4 h-4 text-pw-black/60 group-hover:text-pw-black/80 transition-colors" />
+                <span className="text-sm font-medium text-pw-black/70 group-hover:text-pw-black/90 transition-colors">
+                  Bibliothek
+                </span>
+                {unseenCount > 0 && (
+                  <span className="ml-auto bg-pw-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    {unseenCount}
+                  </span>
+                )}
+              </button>
+            </div>
 
             {/* Chats Label */}
             <div className="px-4 py-2">
@@ -167,14 +208,15 @@ export function ChatSidebar({
                 </p>
               ) : (
                 <div className="space-y-0.5">
-                  {conversations.map((conv) => (
+                  {/* Conversations are already sorted */}
+                  {sortedConversations.map((conv) => (
                     <div key={conv.id} className="relative group">
                       <div
                         onClick={() => onLoadConversation?.(conv.id)}
-                        className={`w-full p-2 rounded-lg transition-all duration-200 cursor-pointer ${
-                          currentConversationId === conv.id
+                        className={`w-full p-2 rounded-lg transition-colors duration-200 cursor-pointer ${
+                          isOnChatPage && currentConversationId === conv.id
                             ? "bg-pw-light"
-                            : "hover:bg-pw-black/20 active:bg-pw-black/30"
+                            : "hover:bg-pw-black/20"
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -330,6 +372,14 @@ export function ChatSidebar({
           </div>
         )}
       </aside>
+
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        conversations={conversations}
+        onNavigateToChat={handleNavigateToChat}
+      />
     </>
   );
 }

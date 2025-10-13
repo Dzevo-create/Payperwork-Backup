@@ -38,7 +38,7 @@ const testimonials = [
     role: "Geschäftsführer, Zimmermann Architekten AG",
     initials: "DZ",
     color: "#50504f",
-    image: "/images/Pictures/hossein-nasr-g-rjNqX4Vfk-unsplash.jpg"
+    image: "/images/Pictures/Fotos/hossein-nasr-g-rjNqX4Vfk-unsplash.jpg"
   },
   {
     quote: "Die beste Investition für unser Studio",
@@ -47,7 +47,7 @@ const testimonials = [
     role: "Partnerin, Meier & Hofmann Architekten",
     initials: "SM",
     color: "#a3a8a2",
-    image: "/images/Pictures/max-harlynking-PGoEi8jL5BA-unsplash.jpg"
+    image: "/images/Pictures/Fotos/max-harlynking-PGoEi8jL5BA-unsplash.jpg"
   },
   {
     quote: "Unglaubliche Zeitersparnis bei Wettbewerben",
@@ -56,7 +56,7 @@ const testimonials = [
     role: "Creative Director, Steiner Urban Design",
     initials: "LS",
     color: "#242424",
-    image: "/images/Pictures/adrian-pelletier-QHJytUzTEkU-unsplash.jpg"
+    image: "/images/Pictures/Fotos/adrian-pelletier-QHJytUzTEkU-unsplash.jpg"
   },
   {
     quote: "Perfekt für schnelle Kundeniterationen",
@@ -65,7 +65,7 @@ const testimonials = [
     role: "Projektleiterin, Keller Design Studio",
     initials: "AK",
     color: "#a3a8a2",
-    image: "/images/Pictures/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg"
+    image: "/images/Pictures/Fotos/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg"
   }
 ];
 
@@ -156,10 +156,10 @@ export function ROI() {
             const cardColor = colors[index];
             // Get matching background image for each card
             const images = [
-              '/images/Pictures/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg',
-              '/images/Pictures/maximilian-jaenicke-wOtTh39V83g-unsplash.jpg',
-              '/images/Pictures/max-harlynking-PGoEi8jL5BA-unsplash.jpg',
-              '/images/Pictures/adrian-pelletier-QHJytUzTEkU-unsplash.jpg'
+              '/images/Pictures/Fotos/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg',
+              '/images/Pictures/Fotos/maximilian-jaenicke-wOtTh39V83g-unsplash.jpg',
+              '/images/Pictures/Fotos/max-harlynking-PGoEi8jL5BA-unsplash.jpg',
+              '/images/Pictures/Fotos/adrian-pelletier-QHJytUzTEkU-unsplash.jpg'
             ];
 
             return (

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { Settings, User, ChevronDown, LogOut, Moon, Bell, Key, Home } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -32,14 +33,14 @@ export function SidebarFooter({ credits = 3000 }: SidebarFooterProps) {
     <div className="p-3">
       <div className="flex items-center gap-2">
         {/* Home Button */}
-        <a
+        <Link
           href="/"
           className="p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 hover:scale-110"
           aria-label="Home"
           title="Zur Startseite"
         >
           <Home className="w-4 h-4 text-pw-black/60" />
-        </a>
+        </Link>
 
         {/* Profile Dropdown */}
         <div className="relative flex-1" ref={profileRef}>
