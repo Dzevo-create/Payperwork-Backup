@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { Message, Attachment } from "@/types/chat";
 import { MessageActions } from "./MessageActions";
 import { MessageContent } from "../Message/MessageContent";
@@ -27,7 +26,7 @@ interface MessageBubbleProps {
   onC1Action?: (data: { llmFriendlyMessage: string }) => void;
 }
 
-export const MessageBubble = memo(function MessageBubble({
+export function MessageBubble({
   message,
   isLastMessage,
   isGenerating,
@@ -120,4 +119,4 @@ export const MessageBubble = memo(function MessageBubble({
       )}
     </div>
   );
-});
+}

@@ -1,13 +1,11 @@
 "use client";
 
-import { memo } from "react";
-
 interface EmptyStateProps {
   title?: string;
   description?: string;
 }
 
-export const EmptyState = memo(function EmptyState({
+export function EmptyState({
   title = "Wie kann ich helfen?",
   description = "Starten Sie eine neue Konversation, indem Sie eine Nachricht unten eingeben.",
 }: EmptyStateProps) {
@@ -19,4 +17,4 @@ export const EmptyState = memo(function EmptyState({
       </div>
     </div>
   );
-});
+}

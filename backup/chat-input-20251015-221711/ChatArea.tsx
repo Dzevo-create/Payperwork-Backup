@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ChatHeader, AIModel, VideoModel, GPTModel } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
@@ -424,25 +424,25 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
     }
   };
 
-  const handleChatNameChange = useCallback(async (newName: string) => {
+  const handleChatNameChange = async (newName: string) => {
     setChatName(newName);
 
     // Update conversation in store if we have a current conversation
     if (currentConversationId) {
       await updateConversation(currentConversationId, { title: newName });
     }
-  }, [currentConversationId, updateConversation]);
+  };
 
-  const handleSuperChatToggle = useCallback(async (enabled: boolean) => {
+  const handleSuperChatToggle = async (enabled: boolean) => {
     setIsSuperChatEnabled(enabled);
 
     // Update conversation in store if we have a current conversation
     if (currentConversationId) {
       await updateConversation(currentConversationId, { isSuperChatEnabled: enabled });
     }
-  }, [currentConversationId, updateConversation]);
+  };
 
-  const handleEditMessage = useCallback((messageId: string, newContent: string) => {
+  const handleEditMessage = (messageId: string, newContent: string) => {
     // Find the message index
     const messageIndex = messages.findIndex((msg) => msg.id === messageId);
     if (messageIndex === -1) return;
@@ -458,10 +458,10 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
 
     // Resend the edited message
     handleSendMessage(newContent, editedMessage.attachments);
-  }, [messages, setMessages, handleSendMessage]);
+  };
 
   // Handle C1 Related Query click - populates input without auto-sending
-  const handleC1Action = useCallback((data: { llmFriendlyMessage: string }) => {
+  const handleC1Action = (data: { llmFriendlyMessage: string }) => {
     console.log("🎯 C1 Action triggered:", data);
 
     // Extract text from <content> tags
@@ -481,7 +481,7 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
 
     console.log("✨ Cleaned text:", cleanedText);
     setInputValue(cleanedText);
-  }, []);
+  };
 
   return (
     <>

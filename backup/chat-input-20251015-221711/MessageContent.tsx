@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import { Loader2, X, Send } from "lucide-react";
 import { Message } from "@/types/chat";
@@ -17,7 +16,7 @@ interface MessageContentProps {
   onEditMessage?: (messageId: string, newContent: string) => void;
 }
 
-export const MessageContent = memo(function MessageContent({
+export function MessageContent({
   message,
   isStreamingMessage,
   isEditing,
@@ -112,4 +111,4 @@ export const MessageContent = memo(function MessageContent({
       </ReactMarkdown>
     </div>
   );
-});
+}
