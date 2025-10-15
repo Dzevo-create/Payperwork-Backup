@@ -5,8 +5,11 @@ import { ChatLayout } from "@/components/chat/ChatLayout";
 /**
  * Chat Page
  *
- * Standard chat page with optional Super Chat (C1) toggle in the UI.
- * The Super Chat feature can be toggled from within the chat interface.
+ * Main chat interface supporting:
+ * - Text chat with OpenAI GPT-4o
+ * - Image generation (Gemini Pro Vision)
+ * - Video generation (Payperwork Move v1 & v2)
+ * - Multi-modal inputs (images, PDFs, voice)
  */
 
 export default function ChatPage() {

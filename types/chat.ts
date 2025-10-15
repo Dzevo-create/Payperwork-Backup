@@ -32,9 +32,10 @@ export interface Message {
   generationType?: "image" | "video" | "text";
   generationAttempt?: number; // For retry indicator (1, 2, 3...)
   generationMaxAttempts?: number; // Total attempts (e.g., 3)
-  // C1-specific properties
-  isC1Streaming?: boolean; // Indicates C1 response is still being buffered
-  wasGeneratedWithC1?: boolean; // True if this message was created with Super Chat enabled
+  // GPT model version used to generate this message
+  gptModel?: "gpt-4o" | "gpt-5";
+  // SuperChat (C1) mode indicator - tracks which mode created this message
+  isSuperChatMode?: boolean; // If true, render with C1Component instead of ReactMarkdown
   // Video generation metadata
   videoTask?: {
     taskId: string;
@@ -64,6 +65,7 @@ export interface Conversation {
   createdAt: Date;
   updatedAt: Date;
   isPinned?: boolean;
+  isSuperChatEnabled?: boolean; // Per-conversation SuperChat mode toggle
 }
 
 export interface ChatError {

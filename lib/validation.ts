@@ -127,7 +127,7 @@ export const fileValidation = {
  * Text input validation
  */
 export const textValidation = {
-  MAX_MESSAGE_LENGTH: 10000, // 10k characters
+  MAX_MESSAGE_LENGTH: 200000, // 200k characters (Claude API limit)
   MAX_PROMPT_LENGTH: 5000, // 5k characters
   MAX_TITLE_LENGTH: 200,
 

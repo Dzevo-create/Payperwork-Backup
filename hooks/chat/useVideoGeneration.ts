@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { VideoSettingsType } from "@/components/chat/Chat/VideoSettings";
 import { VideoModel } from "@/components/chat/Chat/ChatHeader";
 import { Message, Attachment } from "@/types/chat";
 import { addCameraMovementToPrompt } from "@/utils/cameraPrompts";
 import { getErrorMessage } from "@/utils/errorHandler";
+import { videoCache } from "@/lib/utils/videoCache";
 
 /**
  * Interface for the hook's return value
@@ -37,9 +38,12 @@ export interface VideoGenerationParams {
     type: "text2video" | "image2video",
     prompt: string,
     thumbnailUrl?: string,
-    estimatedDuration?: number
+    estimatedDuration?: number,
+    duration?: string,
+    aspectRatio?: string
   ) => void;
   updateQueueTaskId: (messageId: string, newTaskId: string) => void;
+  markVideoCompleted: (messageId: string, videoUrl: string) => void;
   removeFromQueue: (messageId: string) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setError: (error: { message: string; retryable: boolean } | null) => void;
@@ -58,6 +62,16 @@ export interface VideoGenerationParams {
 export function useVideoGeneration(): UseVideoGenerationReturn {
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Cleanup on unmount - prevents memory leaks
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
+
   /**
    * Main video generation handler
    */
@@ -73,6 +87,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
       updateMessageWithAttachments,
       addToQueue,
       updateQueueTaskId,
+      markVideoCompleted,
       removeFromQueue,
       setIsGenerating,
       setError,
@@ -134,7 +149,9 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
         type,
         content,
         thumbnailUrl,
-        estimatedDuration
+        estimatedDuration,
+        videoSettings.duration, // Pass actual duration setting
+        videoSettings.aspectRatio // Pass actual aspect ratio setting
       );
 
       // Update assistant message with "generating" status and placeholder attachment
@@ -249,10 +266,25 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
           );
         }
 
-        // If fal.ai returns immediately with video, update the message directly
+        // If fal.ai returns immediately with video, handle completion manually
         if (isImmediate) {
           const videoUrl = videoData.videos[0].url;
           const fileName = `payperwork-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.mp4`;
+
+          console.log("🎉 IMMEDIATE VIDEO READY (fal.ai):", {
+            messageId: assistantMessageId,
+            taskId: videoData.task_id,
+            videoUrl,
+          });
+
+          // Cache the video for faster access
+          videoCache.set({
+            videoUrl,
+            taskId: videoData.task_id,
+            model,
+            duration: videoSettings.duration,
+            aspectRatio: videoSettings.aspectRatio,
+          });
 
           // Update message with video
           updateMessageWithAttachments(
@@ -276,8 +308,10 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
             }
           );
 
-          // Queue will be updated by onVideoReady callback automatically
-          // (it's triggered by the updateMessageWithAttachments)
+          // CRITICAL FIX: For immediate completions (fal.ai), mark queue item as completed
+          // This prevents it from staying in "processing" state forever
+          console.log("✅ Marking queue item as completed for immediate video");
+          markVideoCompleted(assistantMessageId, videoUrl);
         }
       } else {
         // CRITICAL: Remove from queue if API response doesn't contain task_id
@@ -299,7 +333,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
       abortControllerRef.current = null;
       const errorMessage = error instanceof Error ? error.message : String(error);
 
-      // Handle abort
+      // Handle abort (user cancelled)
       if (error instanceof Error && error.name === "AbortError") {
         console.log("Video generation stopped by user");
         return;
@@ -307,10 +341,17 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
 
       console.error("Error calling Video API:", error);
 
+      // Determine if error is retryable
+      const isRetryable = !errorMessage.includes("API key") &&
+                          !errorMessage.includes("not configured") &&
+                          !errorMessage.includes("Invalid") &&
+                          error instanceof Error &&
+                          error.name !== "TypeError"; // Network errors are retryable
+
       // Set error in store
       setError({
         message: errorMessage || "Ein Fehler ist aufgetreten",
-        retryable: true,
+        retryable: isRetryable,
       });
 
       // Update assistant message with error (using existing message if available)

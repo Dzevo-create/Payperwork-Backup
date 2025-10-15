@@ -13,6 +13,7 @@ export interface LibraryItem {
   conversationId?: string; // Reference to conversation
   seen: boolean; // For badge counter
   isFavorite?: boolean; // For favorites/star feature
+  sourceImage?: string; // Source image URL for renders/videos/upscales
   metadata?: {
     duration?: string;
     aspectRatio?: string;

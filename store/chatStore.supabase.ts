@@ -35,7 +35,7 @@ interface ChatStore {
   hydrate: () => Promise<void>; // Load from Supabase
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => Promise<void>; // Now async!
-  updateMessage: (id: string, content: string) => Promise<void>;
+  updateMessage: (id: string, content: string, skipSync?: boolean) => Promise<void>;
   updateMessageWithAttachments: (
     id: string,
     content: string,
@@ -58,6 +58,10 @@ interface ChatStore {
   clearError: () => void;
 }
 
+// Global flag to prevent multiple hydrations (persists across component remounts)
+let isHydrating = false;
+let hasHydrated = false;
+
 export const useChatStore = create<ChatStore>()((set, get) => ({
   // Initial state
   messages: [],
@@ -67,8 +71,16 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   error: null,
   isHydrated: false,
 
-  // Load data from Supabase
+  // Load data from Supabase (protected against multiple calls)
   hydrate: async () => {
+    // Skip if already hydrated or currently hydrating
+    if (hasHydrated || isHydrating) {
+      console.log('⏭️ Skipping hydration (already done or in progress)');
+      return;
+    }
+
+    isHydrating = true;
+
     try {
       console.log('🔄 Loading conversations from Supabase...');
       const conversations = await fetchConversations();
@@ -97,6 +109,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         isHydrated: true
       });
 
+      hasHydrated = true;
+      isHydrating = false;
+
       console.log(`✅ Loaded ${conversations.length} conversations from Supabase`);
       if (restoredConvId) {
         console.log(`✅ Restored conversation: ${restoredConvId}`);
@@ -110,6 +125,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         },
         isHydrated: true // Mark as hydrated even on error to prevent retry loops
       });
+
+      hasHydrated = true;
+      isHydrating = false;
     }
   },
 
@@ -142,10 +160,34 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     }
   },
 
-  updateMessage: async (id, content) => {
+  updateMessage: async (id, content, skipSync = false) => {
     const conversationId = get().currentConversationId;
+    const state = get();
 
-    // Optimistic update - update both messages AND conversation
+    // CRITICAL: Find the existing message to preserve ALL its properties
+    const existingMessage = state.messages.find(msg => msg.id === id);
+
+    if (!existingMessage) {
+      console.error('⚠️ updateMessage called for non-existent message:', id);
+      return;
+    }
+
+    console.log("🔍 updateMessage - Before update:", {
+      messageId: id,
+      wasGeneratedWithC1: existingMessage.wasGeneratedWithC1,
+      isC1Streaming: existingMessage.isC1Streaming,
+      contentPreview: content.substring(0, 50),
+    });
+
+    // SIMPLE: Update content while preserving ALL other properties
+    const updatedMessage = {
+      ...existingMessage,
+      content,
+      // If this is a C1 message being finalized, ensure isC1Streaming is false
+      isC1Streaming: existingMessage.wasGeneratedWithC1 ? false : existingMessage.isC1Streaming,
+    };
+
+    // Optimistic update - update both messages and conversations
     set((state) => {
       if (!Array.isArray(state.messages)) {
         console.error('⚠️ state.messages is not an array');
@@ -153,18 +195,18 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       }
 
       const messages = state.messages.map((msg) =>
-        msg.id === id ? { ...msg, content } : msg
+        msg.id === id ? updatedMessage : msg
       );
 
-      // Also update in conversation
+      // Update conversation messages WITHOUT updating updatedAt (prevents reload)
       const conversations = state.conversations.map(conv =>
         conv.id === conversationId
           ? {
               ...conv,
               messages: (conv.messages || []).map(msg =>
-                msg.id === id ? { ...msg, content } : msg
+                msg.id === id ? updatedMessage : msg
               ),
-              updatedAt: new Date()
+              // DON'T update updatedAt - prevents conversation reload
             }
           : conv
       );
@@ -172,12 +214,32 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       return { messages, conversations };
     });
 
-    // Sync to Supabase
-    try {
-      await updateMessageSupabase(id, { content });
-      console.log('✅ Message updated in Supabase');
-    } catch (error) {
-      console.error('❌ Failed to update message in Supabase:', error);
+    // Sync to Supabase (skip during streaming to prevent excessive updates)
+    if (!skipSync) {
+      try {
+        // SIMPLE: Build update payload with ALL important flags preserved
+        const updatePayload: Partial<Message> = {
+          content,
+          isC1Streaming: false, // Always false when syncing to Supabase (streaming is done)
+        };
+
+        // ALWAYS preserve wasGeneratedWithC1 flag if it exists
+        if ('wasGeneratedWithC1' in existingMessage) {
+          updatePayload.wasGeneratedWithC1 = existingMessage.wasGeneratedWithC1;
+        }
+
+        console.log('✅ Syncing to Supabase with flags:', {
+          messageId: id,
+          wasGeneratedWithC1: updatePayload.wasGeneratedWithC1,
+          isC1Streaming: updatePayload.isC1Streaming,
+          contentLength: content.length,
+        });
+
+        await updateMessageSupabase(id, updatePayload);
+        console.log('✅ Message updated in Supabase');
+      } catch (error) {
+        console.error('❌ Failed to update message in Supabase:', error);
+      }
     }
   },
 
@@ -309,6 +371,13 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       } else {
         localStorage.removeItem('currentConversationId');
       }
+    }
+
+    // ⚠️ CRITICAL FIX: Don't reload messages if we're already in this conversation
+    // and generation is in progress (prevents overwriting during streaming)
+    if (id === state.currentConversationId && state.isGenerating) {
+      console.log('⚠️ Skipping message reload - generation in progress for conversation:', id);
+      return;
     }
 
     if (conversation && conversation.messages) {

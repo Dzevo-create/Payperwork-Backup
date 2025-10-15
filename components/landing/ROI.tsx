@@ -1,73 +1,11 @@
 "use client";
 
-import { TrendingUp, Clock, Users, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { LANDING_STATS, STATS_IMAGES, STATS_COLORS, TESTIMONIALS } from "@/config/landing";
 
-const stats = [
-  {
-    icon: Clock,
-    value: "95%",
-    label: "Zeitersparnis",
-    description: "Im Vergleich zu traditioneller 3D-Software",
-  },
-  {
-    icon: TrendingUp,
-    value: "10x",
-    label: "Mehr Projekte",
-    description: "Bearbeite mehr Projekte in der gleichen Zeit",
-  },
-  {
-    icon: Users,
-    value: "5.000+",
-    label: "Architekten",
-    description: "Vertrauen bereits auf Payperwork",
-  },
-  {
-    icon: Sparkles,
-    value: "<30s",
-    label: "Durchschnitt",
-    description: "Vom Upload zum fertigen Rendering",
-  },
-];
-
-const testimonials = [
-  {
-    quote: "Payperwork hat unsere Workflow-Effizienz revolutioniert",
-    text: "Wir erstellen jetzt 3x mehr Visualisierungen pro Projekt und gewinnen deutlich mehr Ausschreibungen. Die Zeitersparnis hat es uns ermöglicht, unser Team um 40% zu vergrößern, ohne zusätzliche Software-Lizenzen zu kaufen.",
-    name: "Daniel Zimmermann",
-    role: "Geschäftsführer, Zimmermann Architekten AG",
-    initials: "DZ",
-    color: "#50504f",
-    image: "/images/Pictures/Fotos/hossein-nasr-g-rjNqX4Vfk-unsplash.jpg"
-  },
-  {
-    quote: "Die beste Investition für unser Studio",
-    text: "Als mittelständisches Architekturbüro waren professionelle Renderings immer zeitaufwendig und teuer. Mit Payperwork erstellen wir fotorealistische Visualisierungen in Minuten. Unsere Kundenpräsentationen sind auf einem völlig neuen Level.",
-    name: "Sophie Meier",
-    role: "Partnerin, Meier & Hofmann Architekten",
-    initials: "SM",
-    color: "#a3a8a2",
-    image: "/images/Pictures/Fotos/max-harlynking-PGoEi8jL5BA-unsplash.jpg"
-  },
-  {
-    quote: "Unglaubliche Zeitersparnis bei Wettbewerben",
-    text: "Früher verbrachten wir Tage mit Renderings für Wettbewerbsabgaben. Jetzt dauert es maximal eine Stunde für mehrere Varianten. Die KI versteht genau unsere Designsprache. Wir haben unsere Erfolgsquote um 65% gesteigert!",
-    name: "Lukas Steiner",
-    role: "Creative Director, Steiner Urban Design",
-    initials: "LS",
-    color: "#242424",
-    image: "/images/Pictures/Fotos/adrian-pelletier-QHJytUzTEkU-unsplash.jpg"
-  },
-  {
-    quote: "Perfekt für schnelle Kundeniterationen",
-    text: "Unsere Kunden wollen verschiedene Optionen sehen, bevor sie sich entscheiden. Mit Payperwork können wir in einem Meeting live Varianten erstellen und anpassen. Das hat unsere Kundenzufriedenheit massiv erhöht.",
-    name: "Anna Keller",
-    role: "Projektleiterin, Keller Design Studio",
-    initials: "AK",
-    color: "#a3a8a2",
-    image: "/images/Pictures/Fotos/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg"
-  }
-];
+const stats = LANDING_STATS;
+const testimonials = TESTIMONIALS;
 
 export function ROI() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -151,16 +89,8 @@ export function ROI() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
-            // Use same gray tones as ProblemSolution
-            const colors = ['#a3a8a2', '#242424', '#a3a8a2', '#242424'];
-            const cardColor = colors[index];
-            // Get matching background image for each card
-            const images = [
-              '/images/Pictures/Fotos/georgi-kalaydzhiev-Bnag6fJ1pHo-unsplash.jpg',
-              '/images/Pictures/Fotos/maximilian-jaenicke-wOtTh39V83g-unsplash.jpg',
-              '/images/Pictures/Fotos/max-harlynking-PGoEi8jL5BA-unsplash.jpg',
-              '/images/Pictures/Fotos/adrian-pelletier-QHJytUzTEkU-unsplash.jpg'
-            ];
+            const cardColor = STATS_COLORS[index];
+            const images = STATS_IMAGES;
 
             return (
               <div

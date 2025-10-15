@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
         'fault': false,
       };
 
-      // Node.js module fallbacks for C1 dependencies
+      // Node.js module fallbacks
       config.resolve.fallback = {
         ...config.resolve.fallback,
         // Node.js built-in modules
@@ -54,11 +54,6 @@ const nextConfig: NextConfig = {
         path: false,
         util: false,
         stream: false,
-        // C1 optional dependencies
-        'lowlight': false,
-        'lowlight/lib/core': false,
-        'hastscript': false,
-        // 'date-fns': false, // ← Removed - date-fns is now a real dependency
       };
     }
 
@@ -70,17 +65,13 @@ const nextConfig: NextConfig = {
       'fault': false,
     };
 
-    // Suppress PDF.js and C1 dependency warnings
+    // Suppress PDF.js dependency warnings
     config.ignoreWarnings = [
       /Setting up fake worker/,
       /graphic state operator SMask/,
       /TilingType/,
       /field\.type of Link/,
       /NOT valid form element/,
-      // Ignore C1 dependency warnings - they're optional
-      /Can't resolve 'lowlight'/,
-      /Can't resolve 'hastscript'/,
-      // /Can't resolve 'date-fns'/, // ← Removed - date-fns is now a real dependency
       /Can't resolve 'format'/,
       /Can't resolve 'fault'/,
     ];

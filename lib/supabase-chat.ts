@@ -1,17 +1,6 @@
 import { supabase } from './supabase';
 import { Message, Conversation } from '@/types/chat';
-
-// Get user ID from localStorage or generate new one
-const getUserId = () => {
-  if (typeof window === 'undefined') return 'anonymous';
-
-  let userId = localStorage.getItem('payperwork_user_id');
-  if (!userId) {
-    userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem('payperwork_user_id', userId);
-  }
-  return userId;
-};
+import { getUserId } from './supabase/auth';
 
 // Conversations
 export async function fetchConversations(): Promise<Conversation[]> {
@@ -121,23 +110,48 @@ export async function fetchMessages(conversationId: string): Promise<Message[]> 
     return [];
   }
 
-  return (data || []).map((msg) => ({
-    id: msg.id,
-    role: msg.role,
-    content: msg.content,
-    timestamp: new Date(msg.timestamp),
-    attachments: msg.attachments || [],
-    videoTask: msg.video_task,
-    wasGeneratedWithC1: msg.was_generated_with_c1,
-    generationType: msg.generation_type,
-    generationAttempt: msg.generation_attempt,
-    generationMaxAttempts: msg.generation_max_attempts,
-    isC1Streaming: msg.is_c1_streaming,
-    replyTo: msg.reply_to,
-  }));
+  return (data || []).map((msg) => {
+    const mappedMessage = {
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      timestamp: new Date(msg.timestamp),
+      attachments: msg.attachments || [],
+      videoTask: msg.video_task,
+      wasGeneratedWithC1: msg.was_generated_with_c1,
+      generationType: msg.generation_type,
+      generationAttempt: msg.generation_attempt,
+      generationMaxAttempts: msg.generation_max_attempts,
+      isC1Streaming: msg.is_c1_streaming,
+      replyTo: msg.reply_to,
+    };
+
+    // Debug log for C1 messages loaded from Supabase
+    if (msg.was_generated_with_c1 && msg.role === 'assistant') {
+      console.log("🔍 Loading C1 message from Supabase:", {
+        id: msg.id,
+        was_generated_with_c1: msg.was_generated_with_c1,
+        wasGeneratedWithC1: mappedMessage.wasGeneratedWithC1,
+        contentPreview: msg.content.substring(0, 100),
+      });
+    }
+
+    return mappedMessage;
+  });
 }
 
 export async function createMessage(conversationId: string, message: Message): Promise<Message | null> {
+  // Debug log for C1 message creation
+  if (message.wasGeneratedWithC1 && message.role === 'assistant') {
+    console.log("🔍 Creating C1 message in Supabase:", {
+      id: message.id,
+      wasGeneratedWithC1: message.wasGeneratedWithC1,
+      isC1Streaming: message.isC1Streaming,
+      will_save_as: message.wasGeneratedWithC1 || false,
+      contentPreview: message.content.substring(0, 100),
+    });
+  }
+
   const { data, error } = await supabase
     .from('messages')
     .insert({
@@ -191,6 +205,16 @@ export async function updateMessage(id: string, updates: Partial<Message>): Prom
   if (updates.generationMaxAttempts !== undefined) updateData.generation_max_attempts = updates.generationMaxAttempts;
   if (updates.isC1Streaming !== undefined) updateData.is_c1_streaming = updates.isC1Streaming;
   if (updates.replyTo !== undefined) updateData.reply_to = updates.replyTo;
+
+  // Debug log for C1 message updates (only if content is being updated with <content> tags)
+  if (updateData.content && updateData.content.includes('<content>')) {
+    console.log("🔍 Updating C1 message in Supabase:", {
+      id,
+      updateData,
+      hasWasGeneratedWithC1Field: 'was_generated_with_c1' in updateData,
+      contentPreview: updateData.content.substring(0, 100),
+    });
+  }
 
   const { error } = await supabase
     .from('messages')

@@ -27,25 +27,6 @@ export function validateOpenAIKey(): string {
 }
 
 /**
- * Check if Anthropic API key is configured (for C1)
- */
-export function validateAnthropicKey(): string {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    logger.error('ANTHROPIC_API_KEY not configured');
-    throw new Error('Anthropic API key not configured');
-  }
-
-  if (!apiKey.startsWith('sk-ant-')) {
-    logger.error('Invalid ANTHROPIC_API_KEY format');
-    throw new Error('Invalid Anthropic API key format');
-  }
-
-  return apiKey;
-}
-
-/**
  * Check if Kling AI API key is configured (for video generation)
  */
 export function validateKlingKey(): string {
@@ -74,6 +55,20 @@ export function validateFalKey(): string {
   if (!apiKey.includes(':')) {
     logger.error('Invalid FAL_KEY format');
     throw new Error('Invalid fal.ai API key format (must include colon)');
+  }
+
+  return apiKey;
+}
+
+/**
+ * Check if Google Gemini API key is configured (for image generation)
+ */
+export function validateGoogleGeminiKey(): string {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+
+  if (!apiKey) {
+    logger.error('GOOGLE_GEMINI_API_KEY not configured');
+    throw new Error('Google Gemini API key not configured');
   }
 
   return apiKey;
@@ -173,16 +168,13 @@ export interface ApiKeyValidation {
  * Validate API keys for a route
  */
 export function validateApiKeys(
-  requiredKeys: ('openai' | 'anthropic' | 'kling' | 'fal' | 'supabase')[]
+  requiredKeys: ('openai' | 'kling' | 'fal' | 'supabase' | 'google-gemini')[]
 ): ApiKeyValidation {
   try {
     for (const keyType of requiredKeys) {
       switch (keyType) {
         case 'openai':
           validateOpenAIKey();
-          break;
-        case 'anthropic':
-          validateAnthropicKey();
           break;
         case 'kling':
           validateKlingKey();
@@ -192,6 +184,9 @@ export function validateApiKeys(
           break;
         case 'supabase':
           validateSupabaseKeys();
+          break;
+        case 'google-gemini':
+          validateGoogleGeminiKey();
           break;
       }
     }

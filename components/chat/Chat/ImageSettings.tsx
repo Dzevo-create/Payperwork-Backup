@@ -2,116 +2,22 @@
 
 import { Palette, Sun, Zap, RectangleHorizontal, Sparkles, ChevronDown, Copy } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-
-export interface ImageSettingsType {
-  preset?: string; // "none" | "cinematic" | "portrait" | etc.
-  style?: "photorealistic" | "cinematic" | "artistic" | "anime" | "3d_render";
-  lighting?: "natural" | "studio" | "dramatic" | "golden_hour" | "neon" | "soft";
-  quality: "standard" | "high" | "ultra";
-  aspectRatio: "1:1" | "16:9" | "9:16" | "4:3" | "3:2" | "21:9";
-  numImages: 1 | 2 | 3 | 4;
-}
+import {
+  IMAGE_PRESETS,
+  IMAGE_STYLES,
+  LIGHTING_OPTIONS,
+  QUALITY_OPTIONS,
+  ASPECT_RATIOS,
+  NUM_IMAGES_OPTIONS,
+  getPresetDefaults,
+  type ImageSettingsType,
+  type ImagePresetKey
+} from "@/config/imageSettings";
 
 interface ImageSettingsProps {
   settings: ImageSettingsType;
   onSettingsChange: (settings: ImageSettingsType) => void;
 }
-
-// Preset definitions
-const PRESET_OPTIONS = [
-  { value: "none", label: "Keine Vorgabe", icon: "✨" },
-  { value: "cinematic", label: "Cinematic", icon: "🎬" },
-  { value: "portrait", label: "Portrait", icon: "📸" },
-  { value: "landscape", label: "Landscape", icon: "🏞️" },
-  { value: "product", label: "Product", icon: "📦" },
-  { value: "artistic", label: "Artistic", icon: "🎨" },
-  { value: "night", label: "Night Scene", icon: "🌃" },
-];
-
-const STYLE_OPTIONS = [
-  { value: undefined, label: "Auto (Enhancer wählt)" },
-  { value: "photorealistic", label: "Photorealistic" },
-  { value: "cinematic", label: "Cinematic" },
-  { value: "artistic", label: "Artistic" },
-  { value: "anime", label: "Anime" },
-  { value: "3d_render", label: "3D Render" },
-];
-
-const LIGHTING_OPTIONS = [
-  { value: undefined, label: "Auto (Enhancer wählt)" },
-  { value: "natural", label: "Natural" },
-  { value: "studio", label: "Studio" },
-  { value: "dramatic", label: "Dramatic" },
-  { value: "golden_hour", label: "Golden Hour" },
-  { value: "neon", label: "Neon" },
-  { value: "soft", label: "Soft" },
-];
-
-const QUALITY_OPTIONS = [
-  { value: "standard", label: "Standard" },
-  { value: "high", label: "High" },
-  { value: "ultra", label: "Ultra" },
-];
-
-const ASPECT_RATIO_OPTIONS = [
-  { value: "1:1", label: "1:1 (Square)" },
-  { value: "16:9", label: "16:9 (Landscape)" },
-  { value: "9:16", label: "9:16 (Portrait)" },
-  { value: "4:3", label: "4:3 (Classic)" },
-  { value: "3:2", label: "3:2 (Photo)" },
-  { value: "21:9", label: "21:9 (Cinematic)" },
-];
-
-const NUM_IMAGES_OPTIONS = [
-  { value: 1, label: "1 Bild" },
-  { value: 2, label: "2 Bilder" },
-  { value: 3, label: "3 Bilder" },
-  { value: 4, label: "4 Bilder" },
-];
-
-// Preset presets (defaults when selecting a preset)
-const PRESET_DEFAULTS: { [key: string]: Partial<ImageSettingsType> } = {
-  none: {
-    style: undefined,
-    lighting: undefined,
-  },
-  cinematic: {
-    style: "cinematic",
-    lighting: "dramatic",
-    quality: "ultra",
-    aspectRatio: "21:9",
-  },
-  portrait: {
-    style: "photorealistic",
-    lighting: "soft",
-    quality: "ultra",
-    aspectRatio: "3:2",
-  },
-  landscape: {
-    style: "photorealistic",
-    lighting: "natural",
-    quality: "ultra",
-    aspectRatio: "16:9",
-  },
-  product: {
-    style: "photorealistic",
-    lighting: "studio",
-    quality: "ultra",
-    aspectRatio: "1:1",
-  },
-  artistic: {
-    style: "artistic",
-    lighting: "dramatic",
-    quality: "high",
-    aspectRatio: "16:9",
-  },
-  night: {
-    style: "cinematic",
-    lighting: "neon",
-    quality: "ultra",
-    aspectRatio: "16:9",
-  },
-};
 
 type DropdownType = "preset" | "style" | "lighting" | "quality" | "aspect" | "numImages" | null;
 
@@ -133,8 +39,8 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDropdown]);
 
-  const handlePresetChange = (presetId: string) => {
-    const presetDefaults = PRESET_DEFAULTS[presetId] || {};
+  const handlePresetChange = (presetId: ImagePresetKey) => {
+    const presetDefaults = getPresetDefaults(presetId);
     onSettingsChange({
       ...settings,
       preset: presetId,
@@ -146,11 +52,11 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
   const getCurrentLabel = (type: string) => {
     switch (type) {
       case "preset":
-        const preset = PRESET_OPTIONS.find(p => p.value === (settings.preset || "none"));
-        return preset?.icon || "✨";
+        const preset = IMAGE_PRESETS[settings.preset as ImagePresetKey] || IMAGE_PRESETS.none;
+        return preset.icon || "✨";
       case "style":
         if (!settings.style) return "Auto";
-        const style = STYLE_OPTIONS.find(s => s.value === settings.style);
+        const style = IMAGE_STYLES.find(s => s.value === settings.style);
         return style?.label.split(" ")[0] || "Auto";
       case "lighting":
         if (!settings.lighting) return "Auto";
@@ -184,20 +90,20 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
 
         {openDropdown === "preset" && (
           <div className="absolute bottom-full mb-2 right-0 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-pw-black/10 py-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-            {PRESET_OPTIONS.map((option) => (
+            {Object.entries(IMAGE_PRESETS).map(([key, preset]) => (
               <button
-                key={option.value}
-                onClick={() => handlePresetChange(option.value)}
+                key={key}
+                onClick={() => handlePresetChange(key as ImagePresetKey)}
                 className={`w-full px-3 py-2 text-left text-sm transition-colors ${
-                  (settings.preset || "none") === option.value
+                  (settings.preset || "none") === key
                     ? "bg-pw-accent text-white font-medium"
                     : "text-pw-black/70 hover:bg-pw-black/5"
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  {(settings.preset || "none") === option.value && <span className="text-xs">✓</span>}
-                  <span>{option.icon}</span>
-                  {option.label}
+                  {(settings.preset || "none") === key && <span className="text-xs">✓</span>}
+                  <span>{preset.icon}</span>
+                  {preset.label}
                 </span>
               </button>
             ))}
@@ -220,7 +126,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
 
         {openDropdown === "style" && (
           <div className="absolute bottom-full mb-2 right-0 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-pw-black/10 py-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-            {STYLE_OPTIONS.map((option) => (
+            {IMAGE_STYLES.map((option) => (
               <button
                 key={option.value || "auto"}
                 onClick={() => {
@@ -334,7 +240,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
 
         {openDropdown === "aspect" && (
           <div className="absolute bottom-full mb-2 right-0 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-pw-black/10 py-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-            {ASPECT_RATIO_OPTIONS.map((option) => (
+            {ASPECT_RATIOS.map((option) => (
               <button
                 key={option.value}
                 onClick={() => {
@@ -397,3 +303,6 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
     </div>
   );
 }
+
+// Re-export the type for backward compatibility
+export type { ImageSettingsType };

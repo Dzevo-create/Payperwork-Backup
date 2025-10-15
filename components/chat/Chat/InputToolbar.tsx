@@ -11,6 +11,7 @@ interface InputToolbarProps {
   onModeChange: (mode: "chat" | "image" | "video") => void;
   onFileClick: () => void;
   dropdownRef: React.RefObject<HTMLDivElement>;
+  isSuperChatEnabled?: boolean;
 }
 
 export function InputToolbar({
@@ -21,6 +22,7 @@ export function InputToolbar({
   onModeChange,
   onFileClick,
   dropdownRef,
+  isSuperChatEnabled = false,
 }: InputToolbarProps) {
   return (
     <div className="relative" ref={dropdownRef}>

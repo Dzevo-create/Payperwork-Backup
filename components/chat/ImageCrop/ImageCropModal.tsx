@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { X, Check } from "lucide-react";
+import { X, Check, Download } from "lucide-react";
 
 interface ImageCropModalProps {
   isOpen: boolean;
@@ -38,6 +38,32 @@ export default function ImageCropModal({
       onClose();
     } catch (error) {
       console.error("Error cropping image:", error);
+    }
+  };
+
+  const handleDownload = async () => {
+    const image = imgRef.current;
+    if (!image || !completedCrop) {
+      // If no crop selected, download original image
+      const link = document.createElement("a");
+      link.href = imageUrl;
+      link.download = `image-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    try {
+      const croppedImage = await getCroppedImg(image, completedCrop);
+      const link = document.createElement("a");
+      link.href = croppedImage;
+      link.download = `cropped-image-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading image:", error);
     }
   };
 
@@ -77,20 +103,32 @@ export default function ImageCropModal({
 
         {/* Footer - Controls */}
         <div className="absolute bottom-0 left-0 right-0 z-10 bg-pw-black/98 border-t border-pw-accent/30 px-6 py-4">
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-between">
+            {/* Left side - Download Button */}
             <button
-              onClick={onClose}
-              className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors"
+              onClick={handleDownload}
+              className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors flex items-center gap-2"
             >
-              Abbrechen
+              <Download className="w-4 h-4" />
+              Download
             </button>
-            <button
-              onClick={createCroppedImage}
-              className="px-5 py-2 bg-pw-accent hover:bg-pw-accent-hover text-pw-black font-semibold rounded-xl transition-colors flex items-center gap-2"
-            >
-              <Check className="w-4 h-4" />
-              Zuschneiden
-            </button>
+
+            {/* Right side - Cancel and Crop Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={createCroppedImage}
+                className="px-5 py-2 bg-pw-accent hover:bg-pw-accent-hover text-pw-black font-semibold rounded-xl transition-colors flex items-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                Zuschneiden
+              </button>
+            </div>
           </div>
         </div>
       </div>

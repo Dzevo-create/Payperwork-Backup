@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChatSidebar } from "@/components/chat/Sidebar/ChatSidebar";
 import { LibraryLayout } from "@/components/library/LibraryLayout";
 import { LibraryErrorBoundary } from "@/components/library/LibraryErrorBoundary";
 import { useChatStore } from "@/store/chatStore.supabase";
 
 export default function LibraryPage() {
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -21,8 +23,9 @@ export default function LibraryPage() {
   const handleLoadConversation = (convId: string) => {
     const conv = conversations.find((c) => c.id === convId);
     if (conv) {
-      // Pass conversation ID as URL parameter to survive page reload
-      window.location.href = `/chat?convId=${convId}`;
+      // FIX: Use Next.js router for client-side navigation (no full page reload)
+      setCurrentConversationId(convId);
+      router.push(`/chat?convId=${convId}`);
     }
   };
 
@@ -47,7 +50,10 @@ export default function LibraryPage() {
   };
 
   const handleNewChat = () => {
-    window.location.href = "/chat";
+    // FIX: Use Next.js router for client-side navigation (no full page reload)
+    setCurrentConversationId(null);
+    setMessages([]);
+    router.push("/chat");
   };
 
   return (

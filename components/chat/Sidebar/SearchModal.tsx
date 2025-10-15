@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Search, X, MessageSquare, Clock } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Search, X } from "lucide-react";
+import { useChatSearch } from "@/hooks/chat/useChatSearch";
+import { SearchResultItem } from "./SearchResultItem";
 
 interface Message {
   id: string;
@@ -19,16 +21,6 @@ interface Conversation {
   updatedAt: Date;
 }
 
-interface SearchResult {
-  conversationId: string;
-  conversationTitle: string;
-  messageId: string;
-  messageContent: string;
-  messageRole: "user" | "assistant";
-  timestamp: Date;
-  matchIndex: number;
-}
-
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,20 +34,26 @@ export function SearchModal({
   conversations,
   onNavigateToChat,
 }: SearchModalProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    selectedIndex,
+    navigateDown,
+    navigateUp,
+    clearSearch,
+  } = useChatSearch(conversations);
 
   // Focus input when modal opens
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
-      setSearchQuery("");
-      setSearchResults([]);
-      setSelectedIndex(0);
+      clearSearch();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Handle keyboard shortcuts
@@ -67,12 +65,10 @@ export function SearchModal({
         onClose();
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < searchResults.length - 1 ? prev + 1 : prev
-        );
+        navigateDown();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+        navigateUp();
       } else if (e.key === "Enter" && searchResults.length > 0) {
         e.preventDefault();
         const result = searchResults[selectedIndex];
@@ -85,7 +81,7 @@ export function SearchModal({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, searchResults, selectedIndex, onClose, onNavigateToChat]);
+  }, [isOpen, searchResults, selectedIndex, navigateDown, navigateUp, onClose, onNavigateToChat]);
 
   // Scroll selected result into view
   useEffect(() => {
@@ -98,94 +94,6 @@ export function SearchModal({
       }
     }
   }, [selectedIndex, searchResults]);
-
-  // Perform search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setSelectedIndex(0);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase();
-    const results: SearchResult[] = [];
-
-    conversations.forEach((conv) => {
-      conv.messages.forEach((msg) => {
-        const content = msg.content.toLowerCase();
-        const matchIndex = content.indexOf(query);
-
-        if (matchIndex !== -1) {
-          results.push({
-            conversationId: conv.id,
-            conversationTitle: conv.title,
-            messageId: msg.id,
-            messageContent: msg.content,
-            messageRole: msg.role,
-            timestamp: msg.timestamp,
-            matchIndex,
-          });
-        }
-      });
-
-      // Also search in conversation titles
-      const titleIndex = conv.title.toLowerCase().indexOf(query);
-      if (titleIndex !== -1 && conv.messages.length > 0) {
-        const firstMessage = conv.messages[0];
-        results.push({
-          conversationId: conv.id,
-          conversationTitle: conv.title,
-          messageId: firstMessage.id,
-          messageContent: conv.title,
-          messageRole: "user",
-          timestamp: conv.updatedAt,
-          matchIndex: titleIndex,
-        });
-      }
-    });
-
-    // Sort by most recent
-    results.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-
-    setSearchResults(results.slice(0, 50)); // Limit to 50 results
-    setSelectedIndex(0);
-  }, [searchQuery, conversations]);
-
-  // Highlight matching text
-  const highlightText = (text: string, query: string) => {
-    if (!query.trim()) return text;
-
-    const index = text.toLowerCase().indexOf(query.toLowerCase());
-    if (index === -1) return text;
-
-    // Get context around the match (50 chars before and after)
-    const start = Math.max(0, index - 50);
-    const end = Math.min(text.length, index + query.length + 150);
-    let snippet = text.slice(start, end);
-
-    if (start > 0) snippet = "..." + snippet;
-    if (end < text.length) snippet = snippet + "...";
-
-    // Highlight the matching part
-    const lowerSnippet = snippet.toLowerCase();
-    const matchIndex = lowerSnippet.indexOf(query.toLowerCase());
-
-    if (matchIndex === -1) return snippet;
-
-    const before = snippet.slice(0, matchIndex);
-    const match = snippet.slice(matchIndex, matchIndex + query.length);
-    const after = snippet.slice(matchIndex + query.length);
-
-    return (
-      <>
-        {before}
-        <mark className="bg-pw-accent/30 text-pw-black font-medium">{match}</mark>
-        {after}
-      </>
-    );
-  };
 
   if (!isOpen) return null;
 
@@ -230,40 +138,18 @@ export function SearchModal({
           ) : (
             <div className="py-2">
               {searchResults.map((result, index) => (
-                <button
+                <SearchResultItem
                   key={`${result.conversationId}-${result.messageId}-${index}`}
+                  conversationTitle={result.conversationTitle}
+                  messageContent={result.messageContent}
+                  timestamp={result.timestamp}
+                  searchQuery={searchQuery}
+                  isSelected={index === selectedIndex}
                   onClick={() => {
                     onNavigateToChat(result.conversationId, result.messageId);
                     onClose();
                   }}
-                  className={`w-full px-4 py-3 text-left transition-colors ${
-                    index === selectedIndex
-                      ? "bg-pw-accent/10"
-                      : "hover:bg-pw-black/5"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-pw-black/40 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-pw-black truncate">
-                          {result.conversationTitle}
-                        </span>
-                        <span className="text-xs text-pw-black/40 flex items-center gap-1 flex-shrink-0">
-                          <Clock className="w-3 h-3" />
-                          {new Date(result.timestamp).toLocaleDateString("de-DE", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-pw-black/60 line-clamp-2">
-                        {highlightText(result.messageContent, searchQuery)}
-                      </p>
-                    </div>
-                  </div>
-                </button>
+                />
               ))}
             </div>
           )}

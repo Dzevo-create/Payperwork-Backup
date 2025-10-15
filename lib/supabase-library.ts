@@ -1,18 +1,7 @@
 import { supabase } from './supabase';
 import { LibraryItem } from '@/types/library';
 import { libraryLogger } from './logger';
-
-// Get user ID from localStorage
-const getUserId = () => {
-  if (typeof window === 'undefined') return 'anonymous';
-
-  let userId = localStorage.getItem('payperwork_user_id');
-  if (!userId) {
-    userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem('payperwork_user_id', userId);
-  }
-  return userId;
-};
+import { getUserId } from './supabase/auth';
 
 // Upload file to Supabase Storage
 export async function uploadFile(

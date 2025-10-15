@@ -103,6 +103,11 @@ export const videoGenerationRateLimiter = new RateLimiter({
   uniqueTokenPerInterval: 2, // 2 videos per minute
 });
 
+export const imageEditRateLimiter = new RateLimiter({
+  interval: 60000, // 1 minute
+  uniqueTokenPerInterval: 50, // 50 edits per minute (very generous - editing is iterative)
+});
+
 export const apiRateLimiter = new RateLimiter({
   interval: 60000, // 1 minute
   uniqueTokenPerInterval: 60, // 60 requests per minute

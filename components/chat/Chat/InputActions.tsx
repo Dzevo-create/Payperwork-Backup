@@ -13,6 +13,8 @@ interface InputActionsProps {
   onEnhancePrompt: () => void;
   onSend: () => void;
   onStopGeneration?: () => void;
+  isSuperChatEnabled?: boolean;
+  mode?: "chat" | "image" | "video";
 }
 
 export function InputActions({
@@ -26,6 +28,8 @@ export function InputActions({
   onEnhancePrompt,
   onSend,
   onStopGeneration,
+  isSuperChatEnabled = false,
+  mode = "chat",
 }: InputActionsProps) {
   return (
     <>

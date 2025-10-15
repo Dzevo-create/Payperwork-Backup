@@ -188,6 +188,18 @@ export function MediaLightbox({ isOpen, item, onClose, onNavigate, hasNext, hasP
 
           {/* Details */}
           <div className="space-y-4">
+            {/* Source Image */}
+            {item.sourceImage && (
+              <div className="mb-4 p-3 bg-pw-black/5 rounded-xl">
+                <p className="text-pw-black/60 text-xs uppercase tracking-wide mb-2">Ausgangsbild</p>
+                <img
+                  src={item.sourceImage}
+                  alt="Source"
+                  className="w-full h-32 object-cover rounded-lg shadow-sm"
+                />
+              </div>
+            )}
+
             {/* Model */}
             {item.model && (
               <div className="flex items-start gap-3">

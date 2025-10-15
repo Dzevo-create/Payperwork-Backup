@@ -5,25 +5,42 @@ import { textValidation } from "@/lib/validation";
 import { apiLogger } from "@/lib/logger";
 import { validateContentType } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
+import { transformStream } from "@crayonai/stream";
 
 /**
- * C1 Chat API Route (ACTIVE ✅)
+ * C1 Chat API Route with Claude Sonnet 4 (SIMPLIFIED - WORKING VERSION ✅)
  *
- * Uses Thesys C1 API for Generative UI responses.
+ * Uses Thesys C1 API with Claude Sonnet 4 for Generative UI responses.
  * Returns interactive UI components instead of plain text.
+ *
+ * This is a MINIMAL working version without domains/tools.
  */
+
+// Minimal system prompt for C1
+const SIMPLE_SYSTEM_PROMPT = `You are a professional AI assistant powered by Claude Sonnet 4.
+You provide accurate, well-structured, and visually rich responses using interactive UI components.
+
+OUTPUT RULES:
+1. Use structured UI components (cards, charts, tables, lists) when appropriate
+2. Keep responses clear, concise, and professional
+3. Cite sources when providing factual information
+4. End with 2-3 relevant follow-up questions
+
+COMPLIANCE:
+- Maintain a neutral, helpful, professional tone
+- Clearly state data limitations when applicable
+- Include appropriate disclaimers for advice`;
 
 const c1Client = new OpenAI({
   apiKey: process.env.THESYS_API_KEY,
-  baseURL: "https://api.thesys.dev/v1/embed",
+  baseURL: "https://api.thesys.dev/v1/embed/",
 });
 
 export async function POST(req: NextRequest) {
   const clientId = getClientId(req);
 
   try {
-    // API Key validation - C1 uses Thesys API which needs OpenAI SDK
-    // But check for THESYS_API_KEY specifically
+    // API Key validation
     if (!process.env.THESYS_API_KEY) {
       return handleApiError(
         new Error('Thesys API key not configured'),
@@ -55,80 +72,57 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Inject system prompt at the beginning
+    const enhancedMessages = [
+      { role: "system", content: SIMPLE_SYSTEM_PROMPT },
+      ...messages
+    ];
+
     apiLogger.info("C1 chat request received", {
       clientId,
       messageCount: messages.length,
+      model: "claude-sonnet-4",
     });
 
-    // Call C1 API with Generative UI model
-    const llmStream = await c1Client.chat.completions.create({
-      model: "c1-latest", // C1 Generative UI model - always uses the latest version
-      messages: messages,
+    // Call C1 API with Claude Sonnet 4 (NO TOOLS - SIMPLE VERSION)
+    const completion = await c1Client.chat.completions.create({
+      model: "c1/anthropic/claude-sonnet-4/v-20250930",
+      temperature: 0.7,
+      messages: enhancedMessages,
       stream: true,
     });
 
     apiLogger.info("C1 chat streaming started", { clientId });
 
-    // Stream C1 response directly without transformation
-    // C1 API returns JSON wrapped in <content> tags - we keep it as-is
+    // Transform C1 stream to SSE format that frontend expects
+    // Frontend expects: data: {"content": "..."}\n\n
     const encoder = new TextEncoder();
-
-    const customStream = new ReadableStream({
+    const stream = new ReadableStream({
       async start(controller) {
-        let isClosed = false;
-
         try {
-          for await (const chunk of llmStream) {
-            // Check if controller is still open before enqueueing
-            if (isClosed) {
-              apiLogger.warn("C1 stream closed early, stopping iteration", { clientId });
-              break;
-            }
+          for await (const chunk of completion) {
+            const delta = chunk.choices[0]?.delta;
+            const content = delta?.content;
 
-            const content = chunk.choices[0]?.delta?.content || "";
             if (content) {
-              try {
-                // Send raw C1 content (including <content> tags - C1Component will parse it)
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-              } catch (enqueueError: any) {
-                // Controller closed (client disconnected), stop streaming
-                if (enqueueError.message?.includes("Controller is already closed")) {
-                  apiLogger.info("Client disconnected from C1 stream", { clientId });
-                  isClosed = true;
-                  break;
-                }
-                throw enqueueError; // Re-throw other errors
-              }
+              // Format as SSE: data: {"content": "..."}\n\n
+              const sseData = `data: ${JSON.stringify({ content })}\n\n`;
+              controller.enqueue(encoder.encode(sseData));
             }
           }
 
-          // Only enqueue [DONE] if controller is still open
-          if (!isClosed) {
-            try {
-              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-              controller.close();
-            } catch (closeError: any) {
-              // Ignore if already closed
-              if (!closeError.message?.includes("Controller is already closed")) {
-                throw closeError;
-              }
-            }
-          }
-        } catch (error: any) {
-          apiLogger.error("C1 stream error", error, { clientId });
-          // Only call controller.error if not already closed
-          if (!isClosed) {
-            try {
-              controller.error(error);
-            } catch {
-              // Ignore if controller is already closed
-            }
-          }
+          // Send done marker
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          controller.error(error);
         }
       },
     });
 
-    return new Response(customStream, {
+    const responseStream = stream;
+
+    return new Response(responseStream as unknown as ReadableStream, {
       headers: addRateLimitHeaders(
         new Headers({
           "Content-Type": "text/event-stream",

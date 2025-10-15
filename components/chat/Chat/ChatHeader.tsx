@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Share2, Menu, ChevronDown, Edit2 } from "lucide-react";
-import { C1Toggle } from "./C1Toggle";
 
+export type GPTModel = "gpt-4o" | "gpt-5";
 export type AIModel = "chatgpt" | "claude" | "gemini";
 export type VideoModel = "kling" | "sora2";
 
@@ -11,29 +11,42 @@ interface ChatHeaderProps {
   onMenuClick?: () => void;
   selectedModel?: AIModel;
   onModelChange?: (model: AIModel) => void;
+  selectedGPTModel?: GPTModel;
+  onGPTModelChange?: (model: GPTModel) => void;
   selectedVideoModel?: VideoModel;
   onVideoModelChange?: (model: VideoModel) => void;
   mode?: "chat" | "image" | "video";
   chatName?: string;
   onChatNameChange?: (name: string) => void;
+  isSuperChatEnabled?: boolean;
+  onSuperChatToggle?: (enabled: boolean) => void;
 }
 
 export function ChatHeader({
   onMenuClick,
   selectedModel = "chatgpt",
   onModelChange,
+  selectedGPTModel = "gpt-4o",
+  onGPTModelChange,
   selectedVideoModel = "kling",
   onVideoModelChange,
   mode = "chat",
   chatName = "Neuer Chat",
-  onChatNameChange
+  onChatNameChange,
+  isSuperChatEnabled = false,
+  onSuperChatToggle
 }: ChatHeaderProps) {
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(chatName);
 
+  const gptModels: { id: GPTModel; name: string; version: string; badge?: string; desc?: string }[] = [
+    { id: "gpt-4o", name: "ChatGPT", version: "4o", desc: "Schnell" },
+    { id: "gpt-5", name: "ChatGPT", version: "5", badge: "Neu", desc: "Leistungsstark" },
+  ];
+
   const chatModels: { id: AIModel; name: string; version: string }[] = [
-    { id: "chatgpt", name: "ChatGPT", version: "4o" },
+    { id: "chatgpt", name: "ChatGPT", version: selectedGPTModel === "gpt-4o" ? "4o" : "5" },
     { id: "claude", name: "Claude", version: "3.5" },
     { id: "gemini", name: "Gemini", version: "2.0" },
   ];
@@ -50,8 +63,16 @@ export function ChatHeader({
       const model = videoModels.find(m => m.id === selectedVideoModel) || videoModels[0];
       return { name: model.name, version: model.version };
     } else {
-      const model = chatModels.find(m => m.id === selectedModel) || chatModels[0];
-      return { name: model.name, version: model.version };
+      // Chat mode - show model name with version
+      if (selectedModel === "chatgpt") {
+        return { name: "ChatGPT", version: selectedGPTModel === "gpt-4o" ? "4o" : "5" };
+      } else if (selectedModel === "claude") {
+        return { name: "Claude", version: "3.5" };
+      } else if (selectedModel === "gemini") {
+        return { name: "Gemini", version: "2.0" };
+      }
+      // Fallback
+      return { name: "ChatGPT", version: "4o" };
     }
   };
 
@@ -104,7 +125,7 @@ export function ChatHeader({
             )}
           </button>
 
-          {/* Dropdown Menu - For chat and video mode */}
+          {/* Dropdown Menu - For chat mode */}
           {mode === "chat" && isModelDropdownOpen && (
             <>
               {/* Backdrop */}
@@ -113,27 +134,83 @@ export function ChatHeader({
                 onClick={() => setIsModelDropdownOpen(false)}
               />
 
-              {/* Chat Models Menu */}
-              <div className="absolute top-full left-0 mt-1.5 w-44 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-pw-black/10 overflow-hidden z-20">
-                {chatModels.map((model) => (
+              {/* AI Models Menu */}
+              <div className="absolute top-full left-0 mt-1.5 w-52 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-pw-black/10 overflow-hidden z-20">
+                {/* ChatGPT Section with versions */}
+                <div className="border-b border-pw-black/10">
+                  <div className="px-3 py-2 bg-pw-black/5">
+                    <div className="text-xs font-semibold text-pw-black/60 uppercase tracking-wider">
+                      ChatGPT
+                    </div>
+                  </div>
+                  {gptModels.map((model) => (
+                    <button
+                      key={model.id}
+                      onClick={() => {
+                        onModelChange?.("chatgpt");
+                        onGPTModelChange?.(model.id);
+                        setIsModelDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-2.5 text-left hover:bg-pw-black/5 transition-colors ${
+                        selectedModel === "chatgpt" && selectedGPTModel === model.id ? 'bg-pw-accent/10' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-medium text-pw-black">
+                            Version {model.version}
+                          </div>
+                          {model.desc && (
+                            <div className="text-xs text-pw-black/60">
+                              {model.desc}
+                            </div>
+                          )}
+                        </div>
+                        {model.badge && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-pw-accent/20 text-pw-accent rounded">
+                            {model.badge}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Other AI Models */}
+                <div>
                   <button
-                    key={model.id}
                     onClick={() => {
-                      onModelChange?.(model.id);
+                      onModelChange?.("claude");
                       setIsModelDropdownOpen(false);
                     }}
                     className={`w-full px-3 py-2.5 text-left hover:bg-pw-black/5 transition-colors ${
-                      selectedModel === model.id ? 'bg-pw-accent/10' : ''
+                      selectedModel === "claude" ? 'bg-pw-accent/10' : ''
                     }`}
                   >
                     <div className="text-sm font-semibold text-pw-black">
-                      {model.name}
+                      Claude
                     </div>
                     <div className="text-xs text-pw-black/60">
-                      {model.version}
+                      Version 3.5 • Bald verfügbar
                     </div>
                   </button>
-                ))}
+                  <button
+                    onClick={() => {
+                      onModelChange?.("gemini");
+                      setIsModelDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2.5 text-left hover:bg-pw-black/5 transition-colors ${
+                      selectedModel === "gemini" ? 'bg-pw-accent/10' : ''
+                    }`}
+                  >
+                    <div className="text-sm font-semibold text-pw-black">
+                      Gemini
+                    </div>
+                    <div className="text-xs text-pw-black/60">
+                      Version 2.0 • Bald verfügbar
+                    </div>
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -201,10 +278,24 @@ export function ChatHeader({
         </div>
       </div>
 
-      {/* Right: C1 Toggle + Share Button */}
+      {/* Right: SuperChat Toggle + Share Button */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* C1 Super Chat Toggle */}
-        <C1Toggle />
+        {/* SuperChat Toggle - Only in chat mode */}
+        {mode === "chat" && (
+          <button
+            onClick={() => onSuperChatToggle?.(!isSuperChatEnabled)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+              isSuperChatEnabled
+                ? "bg-pw-black text-white shadow-sm"
+                : "bg-pw-black/5 text-pw-black/70 hover:bg-pw-black/10"
+            }`}
+          >
+            <span className="font-semibold">{isSuperChatEnabled ? "SuperChat" : "Standard"}</span>
+            <span className="hidden sm:inline text-[10px] opacity-70">
+              {isSuperChatEnabled ? "Generative UI" : "Text only"}
+            </span>
+          </button>
+        )}
 
         {/* Share Button */}
         <button

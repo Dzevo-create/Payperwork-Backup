@@ -3,6 +3,13 @@
 import { Clock, RectangleHorizontal, Sparkles, Video, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { VideoModel } from "./ChatHeader";
+import {
+  getDurationOptions,
+  getAspectRatioOptions,
+  hasFeature,
+  KLING_MODES,
+  KLING_CAMERA_MOVEMENTS,
+} from "@/config/videoSettings";
 
 export interface VideoSettingsType {
   duration: "4" | "5" | "8" | "10" | "12"; // Sora: 4,8,12 | Kling: 5,10
@@ -20,82 +27,16 @@ interface VideoSettingsProps {
   videoModel?: VideoModel; // NEW: To show different options based on model
 }
 
-// Kling AI options (v.1)
-const KLING_DURATION_OPTIONS = [
-  { value: "5", label: "5 Sekunden" },
-  { value: "10", label: "10 Sekunden" },
-];
-
-const KLING_ASPECT_RATIO_OPTIONS = [
-  { value: "16:9", label: "16:9 (Landscape)" },
-  { value: "9:16", label: "9:16 (Portrait)" },
-  { value: "1:1", label: "1:1 (Quadrat)" },
-];
-
-const KLING_ASPECT_RATIO_OPTIONS_WITH_ORIGINAL = [
-  { value: "original", label: "Original (vom Bild)" },
-  { value: "16:9", label: "16:9 (Landscape)" },
-  { value: "9:16", label: "9:16 (Portrait)" },
-  { value: "1:1", label: "1:1 (Quadrat)" },
-];
-
-const KLING_MODE_OPTIONS = [
-  { value: "std", label: "Standard" },
-  { value: "pro", label: "Professional" },
-];
-
-// Sora 2 options (v.2) - fal.ai API specs
-const SORA_DURATION_OPTIONS = [
-  { value: "4", label: "4 Sekunden" },
-  { value: "8", label: "8 Sekunden" },
-  { value: "12", label: "12 Sekunden" },
-];
-
-const SORA_ASPECT_RATIO_OPTIONS = [
-  { value: "16:9", label: "16:9 (Landscape)" },
-  { value: "9:16", label: "9:16 (Portrait)" },
-];
-
-const SORA_ASPECT_RATIO_OPTIONS_WITH_AUTO = [
-  { value: "auto", label: "Auto (vom Bild)" },
-  { value: "16:9", label: "16:9 (Landscape)" },
-  { value: "9:16", label: "9:16 (Portrait)" },
-];
-
-const CAMERA_OPTIONS = [
-  { value: "none", label: "Statisch" },
-  { value: "zoom_in", label: "Zoom rein" },
-  { value: "zoom_out", label: "Zoom raus" },
-  { value: "pan_left", label: "Nach links" },
-  { value: "pan_right", label: "Nach rechts" },
-  { value: "tilt_up", label: "Nach oben" },
-  { value: "tilt_down", label: "Nach unten" },
-];
-
 type DropdownType = "duration" | "aspect" | "mode" | "camera" | null;
 
 export default function VideoSettings({ settings, onSettingsChange, hasImageAttachment = false, videoModel = "kling" }: VideoSettingsProps) {
-  // Get options based on video model - SEPARATE FOR EACH MODEL
-  const durationOptions = videoModel === "sora2" ? SORA_DURATION_OPTIONS : KLING_DURATION_OPTIONS;
-
-  // Aspect ratio options depend on model AND whether there's an image
-  let aspectRatioOptions;
-  if (videoModel === "sora2") {
-    // Sora 2: auto (for image2video), 16:9, 9:16 (NO 1:1!)
-    aspectRatioOptions = hasImageAttachment
-      ? SORA_ASPECT_RATIO_OPTIONS_WITH_AUTO
-      : SORA_ASPECT_RATIO_OPTIONS;
-  } else {
-    // Kling AI: original (for image2video), 16:9, 9:16, 1:1
-    aspectRatioOptions = hasImageAttachment
-      ? KLING_ASPECT_RATIO_OPTIONS_WITH_ORIGINAL
-      : KLING_ASPECT_RATIO_OPTIONS;
-  }
-
-  const modeOptions = videoModel === "sora2" ? [] : KLING_MODE_OPTIONS; // Sora has no mode options
-  const showModeSelector = videoModel === "kling"; // Only show mode for Kling
-  const showAudioToggle = videoModel === "sora2"; // Only show audio for Sora 2
-  const showCameraMovement = hasImageAttachment && videoModel === "kling"; // Only show camera movement for Kling image2video
+  // Get options based on video model using helper functions
+  const durationOptions = getDurationOptions(videoModel);
+  const aspectRatioOptions = getAspectRatioOptions(videoModel, hasImageAttachment);
+  const modeOptions = hasFeature(videoModel, "modes") ? KLING_MODES : [];
+  const showModeSelector = hasFeature(videoModel, "modes");
+  const showAudioToggle = hasFeature(videoModel, "audio");
+  const showCameraMovement = hasImageAttachment && hasFeature(videoModel, "cameraMovement");
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -122,7 +63,7 @@ export default function VideoSettings({ settings, onSettingsChange, hasImageAtta
       case "mode":
         return settings.mode === "std" ? "Std" : "Pro";
       case "camera":
-        const camera = CAMERA_OPTIONS.find(c => c.value === (settings.cameraMovement || "none"));
+        const camera = KLING_CAMERA_MOVEMENTS.find(c => c.value === (settings.cameraMovement || "none"));
         return camera?.label.split(" ")[0] || "Statisch";
       default:
         return "";
@@ -263,7 +204,7 @@ export default function VideoSettings({ settings, onSettingsChange, hasImageAtta
 
           {openDropdown === "camera" && (
             <div className="absolute bottom-full mb-2 right-0 w-52 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-pw-black/10 py-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-              {CAMERA_OPTIONS.map((option) => (
+              {KLING_CAMERA_MOVEMENTS.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => {

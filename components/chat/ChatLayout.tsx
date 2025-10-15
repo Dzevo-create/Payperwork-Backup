@@ -35,6 +35,7 @@ export function ChatLayout() {
   const currentConversationId = useChatStore((state) => state.currentConversationId);
   const isHydrated = useChatStore((state) => state.isHydrated);
   const hydrate = useChatStore((state) => state.hydrate);
+  const isGenerating = useChatStore((state) => state.isGenerating);
 
   // Toast state
   const toasts = useToastStore((state) => state.toasts);
@@ -56,13 +57,13 @@ export function ChatLayout() {
   // Track if we've loaded from URL parameter (to prevent re-running the effect)
   const hasLoadedFromUrlRef = useRef(false);
 
-  // Load conversations from Supabase on mount
+  // Load conversations from Supabase on mount (ONLY ONCE per session)
   useEffect(() => {
     if (!isHydrated) {
       console.log('💧 Hydrating store from Supabase...');
       hydrate();
     }
-  }, [isHydrated, hydrate]);
+  }, []); // Empty dependency array - only run once on app startup
 
   // Handle URL parameter for conversation loading (from library page)
   useEffect(() => {
@@ -105,8 +106,20 @@ export function ChatLayout() {
     }
   }, [isHydrated, currentConversationId]);
 
-  // Auto-generate title for existing conversation when first user message is sent
+  // Track when generation completes to trigger title generation
+  const prevIsGeneratingRef = useRef(isGenerating);
+
+  // Auto-generate title AFTER streaming completes (prevents race condition)
   useEffect(() => {
+    // Detect when generation just completed
+    const wasGenerating = prevIsGeneratingRef.current;
+    const isNowNotGenerating = !isGenerating;
+    const generationJustCompleted = wasGenerating && isNowNotGenerating;
+
+    prevIsGeneratingRef.current = isGenerating;
+
+    if (!generationJustCompleted) return;
+
     // Safety check: ensure messages is an array
     if (!Array.isArray(messages)) {
       console.error("⚠️ ChatLayout: messages is not an array");
@@ -116,12 +129,10 @@ export function ChatLayout() {
     // Find first user message
     const firstUserMessage = messages.find((m) => m.role === "user");
 
-    // Only generate title if we already have a conversation and user message, but haven't done this yet
-    // NOTE: Conversation is now created in ChatArea BEFORE first message!
+    // Generate title now that generation is complete
     if (firstUserMessage && currentConversationId && !conversationCreatedRef.current) {
       conversationCreatedRef.current = true;
 
-      // Generate professional title from first message
       const generateTitle = async () => {
         try {
           const response = await fetch("/api/generate-chat-title", {
@@ -132,32 +143,26 @@ export function ChatLayout() {
 
           if (response.ok) {
             const { title } = await response.json();
-
-            // Update conversation with generated title
             console.log("🎯 Updating conversation with title:", title, "for ID:", currentConversationId);
             updateConversation(currentConversationId, { title });
             console.log("✅ Chat title generated:", title);
           } else {
-            console.error("❌ Title generation API failed with status:", response.status);
             throw new Error("Title generation failed");
           }
         } catch (error) {
           console.error("Failed to generate chat title:", error);
-          // Fallback to simple title if API fails
           const fallbackTitle = firstUserMessage.content.slice(0, 50) || "Neuer Chat";
           updateConversation(currentConversationId, { title: fallbackTitle });
         }
       };
 
-      // Generate title asynchronously - wrapped in catch to prevent page crashes
       generateTitle().catch((error) => {
-        // Failsafe: If any uncaught error escapes, log it and use fallback title
         console.error("Uncaught error in generateTitle:", error);
         const fallbackTitle = firstUserMessage.content.slice(0, 50) || "Neuer Chat";
         updateConversation(currentConversationId, { title: fallbackTitle });
       });
     }
-  }, [messages, currentConversationId, updateConversation]);
+  }, [isGenerating, messages, currentConversationId, updateConversation]);
 
   // CMD+K / CTRL+K global shortcut
   useEffect(() => {

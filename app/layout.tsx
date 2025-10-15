@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./error-suppression"; // Suppress known third-party warnings
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const inter = Inter({
@@ -49,6 +50,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" suppressHydrationWarning>
+      <head>
+        {/* C1 SuperChat SDK Styles */}
+        <link rel="stylesheet" href="/css/crayonai-react-ui.css" />
+        <link rel="stylesheet" href="/css/genui-sdk.css" />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ErrorBoundary>
           {children}
