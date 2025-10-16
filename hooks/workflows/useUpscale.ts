@@ -92,11 +92,6 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
 
             // Check if completed (try multiple possible completed status names)
             if (statusUpper === "COMPLETED" || statusUpper === "COMPLETE" || statusUpper === "SUCCESS" || statusUpper === "SUCCEEDED") {
-              if (pollingIntervalRef.current) {
-                clearInterval(pollingIntervalRef.current);
-              }
-              setProgress(100);
-
               // Get the image URL (try different response structures)
               let imageUrl: string | null = null;
 
@@ -108,15 +103,29 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
                 imageUrl = data.image;
               }
 
-              console.log("[Upscale] Completed with image:", imageUrl);
+              console.log("[Upscale] Status COMPLETED - checking for image:", {
+                hasImageUrl: !!imageUrl,
+                imageUrl: imageUrl || "null",
+                pollCount,
+              });
 
+              // IMPORTANT: Only stop polling if we ACTUALLY have an image URL
+              // Sometimes Freepik API returns "COMPLETED" but generated array is still empty
+              // This is a race condition in their API - we need to keep polling
               if (imageUrl) {
+                if (pollingIntervalRef.current) {
+                  clearInterval(pollingIntervalRef.current);
+                }
+                setProgress(100);
+                console.log("[Upscale] Success! Got image:", imageUrl);
                 resolve(imageUrl);
+                return;
               } else {
-                console.error("[Upscale] No image URL in response - still empty array:", data);
-                reject(new Error("Kein upscaliertes Bild erhalten - Freepik API hat kein Bild zurückgegeben"));
+                // Status is COMPLETED but no image yet - keep polling
+                console.warn("[Upscale] Status COMPLETED but no image URL yet (poll " + pollCount + "/60) - continuing to poll...");
+                setProgress(Math.min(90 + pollCount, 95)); // 90-95% while waiting for URL
+                // Don't return - continue polling
               }
-              return;
             }
 
             // Check if failed
