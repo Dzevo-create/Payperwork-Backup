@@ -203,6 +203,18 @@ class Logger {
       console.groupEnd();
     }
   }
+
+  /**
+   * Table logging for arrays/objects
+   */
+  table(data: any, label?: string) {
+    if (this.isDevelopment) {
+      if (label) {
+        console.log(`📊 ${label}`);
+      }
+      console.table(data);
+    }
+  }
 }
 
 // Export singleton instance
@@ -241,3 +253,62 @@ export const apiLogger = {
   error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
     logger.error(message, error, { component: 'API', ...context }),
 };
+
+export const workflowLogger = {
+  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.debug(message, { component: 'Workflow', ...context }),
+  info: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.info(message, { component: 'Workflow', ...context }),
+  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.warn(message, { component: 'Workflow', ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
+    logger.error(message, error, { component: 'Workflow', ...context }),
+};
+
+export const videoLogger = {
+  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.debug(message, { component: 'Video', ...context }),
+  info: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.info(message, { component: 'Video', ...context }),
+  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.warn(message, { component: 'Video', ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
+    logger.error(message, error, { component: 'Video', ...context }),
+};
+
+export const imageLogger = {
+  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.debug(message, { component: 'Image', ...context }),
+  info: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.info(message, { component: 'Image', ...context }),
+  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.warn(message, { component: 'Image', ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
+    logger.error(message, error, { component: 'Image', ...context }),
+};
+
+// Legacy compatibility - for gradual migration
+// These allow console.log replacement without changing call signature
+export const createLogger = (component: string) => ({
+  log: (message: string, ...args: any[]) => {
+    if (args.length > 0) {
+      logger.debug(message, { component, data: args });
+    } else {
+      logger.debug(message, { component });
+    }
+  },
+  debug: (message: string, ...args: any[]) => {
+    logger.debug(message, { component, data: args.length > 0 ? args : undefined });
+  },
+  info: (message: string, ...args: any[]) => {
+    logger.info(message, { component, data: args.length > 0 ? args : undefined });
+  },
+  warn: (message: string, ...args: any[]) => {
+    logger.warn(message, { component, data: args.length > 0 ? args : undefined });
+  },
+  error: (message: string, ...args: any[]) => {
+    const error = args.find(arg => arg instanceof Error);
+    const otherArgs = args.filter(arg => !(arg instanceof Error));
+    logger.error(message, error, { component, data: otherArgs.length > 0 ? otherArgs : undefined });
+  },
+});
