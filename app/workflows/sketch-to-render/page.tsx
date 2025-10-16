@@ -17,6 +17,7 @@ import { useSketchToRender } from "@/hooks/workflows/useSketchToRender";
 import { useRenderEdit } from "@/hooks/workflows/useRenderEdit";
 import { useUpscale } from "@/hooks/workflows/useUpscale";
 import { getUserId } from "@/lib/supabase/auth";
+import { uploadBase64Image, uploadFile } from "@/lib/supabase-library";
 
 export default function SketchToRenderPage() {
   const router = useRouter();
@@ -202,41 +203,75 @@ export default function SketchToRenderPage() {
   const handleGenerateSuccess = useCallback(async (result: any) => {
     const autoName = generateRenderName();
 
-    setResultImage(result.imageUrl);
+    // UPLOAD IMAGES TO STORAGE FIRST
+    let storageImageUrl = result.imageUrl;
+    let storageSourceUrl = inputData.sourceImage.preview;
+
+    try {
+      // Upload result image
+      const uploadedResult = await uploadBase64Image(
+        result.imageUrl,
+        `${autoName}-result.jpg`
+      );
+      if (uploadedResult) {
+        storageImageUrl = uploadedResult;
+      } else {
+        console.error("[Upload] Failed to upload result image, using base64");
+      }
+
+      // Upload source image
+      if (inputData.sourceImage.preview) {
+        const uploadedSource = await uploadBase64Image(
+          inputData.sourceImage.preview,
+          `${autoName}-source.jpg`
+        );
+        if (uploadedSource) {
+          storageSourceUrl = uploadedSource;
+        } else {
+          console.error("[Upload] Failed to upload source image, using base64");
+        }
+      }
+    } catch (error) {
+      console.error("[Upload] Error uploading images:", error);
+      // Continue with base64 URLs as fallback
+    }
+
+    // NOW use storageImageUrl and storageSourceUrl instead of base64
+    setResultImage(storageImageUrl);
     setRenderName(autoName);
     setOriginalPrompt(result.prompt || ""); // Store original prompt for editing
 
     // Store current source image for lightbox
-    setCurrentSourceImage(inputData.sourceImage.preview);
+    setCurrentSourceImage(storageSourceUrl);
 
     // Add to recent generations with auto name
     const newGeneration = {
       id: result.id,
-      imageUrl: result.imageUrl,
+      imageUrl: storageImageUrl,  // Storage URL
       timestamp: result.timestamp || new Date(),
       prompt: result.prompt, // Keep original prompt for metadata
       name: autoName, // Add auto-generated name
       type: "render" as const,
       settings: result.settings,
-      sourceImageUrl: inputData.sourceImage.preview || undefined, // Include source image (temporary - only valid during session)
+      sourceImageUrl: storageSourceUrl,  // Storage URL
     };
     setRecentGenerations((prev) => [newGeneration, ...prev]);
 
     // Save to database
     await saveGenerationToDb({
-      url: result.imageUrl,
+      url: storageImageUrl,  // Storage URL
       type: "render",
       name: autoName,
       prompt: result.prompt,
       sourceType: "original",
       settings: result.settings,
-      sourceImage: inputData.sourceImage.preview, // Original source image
+      sourceImage: storageSourceUrl, // Storage URL
     });
 
     // Clear prompt and reset settings after successful generation
     setPrompt("");
     setRenderSettings(DEFAULT_RENDER_SETTINGS);
-  }, [generateRenderName]);
+  }, [generateRenderName, inputData.sourceImage.preview]);
 
   const handleGenerateError = useCallback((error: string) => {
     alert(`Generierung fehlgeschlagen: ${error}`);
@@ -269,37 +304,89 @@ export default function SketchToRenderPage() {
       // Store previous result as source for lightbox
       const previousImage = resultImage;
 
-      setResultImage(editedImageUrl);
+      // UPLOAD IMAGES TO STORAGE FIRST
+      let storageEditedUrl = editedImageUrl;
+      let storagePreviousUrl = previousImage;
+
+      try {
+        // Upload edited image (always base64 from hook)
+        const uploadedEdited = await uploadBase64Image(
+          editedImageUrl,
+          `${autoName}-edited.jpg`
+        );
+        if (uploadedEdited) {
+          storageEditedUrl = uploadedEdited;
+        } else {
+          console.error("[Upload] Failed to upload edited image, using base64");
+        }
+
+        // Upload previous image (could be base64, storage URL, or Freepik URL)
+        if (previousImage) {
+          // Check if it's already a storage URL
+          if (previousImage.includes('supabase.co/storage')) {
+            storagePreviousUrl = previousImage; // Already uploaded
+          } else {
+            // Need to upload (base64 or Freepik URL)
+            if (previousImage.startsWith('data:')) {
+              // Base64 data URL
+              const uploadedPrevious = await uploadBase64Image(
+                previousImage,
+                `${autoName}-previous.jpg`
+              );
+              if (uploadedPrevious) {
+                storagePreviousUrl = uploadedPrevious;
+              }
+            } else {
+              // External URL (Freepik temporary), download and upload
+              const response = await fetch(previousImage);
+              const blob = await response.blob();
+              const uploadedPrevious = await uploadFile(
+                blob,
+                `${autoName}-previous.jpg`,
+                'image'
+              );
+              if (uploadedPrevious) {
+                storagePreviousUrl = uploadedPrevious;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[Upload] Error uploading images:", error);
+        // Continue with original URLs as fallback
+      }
+
+      setResultImage(storageEditedUrl);
       setRenderName(autoName);
-      setCurrentSourceImage(previousImage); // Previous result becomes source
+      setCurrentSourceImage(storagePreviousUrl); // Previous result becomes source
 
       // Add to recent generations
       const newGeneration = {
         id: Date.now().toString(),
-        imageUrl: editedImageUrl,
+        imageUrl: storageEditedUrl,
         timestamp: new Date(),
         name: autoName,
         prompt: originalPrompt || "", // Use original prompt as context
         type: "render" as const,
         sourceType: "from_render" as const,
         settings: renderSettings,
-        sourceImageUrl: previousImage || undefined, // Previous result as source
+        sourceImageUrl: storagePreviousUrl || undefined, // Previous result as source
       };
 
       setRecentGenerations((prev) => [newGeneration, ...prev]);
 
       // Save to database
       await saveGenerationToDb({
-        url: editedImageUrl,
+        url: storageEditedUrl,
         type: "render",
         name: autoName,
         prompt: originalPrompt || "",
         sourceType: "from_render",
         settings: renderSettings,
-        sourceImage: previousImage, // Previous result as source
+        sourceImage: storagePreviousUrl, // Previous result as source
       });
     },
-    [generateRenderName, originalPrompt, renderSettings]
+    [generateRenderName, originalPrompt, renderSettings, resultImage]
   );
 
   const {
@@ -323,11 +410,66 @@ export default function SketchToRenderPage() {
       // Store previous result as source for lightbox
       const previousImage = resultImage;
 
+      // UPLOAD IMAGES TO STORAGE FIRST
+      let storageUpscaledUrl = upscaledImageUrl;
+      let storagePreviousUrl = previousImage;
+
+      try {
+        // Upload upscaled image (Freepik temporary URL)
+        const response = await fetch(upscaledImageUrl);
+        const blob = await response.blob();
+        const uploadedUpscaled = await uploadFile(
+          blob,
+          `${autoName}-upscaled.jpg`,
+          'image'
+        );
+        if (uploadedUpscaled) {
+          storageUpscaledUrl = uploadedUpscaled;
+        } else {
+          console.error("[Upload] Failed to upload upscaled image, using Freepik URL");
+        }
+
+        // Upload previous image (could be base64, storage URL, or Freepik URL)
+        if (previousImage) {
+          // Check if it's already a storage URL
+          if (previousImage.includes('supabase.co/storage')) {
+            storagePreviousUrl = previousImage; // Already uploaded
+          } else {
+            // Need to upload (base64 or Freepik URL)
+            if (previousImage.startsWith('data:')) {
+              // Base64 data URL
+              const uploadedPrevious = await uploadBase64Image(
+                previousImage,
+                `${autoName}-previous.jpg`
+              );
+              if (uploadedPrevious) {
+                storagePreviousUrl = uploadedPrevious;
+              }
+            } else {
+              // External URL (Freepik temporary), download and upload
+              const prevResponse = await fetch(previousImage);
+              const prevBlob = await prevResponse.blob();
+              const uploadedPrevious = await uploadFile(
+                prevBlob,
+                `${autoName}-previous.jpg`,
+                'image'
+              );
+              if (uploadedPrevious) {
+                storagePreviousUrl = uploadedPrevious;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[Upload] Error uploading images:", error);
+        // Continue with original URLs as fallback
+      }
+
       // Show upscaled image in Results View
-      setResultImage(upscaledImageUrl);
+      setResultImage(storageUpscaledUrl);
       setResultMediaType("image"); // Upscaled images are always images
       setRenderName(autoName);
-      setCurrentSourceImage(previousImage); // Previous result becomes source
+      setCurrentSourceImage(storagePreviousUrl); // Previous result becomes source
 
       // Scroll to top to show ResultPanel
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -335,30 +477,30 @@ export default function SketchToRenderPage() {
       // Add to recent generations
       const newGeneration = {
         id: Date.now().toString(),
-        imageUrl: upscaledImageUrl,
+        imageUrl: storageUpscaledUrl,
         timestamp: new Date(),
         name: autoName,
         prompt: "", // No prompt for upscale
         type: "upscale" as const,
         sourceType: "from_render" as const,
         settings: renderSettings,
-        sourceImageUrl: previousImage || undefined, // Previous result as source
+        sourceImageUrl: storagePreviousUrl || undefined, // Previous result as source
       };
 
       setRecentGenerations((prev) => [newGeneration, ...prev]);
 
       // Save to database
       await saveGenerationToDb({
-        url: upscaledImageUrl,
+        url: storageUpscaledUrl,
         type: "upscale",
         name: autoName,
         prompt: "", // No prompt for upscale
         sourceType: "from_render",
         settings: renderSettings,
-        sourceImage: previousImage, // Previous result as source
+        sourceImage: storagePreviousUrl, // Previous result as source
       });
     },
-    [generateRenderName, originalPrompt, renderSettings]
+    [generateRenderName, originalPrompt, renderSettings, resultImage]
   );
 
   const {
