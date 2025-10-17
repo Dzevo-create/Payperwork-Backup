@@ -30,6 +30,11 @@ interface RenderLightboxProps {
 export function RenderLightbox({ isOpen, item, onClose, onNavigate, hasNext, hasPrev, onDownload }: RenderLightboxProps) {
   const downloadAbortControllerRef = useRef<AbortController | null>(null);
 
+  // Guard: Return early if item is undefined
+  if (!item) {
+    return null;
+  }
+
   // Debug: Log item data
   useEffect(() => {
     if (isOpen) {

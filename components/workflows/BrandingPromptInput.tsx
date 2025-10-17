@@ -4,6 +4,7 @@ import { Mic, Type, Send, Loader2 } from "lucide-react";
 import { useRef, useEffect } from "react";
 import { BrandingSettings } from "./BrandingSettings";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
+import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 interface BrandingPromptInputProps {
   prompt: string;
@@ -35,6 +36,16 @@ export function BrandingPromptInput({
   onSettingsChange,
 }: BrandingPromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { isRecording, isTranscribing, toggleRecording, setOnTranscriptionComplete } = useVoiceRecording();
+
+  // Setup voice recording callback
+  useEffect(() => {
+    setOnTranscriptionComplete((text: string) => {
+      // Append transcribed text to existing prompt
+      const newPrompt = prompt ? `${prompt} ${text}` : text;
+      onPromptChange(newPrompt);
+    });
+  }, [prompt, onPromptChange, setOnTranscriptionComplete]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -83,18 +94,25 @@ export function BrandingPromptInput({
           <>
             {/* Mic Button */}
             <button
-              disabled={disabled || isGenerating}
-              className="flex-shrink-0 p-1.5 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed mb-0.5"
-              title="Spracheingabe"
-              aria-label="Spracheingabe"
+              onClick={toggleRecording}
+              disabled={disabled || isGenerating || isTranscribing}
+              className={`flex-shrink-0 p-1.5 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed mb-0.5 ${
+                isRecording ? "bg-red-500/20" : ""
+              }`}
+              title={isRecording ? "Aufnahme stoppen" : "Spracheingabe"}
+              aria-label={isRecording ? "Aufnahme stoppen" : "Spracheingabe"}
             >
-              <Mic className="w-4 h-4 text-pw-black/60" />
+              {isTranscribing ? (
+                <Loader2 className="w-4 h-4 text-pw-accent animate-spin" />
+              ) : (
+                <Mic className={`w-4 h-4 ${isRecording ? "text-red-500" : "text-pw-black/60"}`} />
+              )}
             </button>
 
             {/* Prompt Enhancer Button (T-Button) */}
             <button
               onClick={onEnhancePrompt}
-              disabled={disabled || isEnhancing || isGenerating}
+              disabled={disabled || isEnhancing || isGenerating || isRecording}
               className="flex-shrink-0 p-1.5 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed mb-0.5"
               title="Prompt erstellen"
               aria-label="Prompt erstellen"
@@ -106,14 +124,18 @@ export function BrandingPromptInput({
               )}
             </button>
 
-            {/* Send/Generate Button */}
+            {/* Send/Generate Button - Allow generation without prompt (image-only generation) */}
             <button
               onClick={onGenerate}
-              disabled={disabled || isGenerating || !prompt.trim()}
+              disabled={disabled || isGenerating || isRecording}
               className="flex-shrink-0 p-1.5 bg-pw-accent hover:bg-pw-accent/90 disabled:bg-pw-black/10 disabled:cursor-not-allowed rounded-lg transition-all hover:scale-105 disabled:hover:scale-100 mb-0.5"
               aria-label="Generieren"
             >
-              <Send className="w-4 h-4 text-pw-black" />
+              {isGenerating ? (
+                <Loader2 className="w-4 h-4 text-pw-black animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 text-pw-black" />
+              )}
             </button>
           </>
         </div>

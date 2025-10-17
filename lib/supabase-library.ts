@@ -1,8 +1,8 @@
-import { supabase, setSupabaseUserContext } from './supabase';
+import { supabase } from './supabase';
 import { LibraryItem } from '@/types/library';
 import { libraryLogger } from './logger';
-import { getUserId } from './supabase/auth';
-import { initUserContext, extractStorageFilePath, executeVoidQueryWithUserContext } from './utils/supabaseHelpers';
+import { getUserIdSync } from './supabase/insert-helper';
+import { extractStorageFilePath, executeVoidQueryWithUserContext } from './utils/supabaseHelpers';
 
 // Upload file to Supabase Storage
 export async function uploadFile(
@@ -11,7 +11,7 @@ export async function uploadFile(
   type: 'image' | 'video'
 ): Promise<string | null> {
   const bucket = type === 'image' ? 'images' : 'videos';
-  const userId = getUserId();
+  const userId = getUserIdSync();
   const filePath = `${userId}/${Date.now()}_${fileName}`;
 
   const { data, error } = await supabase.storage
@@ -50,10 +50,7 @@ export async function uploadBase64Image(base64: string, fileName: string): Promi
 
 // Fetch library items with pagination
 export async function fetchLibraryItems(offset: number = 0, limit: number = 50): Promise<LibraryItem[]> {
-  const userId = getUserId();
-
-  // Set user context for RLS
-  await setSupabaseUserContext(userId);
+  const userId = getUserIdSync();
 
   const { data, error } = await supabase
     .from('library_items')
@@ -87,11 +84,8 @@ export async function fetchLibraryItems(offset: number = 0, limit: number = 50):
 // Add item to library
 export async function addLibraryItem(item: Omit<LibraryItem, 'id' | 'createdAt' | 'seen'>): Promise<LibraryItem | null> {
   try {
-    const userId = getUserId();
+    const userId = getUserIdSync();
     libraryLogger.debug('Adding library item', { userId, itemType: item.type, itemName: item.name });
-
-    // Set user context for RLS
-    await setSupabaseUserContext(userId);
 
     // If URL is base64, upload it first
     let finalUrl = item.url;
@@ -205,7 +199,7 @@ export async function markItemAsSeen(id: string): Promise<void> {
 
 // Delete library item
 export async function deleteLibraryItem(id: string): Promise<void> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   // First get the item to find the file URL
   const { data: item } = await supabase
@@ -237,7 +231,7 @@ export async function deleteLibraryItem(id: string): Promise<void> {
 
 // Clear all items for user
 export async function clearLibrary(): Promise<void> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   // Get all items to delete files
   const { data: items } = await supabase

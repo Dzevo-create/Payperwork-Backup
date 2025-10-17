@@ -1,5 +1,5 @@
-import { supabase, setSupabaseUserContext } from '@/lib/supabase';
-import { getUserId } from '@/lib/supabase/auth';
+import { supabase } from '@/lib/supabase';
+import { getUserIdSync } from '@/lib/supabase/insert-helper';
 import { logger } from '@/lib/logger';
 
 /**
@@ -8,13 +8,11 @@ import { logger } from '@/lib/logger';
  */
 
 /**
- * Initialize user context for RLS-protected operations
- * Returns the user ID for use in queries
+ * Get user ID synchronously (no RLS context setup needed anymore)
+ * @deprecated Use getUserIdSync() directly instead
  */
-export async function initUserContext(): Promise<string> {
-  const userId = getUserId();
-  await setSupabaseUserContext(userId);
-  return userId;
+export function initUserContext(): string {
+  return getUserIdSync();
 }
 
 /**
@@ -26,7 +24,7 @@ export async function executeWithUserContext<T>(
   queryFn: (userId: string) => Promise<{ data: T | null; error: any }>
 ): Promise<T | null> {
   try {
-    const userId = await initUserContext();
+    const userId = initUserContext();
     const { data, error } = await queryFn(userId);
 
     if (error) {
@@ -49,7 +47,7 @@ export async function executeArrayQueryWithUserContext<T>(
   queryFn: (userId: string) => Promise<{ data: T[] | null; error: any }>
 ): Promise<T[]> {
   try {
-    const userId = await initUserContext();
+    const userId = initUserContext();
     const { data, error } = await queryFn(userId);
 
     if (error) {
@@ -72,7 +70,7 @@ export async function executeVoidQueryWithUserContext(
   queryFn: (userId: string) => Promise<{ error: any }>
 ): Promise<boolean> {
   try {
-    const userId = await initUserContext();
+    const userId = initUserContext();
     const { error } = await queryFn(userId);
 
     if (error) {

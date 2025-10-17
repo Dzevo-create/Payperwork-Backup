@@ -31,7 +31,7 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
         file,
         preview,
         // Store as original when first uploaded, preserve existing original on subsequent changes
-        originalPreview: preview || data.sourceImage.originalPreview
+        originalPreview: preview || data?.sourceImage?.originalPreview || null
       },
     });
   };
@@ -41,7 +41,7 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
     file: File | null,
     preview: string | null
   ) => {
-    const newReferenceImages = [...data.referenceImages];
+    const newReferenceImages = [...(data?.referenceImages || [])];
     // Ensure the array has at least index+1 elements
     while (newReferenceImages.length <= index) {
       newReferenceImages.push({ file: null, preview: null, originalPreview: null });
@@ -51,7 +51,7 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
       file,
       preview,
       // Store as original when first uploaded, preserve existing original on subsequent changes
-      originalPreview: preview || existingOriginal
+      originalPreview: preview || existingOriginal || null
     };
     onChange({
       ...data,
@@ -69,7 +69,7 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
       {/* Source Image Upload (Required) */}
       <ImageUpload
         label="Ausgangsbild"
-        value={data.sourceImage.preview}
+        value={data?.sourceImage?.preview || null}
         onChange={handleSourceImageChange}
         maxSizeMB={10}
         onCrop={onCropSource}
@@ -82,13 +82,13 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
             Referenzen (Optional)
           </label>
           <span className="text-[10px] text-pw-black/40">
-            {data.referenceImages.filter(ref => ref.preview).length}/1
+            {(data?.referenceImages || []).filter(ref => ref.preview).length}/1
           </span>
         </div>
 
         <ImageUpload
           label="Referenzbilder"
-          value={data.referenceImages[0]?.preview || null}
+          value={data?.referenceImages?.[0]?.preview || null}
           onChange={(file, preview) =>
             handleReferenceImageChange(0, file, preview)
           }

@@ -22,16 +22,20 @@ export default function ImageCropModal({
   const imgRef = useRef<HTMLImageElement>(null);
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
-    width: 50,
-    height: 50,
-    x: 25,
-    y: 25,
+    width: 80,
+    height: 80,
+    x: 10,
+    y: 10,
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
 
   const createCroppedImage = async () => {
     const image = imgRef.current;
-    if (!image || !completedCrop) return;
+
+    if (!image || !completedCrop) {
+      alert('Bitte bewege den Crop-Bereich, um ihn zu aktivieren');
+      return;
+    }
 
     try {
       const croppedImage = await getCroppedImg(image, completedCrop);
@@ -39,6 +43,7 @@ export default function ImageCropModal({
       onClose();
     } catch (error) {
       chatLogger.error('Error cropping image:', error);
+      alert('Fehler beim Zuschneiden des Bildes');
     }
   };
 
@@ -46,12 +51,21 @@ export default function ImageCropModal({
     const image = imgRef.current;
     if (!image || !completedCrop) {
       // If no crop selected, download original image
-      const link = document.createElement("a");
-      link.href = imageUrl;
-      link.download = `image-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `image-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        chatLogger.error('Error downloading original image:', error);
+        alert('Download fehlgeschlagen. Bitte versuche es erneut.');
+      }
       return;
     }
 
@@ -64,17 +78,37 @@ export default function ImageCropModal({
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      chatLogger.error('Error downloading image:', error);
+      chatLogger.error('Error downloading cropped image:', error);
+
+      // Fallback: Try to download via fetch if canvas.toBlob fails (CORS issue)
+      try {
+        chatLogger.info('Attempting fallback download via fetch...');
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `image-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        alert('Hinweis: Original-Bild wurde heruntergeladen (Crop konnte nicht angewendet werden).');
+      } catch (fallbackError) {
+        chatLogger.error('Fallback download also failed:', fallbackError);
+        alert('Download fehlgeschlagen. Bitte versuche es erneut.');
+      }
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-5xl h-[85vh] bg-pw-black/95 backdrop-blur-xl border border-pw-accent/30 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-6xl h-[90vh] bg-pw-black/95 backdrop-blur-xl border border-pw-accent/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-pw-black/98 border-b border-pw-accent/30 px-6 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 bg-pw-black/98 border-b border-pw-accent/30 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">Bild zuschneiden</h2>
           <button
             onClick={onClose}
@@ -84,26 +118,46 @@ export default function ImageCropModal({
           </button>
         </div>
 
-        {/* Crop Area */}
-        <div className="absolute inset-0 mt-[73px] mb-[73px] flex items-center justify-center overflow-auto bg-black/90 p-4">
+        {/* Crop Area - Perfectly centered with safe spacing */}
+        <div className="flex-1 flex items-center justify-center bg-black/90 px-8 py-6 min-h-0 overflow-auto">
           <ReactCrop
             crop={crop}
-            onChange={(c) => setCrop(c)}
+            onChange={(c, percentCrop) => setCrop(percentCrop)}
             onComplete={(c) => setCompletedCrop(c)}
-            className="max-w-full max-h-full"
+            aspect={undefined}
+            style={{ maxWidth: '100%', maxHeight: '100%' }}
           >
             <img
               ref={imgRef}
               src={imageUrl}
               alt="Crop me"
-              className="max-w-full max-h-full object-contain"
-              style={{ maxHeight: "calc(85vh - 146px)" }}
+              crossOrigin="anonymous"
+              style={{
+                maxWidth: '100%',
+                maxHeight: 'calc(90vh - 200px)',
+                width: 'auto',
+                height: 'auto',
+                display: 'block'
+              }}
+              onLoad={() => {
+                // Ensure crop is set after image loads
+                if (imgRef.current) {
+                  const { width, height } = imgRef.current;
+                  setCompletedCrop({
+                    unit: 'px',
+                    x: width * 0.1,
+                    y: height * 0.1,
+                    width: width * 0.8,
+                    height: height * 0.8,
+                  });
+                }
+              }}
             />
           </ReactCrop>
         </div>
 
         {/* Footer - Controls */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-pw-black/98 border-t border-pw-accent/30 px-6 py-4">
+        <div className="flex-shrink-0 bg-pw-black/98 border-t border-pw-accent/30 px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Left side - Download Button */}
             <button

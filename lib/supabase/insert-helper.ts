@@ -7,65 +7,41 @@
  * @module lib/supabase/insert-helper
  */
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
-// Initialize Supabase client
-const supabase = createClientComponentClient<Database>();
+const USER_ID_KEY = 'payperwork_user_id';
 
 /**
- * Get the current user ID from the Supabase session
- * @throws Error if no user is authenticated
+ * Get the current user ID from localStorage
+ * This uses the project's localStorage-based user ID system
+ * @throws Error if no user ID is found
  */
 export async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-
-  if (error) {
-    throw new Error(`Failed to get session: ${error.message}`);
-  }
-
-  if (!session?.user?.id) {
-    throw new Error('No authenticated user found. Please log in.');
-  }
-
-  return session.user.id;
+  return getUserIdSync();
 }
 
 /**
- * Get the current user ID synchronously (from cached session)
- * Note: This may not work if the session hasn't been loaded yet
- * @throws Error if no user is authenticated
+ * Get the current user ID synchronously from localStorage
+ * This uses the project's localStorage-based user ID system
+ * @returns User ID string
  */
 export function getUserIdSync(): string {
-  // Try to get from local storage (Supabase stores session there)
+  // Server-side: cannot access localStorage
   if (typeof window === 'undefined') {
-    throw new Error('getUserIdSync can only be used on the client side');
+    return 'anonymous';
   }
 
-  // Get from Supabase's stored session
-  const sessionKey = Object.keys(localStorage).find((key) =>
-    key.startsWith('sb-') && key.endsWith('-auth-token')
-  );
+  // Client-side: Check localStorage
+  let userId = localStorage.getItem(USER_ID_KEY);
 
-  if (!sessionKey) {
-    throw new Error('No authenticated user found. Please log in.');
+  if (!userId) {
+    // Generate new ID if not found
+    userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    localStorage.setItem(USER_ID_KEY, userId);
   }
 
-  try {
-    const sessionData = JSON.parse(localStorage.getItem(sessionKey) || '{}');
-    const userId = sessionData?.user?.id;
-
-    if (!userId) {
-      throw new Error('No authenticated user found. Please log in.');
-    }
-
-    return userId;
-  } catch (error) {
-    throw new Error('Failed to parse session data. Please log in again.');
-  }
+  return userId;
 }
 
 /**

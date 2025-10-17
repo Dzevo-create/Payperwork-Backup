@@ -9,6 +9,7 @@ interface Generation {
   timestamp: Date;
   prompt?: string;
   preset?: string;
+  name?: string;
   type?: "image" | "video" | "render" | "upscale";
   sourceType?: "original" | "from_render" | "from_video";
 }

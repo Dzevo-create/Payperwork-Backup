@@ -2,33 +2,10 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import type { ImageData, GenerationResult, WorkflowHookOptions } from "@/types/workflows/common";
 
-interface ImageData {
-  file: File | null;
-  preview: string | null;
-}
-
-interface GenerationResult {
-  id: string;
-  imageUrl: string;
-  timestamp: Date;
-  prompt?: string;
-  enhancedPrompt?: string;
-  settings?: RenderSettingsType;
-}
-
-interface UseSketchToRenderOptions {
-  onSuccess?: (result: GenerationResult) => void;
-  onError?: (error: string) => void;
-}
-
-interface GenerationMetadata {
-  prompt: string | null;
-  enhancedPrompt: string;
-  settings: RenderSettingsType | null;
-  timestamp: string;
-  model: string;
-}
+// Legacy alias for backwards compatibility
+interface UseSketchToRenderOptions extends WorkflowHookOptions {}
 
 /**
  * useBranding Hook
@@ -67,20 +44,16 @@ export function useBranding(options: UseSketchToRenderOptions = {}) {
       settings: RenderSettingsType,
       referenceImage?: ImageData
     ): Promise<GenerationResult | null> => {
-      // Validation
-      if (!sourceImage.file || !sourceImage.preview) {
+      // Validation - only check preview (file is not needed for generation)
+      if (!sourceImage?.preview) {
         const errorMsg = "Ausgangsbild ist erforderlich";
         setError(errorMsg);
         onErrorRef.current?.(errorMsg);
         return null;
       }
 
-      if (!prompt.trim()) {
-        const errorMsg = "Prompt ist erforderlich";
-        setError(errorMsg);
-        onErrorRef.current?.(errorMsg);
-        return null;
-      }
+      // Note: Prompt is optional - T-Button can generate prompt from image
+      // Allow empty prompt for image-only generation
 
       setIsGenerating(true);
       setError(null);
@@ -92,8 +65,8 @@ export function useBranding(options: UseSketchToRenderOptions = {}) {
         setProgress(10);
 
         // Convert source image to base64 data
-        const sourceBase64 = sourceImage.preview.split(",")[1];
-        const sourceMimeType = sourceImage.preview.split(";")[0].split(":")[1];
+        const sourceBase64 = sourceImage.preview.split(",")[1] || '';
+        const sourceMimeType = sourceImage.preview.split(";")[0]?.split(":")[1] || 'image/jpeg';
 
         // Prepare request payload
         const payload: {
@@ -111,9 +84,9 @@ export function useBranding(options: UseSketchToRenderOptions = {}) {
         };
 
         // Add reference image if provided
-        if (referenceImage?.file && referenceImage.preview) {
-          const refBase64 = referenceImage.preview.split(",")[1];
-          const refMimeType = referenceImage.preview.split(";")[0].split(":")[1];
+        if (referenceImage?.preview) {
+          const refBase64 = referenceImage.preview.split(",")[1] || '';
+          const refMimeType = referenceImage.preview.split(";")[0]?.split(":")[1] || 'image/jpeg';
           payload.referenceImage = {
             data: refBase64,
             mimeType: refMimeType,

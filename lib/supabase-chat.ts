@@ -1,12 +1,12 @@
-import { supabase, setSupabaseUserContext } from './supabase';
+import { supabase } from './supabase';
 import { Message, Conversation } from '@/types/chat';
-import { getUserId } from './supabase/auth';
+import { getUserIdSync } from './supabase/insert-helper';
 import { logger } from '@/lib/logger';
-import { initUserContext, buildUpdateObject } from './utils/supabaseHelpers';
+import { buildUpdateObject } from './utils/supabaseHelpers';
 
 // Conversations
 export async function fetchConversations(): Promise<Conversation[]> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   const { data, error } = await supabase
     .from('conversations')
@@ -39,7 +39,7 @@ export async function fetchConversations(): Promise<Conversation[]> {
 }
 
 export async function createConversation(conversation: Conversation): Promise<Conversation | null> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   const { data, error } = await supabase
     .from('conversations')
@@ -76,7 +76,7 @@ export async function createConversation(conversation: Conversation): Promise<Co
 }
 
 export async function updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   const updateData = buildUpdateObject(updates, {
     title: 'title',
@@ -94,7 +94,7 @@ export async function updateConversation(id: string, updates: Partial<Conversati
 }
 
 export async function deleteConversation(id: string): Promise<void> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   const { error } = await supabase
     .from('conversations')
@@ -108,7 +108,7 @@ export async function deleteConversation(id: string): Promise<void> {
 
 // Messages
 export async function fetchMessages(conversationId: string): Promise<Message[]> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   const { data, error } = await supabase
     .from('messages')
@@ -152,7 +152,7 @@ export async function fetchMessages(conversationId: string): Promise<Message[]> 
 }
 
 export async function createMessage(conversationId: string, message: Message): Promise<Message | null> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   // Debug log for C1 message creation
   if (message.wasGeneratedWithC1 && message.role === 'assistant') {
@@ -207,7 +207,7 @@ export async function createMessage(conversationId: string, message: Message): P
 }
 
 export async function updateMessage(id: string, updates: Partial<Message>): Promise<void> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   const updateData = buildUpdateObject(updates, {
     content: 'content',
@@ -242,7 +242,7 @@ export async function updateMessage(id: string, updates: Partial<Message>): Prom
 }
 
 export async function deleteMessage(id: string): Promise<void> {
-  const userId = await initUserContext();
+  const userId = getUserIdSync();
 
   const { error } = await supabase
     .from('messages')
