@@ -60,6 +60,8 @@ export function ChatSidebar({
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const collapsedSettingsRef = useRef<HTMLDivElement>(null);
   const collapsedProfileRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const unseenCount = useLibraryStore((state) => state.unseenCount);
@@ -67,21 +69,41 @@ export function ChatSidebar({
   // Only show active conversation if we're on the chat page
   const isOnChatPage = pathname === "/chat" || pathname === "/";
 
+  // Cleanup timeouts on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle navigation from search modal
   const handleNavigateToChat = (conversationId: string, messageId?: string) => {
     onLoadConversation?.(conversationId);
 
     // Scroll to specific message after navigation
     if (messageId) {
+      // Clear previous timeouts if they exist
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+
       // Use setTimeout to wait for navigation to complete
-      setTimeout(() => {
+      scrollTimeoutRef.current = setTimeout(() => {
         const messageElement = document.getElementById(`message-${messageId}`);
         if (messageElement) {
           messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
           // Highlight the message briefly
           messageElement.style.transition = "background-color 0.3s ease";
           messageElement.style.backgroundColor = "rgba(255, 200, 0, 0.2)";
-          setTimeout(() => {
+          highlightTimeoutRef.current = setTimeout(() => {
             messageElement.style.backgroundColor = "";
           }, 2000);
         }

@@ -114,9 +114,10 @@ export function useConversationSwitch(
         // Switch conversation
         setCurrentConversationId(conversationId);
 
-        console.log(
-          `Switched to conversation: ${conversationId} (${targetConversation.messages.length} messages)`
-        );
+        logger.info(`Switched to conversation: ${conversationId}`, {
+          conversationId,
+          messageCount: targetConversation.messages.length
+        });
       } catch (error) {
         logger.error('Failed to switch conversation:', error);
       } finally {

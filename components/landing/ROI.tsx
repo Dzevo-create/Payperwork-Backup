@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LANDING_STATS, STATS_IMAGES, STATS_COLORS, TESTIMONIALS } from "@/config/landing";
 
 const stats = LANDING_STATS;
@@ -11,18 +11,38 @@ export function ROI() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const nextTestimonial = () => {
+    // Clear previous timeout if exists
+    if (fadeTimeoutRef.current) {
+      clearTimeout(fadeTimeoutRef.current);
+    }
+
     setFadeOut(true);
-    setTimeout(() => {
+    fadeTimeoutRef.current = setTimeout(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
       setFadeOut(false);
     }, 300);
   };
 
   const prevTestimonial = () => {
+    // Clear previous timeout if exists
+    if (fadeTimeoutRef.current) {
+      clearTimeout(fadeTimeoutRef.current);
+    }
+
     setFadeOut(true);
-    setTimeout(() => {
+    fadeTimeoutRef.current = setTimeout(() => {
       setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
       setFadeOut(false);
     }, 300);
@@ -30,8 +50,13 @@ export function ROI() {
 
   const goToTestimonial = (index: number) => {
     if (index !== currentTestimonial) {
+      // Clear previous timeout if exists
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+
       setFadeOut(true);
-      setTimeout(() => {
+      fadeTimeoutRef.current = setTimeout(() => {
         setCurrentTestimonial(index);
         setFadeOut(false);
       }, 300);

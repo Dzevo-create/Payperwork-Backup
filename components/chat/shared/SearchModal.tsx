@@ -13,14 +13,27 @@ export function SearchModal({ isOpen, onClose, onSearch }: SearchModalProps) {
   const [query, setQuery] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Animation handling
   useEffect(() => {
+    // Clear previous timeout if exists
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+    }
+
     if (isOpen) {
-      setTimeout(() => setIsVisible(true), 10);
+      animationTimeoutRef.current = setTimeout(() => setIsVisible(true), 10);
     } else {
       setIsVisible(false);
     }
+
+    // Cleanup timeout on unmount to prevent memory leaks
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
   }, [isOpen]);
 
   // Auto-focus input

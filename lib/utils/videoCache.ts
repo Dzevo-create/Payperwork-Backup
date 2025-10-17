@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger, videoLogger } from '@/lib/logger';
 
 /**
  * Video Cache Utility
@@ -181,10 +181,10 @@ class VideoCache {
       if (entry) {
         this.cache.delete(oldestUrl);
         this.taskIdIndex.delete(entry.taskId);
-        console.log(
-          "🗑️ Evicted oldest video cache entry:",
-          entry.taskId
-        );
+        videoLogger.debug("Evicted oldest video cache entry", {
+          taskId: entry.taskId,
+          age: Date.now() - entry.timestamp
+        });
       }
     }
   }
@@ -206,9 +206,9 @@ class VideoCache {
     expiredUrls.forEach((url) => this.cache.delete(url));
 
     if (expiredUrls.length > 0) {
-      console.log(
-        `🧹 Cleaned up ${expiredUrls.length} expired video cache entries`
-      );
+      videoLogger.debug(`Cleaned up ${expiredUrls.length} expired video cache entries`, {
+        expiredCount: expiredUrls.length
+      });
     }
   }
 }
@@ -233,12 +233,12 @@ export async function getCachedVideo(
   // Check cache first (by task ID)
   const cached = videoCache.get(taskId);
   if (cached) {
-    logger.info('Video cache HIT:');
+    videoLogger.debug('Video cache HIT', { taskId });
     return cached.videoUrl;
   }
 
   // Cache miss - fetch and store
-  logger.error('Video cache MISS:');
+  videoLogger.debug('Video cache MISS', { taskId });
   const data = await fetcher();
 
   videoCache.set({

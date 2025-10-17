@@ -91,11 +91,13 @@ export function useImageGeneration({
     }
 
     // Debug log to verify referenceImages are correct
-    console.log("🔍 referenceImages for Gemini:", referenceImages.map(img => ({
-      data_length: img.data?.length || 0,
-      mimeType: img.mimeType,
-      data_preview: img.data?.substring(0, 50) + "...",
-    })));
+    chatLogger.debug("referenceImages for Gemini", {
+      images: referenceImages.map(img => ({
+        data_length: img.data?.length || 0,
+        mimeType: img.mimeType,
+        data_preview: img.data?.substring(0, 50) + "...",
+      }))
+    });
 
     // Retry configuration for frontend
     const maxRetries = 2; // API already retries 4 times, so 2 frontend retries = 15 total attempts max
@@ -183,19 +185,22 @@ export function useImageGeneration({
           // Use let with proper scoping instead of var inside if/else blocks
           let imageUrl: string;
           if (!uploadResponse.ok) {
-            chatLogger.error('Failed to upload image ${i + 1} to Supabase, using base64 fallback');
+            chatLogger.error(`Failed to upload image ${i + 1} to Supabase, using base64 fallback`);
             // Fallback to base64 if upload fails
             imageUrl = `data:${img.mimeType};base64,${img.data}`;
           } else {
             const uploadData = await uploadResponse.json();
             imageUrl = uploadData.url; // Supabase public URL
-            chatLogger.info('Image ${i + 1} uploaded to Supabase:');
+            chatLogger.info(`Image ${i + 1} uploaded to Supabase`, { url: uploadData.url });
           }
 
           imageUrls.push(imageUrl);
         }
 
-        chatLogger.debug('🖼️ Final imageUrls before updateMessageWithAttachments (${imageUrls.length} images):');
+        chatLogger.debug(`Final imageUrls before updateMessageWithAttachments (${imageUrls.length} images)`, {
+          imageCount: imageUrls.length,
+          urls: imageUrls.map((url, idx) => ({ index: idx, url: url.substring(0, 50) + '...' }))
+        });
 
         // Update assistant message with generated images (multiple attachments)
         updateMessageWithAttachments(
@@ -214,7 +219,7 @@ export function useImageGeneration({
             const imgUrl = imageUrls[i];
             const imgName = `payperwork-${new Date().toISOString().split('T')[0]}-${new Date().toTimeString().split(' ')[0].replace(/:/g, '-')}-${i + 1}.png`;
 
-            chatLogger.debug('📚 Adding image ${i + 1} to library with:', {
+            chatLogger.debug(`Adding image ${i + 1} to library`, {
               type: "image",
               url: imgUrl,
               name: imgName,
@@ -233,9 +238,9 @@ export function useImageGeneration({
               messageId: assistantMessageId,
               conversationId: currentConversationId || undefined,
             });
-            chatLogger.info('Image ${i + 1} successfully added to library');
+            chatLogger.info(`Image ${i + 1} successfully added to library`);
           } catch (error) {
-            chatLogger.error('Failed to add image ${i + 1} to library:', error);
+            chatLogger.error(`Failed to add image ${i + 1} to library`, error);
           }
         }
 

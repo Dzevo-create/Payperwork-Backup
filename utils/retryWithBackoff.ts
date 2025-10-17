@@ -3,6 +3,8 @@
  * Provides configurable retry logic for API calls that may fail intermittently
  */
 
+import { logger } from '@/lib/logger';
+
 export interface RetryOptions {
   maxRetries?: number;
   initialDelay?: number;
@@ -135,9 +137,11 @@ export const imageGenerationRetryConfig: RetryOptions = {
     return true;
   },
   onRetry: (error: any, attempt: number, delay: number) => {
-    console.log(`🔄 Image generation retry ${attempt}/4 after ${delay}ms`, {
+    logger.info(`Image generation retry ${attempt}/4 after ${delay}ms`, {
       error: error.message,
       status: error.status,
+      attempt,
+      delay
     });
   },
 };

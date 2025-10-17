@@ -1,5 +1,7 @@
 // Video generation polling utility
 
+import { videoLogger } from '@/lib/logger';
+
 export interface PendingVideoTask {
   taskId: string;
   messageId: string;
@@ -24,7 +26,7 @@ class VideoPollingManager {
           this.pendingTasks = new Map(tasks);
           this.startPolling();
         } catch (e) {
-          console.error('Failed to load pending tasks:', e);
+          videoLogger.error('Failed to load pending tasks', e);
         }
       }
     }
@@ -91,12 +93,12 @@ class VideoPollingManager {
             this.removeTask(taskId);
           } else if (data.status === "failed") {
             // Task failed
-            console.error('Video generation failed:', data.message);
+            videoLogger.error('Video generation failed', { taskId, message: data.message });
             this.removeTask(taskId);
           }
           // Otherwise keep polling (status is "processing" or "submitted")
         } catch (error) {
-          console.error('Polling error for task', taskId, error);
+          videoLogger.error('Polling error for task', error, { taskId });
         }
       }
     }, 5000); // Poll every 5 seconds

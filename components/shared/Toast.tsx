@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
@@ -19,20 +19,33 @@ interface ToastProps {
 
 function Toast({ message, onClose }: ToastProps) {
   const [isExiting, setIsExiting] = useState(false);
+  const exitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const duration = message.duration || 5000;
     const timer = setTimeout(() => {
       setIsExiting(true);
-      setTimeout(() => onClose(message.id), 300); // Wait for animation
+      // Store exit animation timeout ref for cleanup
+      exitTimeoutRef.current = setTimeout(() => onClose(message.id), 300); // Wait for animation
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // Clean up exit animation timeout on unmount to prevent memory leaks
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current);
+      }
+    };
   }, [message, onClose]);
 
   const handleClose = () => {
+    // Clear any existing timeout before creating new one
+    if (exitTimeoutRef.current) {
+      clearTimeout(exitTimeoutRef.current);
+    }
+
     setIsExiting(true);
-    setTimeout(() => onClose(message.id), 300);
+    exitTimeoutRef.current = setTimeout(() => onClose(message.id), 300);
   };
 
   const getIcon = () => {
