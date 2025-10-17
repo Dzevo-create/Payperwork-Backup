@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Download } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { chatLogger } from '@/lib/logger';
 
@@ -12,6 +12,8 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ imageUrl, imageName, onClose }: ImageLightboxProps) {
+  const downloadAbortControllerRef = useRef<AbortController | null>(null);
+
   // Close on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -24,18 +26,25 @@ export function ImageLightbox({ imageUrl, imageName, onClose }: ImageLightboxPro
     return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
-  // Prevent body scroll when lightbox is open
+  // Prevent body scroll when lightbox is open & cleanup
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "unset";
+      if (downloadAbortControllerRef.current) {
+        downloadAbortControllerRef.current.abort();
+      }
     };
   }, []);
 
   // Download image function
   const handleDownload = async () => {
     try {
-      const response = await fetch(imageUrl);
+      downloadAbortControllerRef.current = new AbortController();
+
+      const response = await fetch(imageUrl, {
+        signal: downloadAbortControllerRef.current.signal,
+      });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -45,7 +54,13 @@ export function ImageLightbox({ imageUrl, imageName, onClose }: ImageLightboxPro
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+
+      downloadAbortControllerRef.current = null;
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        chatLogger.debug('Download aborted');
+        return;
+      }
       chatLogger.error('Download failed:', error);
     }
   };

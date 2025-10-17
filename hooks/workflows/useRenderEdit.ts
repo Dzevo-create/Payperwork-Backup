@@ -22,6 +22,7 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
   const onSuccessRef = useRef(options.onSuccess);
   const onErrorRef = useRef(options.onError);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fileReaderRef = useRef<FileReader | null>(null);
 
   useEffect(() => {
     onSuccessRef.current = options.onSuccess;
@@ -32,6 +33,10 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      if (fileReaderRef.current) {
+        fileReaderRef.current.abort();
+        fileReaderRef.current = null;
       }
     };
   }, []);
@@ -71,12 +76,17 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
         const reader = new FileReader();
 
         const base64Data = await new Promise<string>((resolve, reject) => {
+          fileReaderRef.current = reader;
           reader.onloadend = () => {
+            fileReaderRef.current = null;
             const result = reader.result as string;
             const base64 = result.split(",")[1];
             resolve(base64);
           };
-          reader.onerror = reject;
+          reader.onerror = () => {
+            fileReaderRef.current = null;
+            reject(new Error("FileReader failed to read blob"));
+          };
           reader.readAsDataURL(blob);
         });
 

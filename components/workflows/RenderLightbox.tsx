@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { X, Download, ChevronLeft, ChevronRight, Calendar, Sparkles, ImageIcon } from "lucide-react";
 import { RenderSettingsType } from "@/types/workflows/renderSettings";
 import { workflowLogger } from '@/lib/logger';
@@ -28,6 +28,8 @@ interface RenderLightboxProps {
 }
 
 export function RenderLightbox({ isOpen, item, onClose, onNavigate, hasNext, hasPrev, onDownload }: RenderLightboxProps) {
+  const downloadAbortControllerRef = useRef<AbortController | null>(null);
+
   // Debug: Log item data
   useEffect(() => {
     if (isOpen) {
@@ -58,7 +60,7 @@ export function RenderLightbox({ isOpen, item, onClose, onNavigate, hasNext, has
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, onNavigate, hasNext, hasPrev]);
 
-  // Prevent body scroll when lightbox is open
+  // Prevent body scroll when lightbox is open & cleanup
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -68,23 +70,45 @@ export function RenderLightbox({ isOpen, item, onClose, onNavigate, hasNext, has
 
     return () => {
       document.body.style.overflow = "";
+      if (downloadAbortControllerRef.current) {
+        downloadAbortControllerRef.current.abort();
+      }
     };
   }, [isOpen]);
 
-  const handleDownloadClick = () => {
+  const handleDownloadClick = async () => {
     if (onDownload) {
       // Use parent's download function if provided
       onDownload(item);
     } else {
-      // Fallback to simple download (won't work for all cases)
+      // Fallback to download with fetch and AbortController
       if (!item.imageUrl) return;
-      const a = document.createElement("a");
-      a.href = item.imageUrl;
-      const extension = item.type === "video" ? ".mp4" : ".jpg";
-      a.download = `${item.name || `render-${item.id}`}${extension}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+
+      try {
+        downloadAbortControllerRef.current = new AbortController();
+
+        const response = await fetch(item.imageUrl, {
+          signal: downloadAbortControllerRef.current.signal,
+        });
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const extension = item.type === "video" ? ".mp4" : ".jpg";
+        a.download = `${item.name || `render-${item.id}`}${extension}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        downloadAbortControllerRef.current = null;
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          workflowLogger.debug('Download aborted');
+          return;
+        }
+        workflowLogger.error('Download failed:', error);
+      }
     }
   };
 

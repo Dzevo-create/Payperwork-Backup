@@ -24,11 +24,16 @@ export function usePromptEnhancement() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const toast = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const fileReaderRef = useRef<FileReader | null>(null);
 
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      if (fileReaderRef.current) {
+        fileReaderRef.current.abort();
+        fileReaderRef.current = null;
       }
     };
   }, []);
@@ -78,12 +83,15 @@ export function usePromptEnhancement() {
             const blob = await response.blob();
             const base64 = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
+              fileReaderRef.current = reader;
               reader.onloadend = () => {
+                fileReaderRef.current = null;
                 const result = reader.result as string;
                 // Keep full data URL (data:image/xxx;base64,...)
                 resolve(result);
               };
               reader.onerror = () => {
+                fileReaderRef.current = null;
                 reject(new Error("FileReader failed to read blob"));
               };
               reader.readAsDataURL(blob);

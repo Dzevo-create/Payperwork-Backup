@@ -58,6 +58,9 @@ export function ChatLayout() {
   // Track if we've loaded from URL parameter (to prevent re-running the effect)
   const hasLoadedFromUrlRef = useRef(false);
 
+  // AbortController for title generation
+  const titleAbortControllerRef = useRef<AbortController | null>(null);
+
   // Load conversations from Supabase on mount (ONLY ONCE per session)
   useEffect(() => {
     if (!isHydrated) {
@@ -65,6 +68,15 @@ export function ChatLayout() {
       hydrate();
     }
   }, []); // Empty dependency array - only run once on app startup
+
+  // Cleanup title generation on unmount
+  useEffect(() => {
+    return () => {
+      if (titleAbortControllerRef.current) {
+        titleAbortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Handle URL parameter for conversation loading (from library page)
   useEffect(() => {
@@ -136,10 +148,14 @@ export function ChatLayout() {
 
       const generateTitle = async () => {
         try {
+          // Create new AbortController for this title generation
+          titleAbortControllerRef.current = new AbortController();
+
           const response = await fetch("/api/generate-chat-title", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prompt: firstUserMessage.content }),
+            signal: titleAbortControllerRef.current.signal,
           });
 
           if (response.ok) {
@@ -150,7 +166,15 @@ export function ChatLayout() {
           } else {
             throw new Error("Title generation failed");
           }
+
+          titleAbortControllerRef.current = null;
         } catch (error) {
+          // Handle AbortError
+          if (error instanceof Error && error.name === 'AbortError') {
+            chatLogger.debug('Title generation aborted');
+            return;
+          }
+
           chatLogger.error('Failed to generate chat title:', error);
           const fallbackTitle = firstUserMessage.content.slice(0, 50) || "Neuer Chat";
           updateConversation(currentConversationId, { title: fallbackTitle });

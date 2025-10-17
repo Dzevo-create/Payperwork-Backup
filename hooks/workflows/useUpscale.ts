@@ -201,6 +201,8 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
       }
       abortControllerRef.current = new AbortController();
 
+      let imageObjectUrl: string | null = null;
+
       try {
         // Progress: Converting and compressing image
         setProgress(10);
@@ -214,6 +216,12 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
         const compressedBlob = await new Promise<Blob>((resolve, reject) => {
           const img = new Image();
           img.onload = () => {
+            // Revoke ObjectURL after image loads
+            if (imageObjectUrl) {
+              URL.revokeObjectURL(imageObjectUrl);
+              imageObjectUrl = null;
+            }
+
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
             if (!ctx) {
@@ -242,8 +250,16 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
               0.92
             );
           };
-          img.onerror = reject;
-          img.src = URL.createObjectURL(blob);
+          img.onerror = (err) => {
+            // Revoke ObjectURL on error
+            if (imageObjectUrl) {
+              URL.revokeObjectURL(imageObjectUrl);
+              imageObjectUrl = null;
+            }
+            reject(err);
+          };
+          imageObjectUrl = URL.createObjectURL(blob);
+          img.src = imageObjectUrl;
         });
 
         const reader = new FileReader();
@@ -314,6 +330,11 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
 
         return upscaledImageUrl;
       } catch (err) {
+        // Revoke ObjectURL on error
+        if (imageObjectUrl) {
+          URL.revokeObjectURL(imageObjectUrl);
+        }
+
         // Don't treat abort as error
         if (err instanceof Error && err.name === "AbortError") {
           return null;
