@@ -34,7 +34,7 @@ interface ChatStore {
 
 export const useChatStore = create<ChatStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       messages: [],
       conversations: [],
@@ -115,7 +115,7 @@ export const useChatStore = create<ChatStore>()(
           } : msg
         );
 
-        chatLogger.debug('📝 Updated messages array:', 50);, attachments: m.attachments, videoTask: m.videoTask })));
+        chatLogger.debug('📝 Updated messages array:', messages.slice(0, 50).map(m => ({ id: m.id, content: m.content.slice(0, 50), attachments: m.attachments, videoTask: m.videoTask })));
 
         // FIX: Capture currentConversationId at the start to avoid race condition
         const conversationId = state.currentConversationId;
@@ -231,9 +231,9 @@ export const useChatStore = create<ChatStore>()(
       // Add error handling for quota exceeded + data validation
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          chatLogger.error('Failed to rehydrate storage:', error);
+          chatLogger.error('Failed to rehydrate storage:', error as Error);
           // Clear localStorage if quota exceeded
-          if (error.name === 'QuotaExceededError') {
+          if ((error as Error).name === 'QuotaExceededError') {
             chatLogger.warn('🚨 Storage quota exceeded, clearing old data...');
             try {
               localStorage.removeItem('payperwork-chat-storage');
@@ -260,7 +260,7 @@ export const useChatStore = create<ChatStore>()(
           if (Array.isArray(state.conversations)) {
             state.conversations = state.conversations.map((conv) => {
               if (!Array.isArray(conv.messages)) {
-                chatLogger.error('Corrupted messages in conversation ${conv.id}, resetting');
+                chatLogger.error(`Corrupted messages in conversation ${conv.id}, resetting`);
                 return { ...conv, messages: [] };
               }
               return conv;
