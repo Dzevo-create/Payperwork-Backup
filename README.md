@@ -42,7 +42,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 ## 📁 Project Structure
 
 ```
-structura-v2/
+payperwork/
 ├── app/                    # Next.js App Router
 │   ├── layout.tsx          # Root layout
 │   ├── page.tsx            # Home page
