@@ -15,7 +15,7 @@
     "react/no-unescaped-entities": "off",
     "prefer-const": "warn",
     "no-console": [
-      "warn",
+      "error",
       {
         "allow": [
           "warn",
@@ -23,5 +23,13 @@
         ]
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["lib/logger.ts", "*.config.{js,ts}", "scripts/**/*"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]}
 }

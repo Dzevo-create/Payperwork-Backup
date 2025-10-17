@@ -2,6 +2,7 @@
 
 import { Component, ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { libraryLogger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -23,7 +24,7 @@ export class LibraryErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    console.error("Library Error:", error, errorInfo);
+    libraryLogger.error('Library Error:', error);
   }
 
   handleReset = () => {

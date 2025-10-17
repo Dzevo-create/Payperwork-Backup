@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useChatStore } from '@/store/chatStore.supabase';
 import { Conversation } from '@/types/chat';
+import { logger } from '@/lib/logger';
 
 export interface UseConversationsOptions {
   /** Auto-refresh on mount */
@@ -87,7 +88,7 @@ export function useConversations(
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load conversations';
       setError(message);
-      console.error('Failed to refresh conversations:', err);
+      logger.error('Failed to refresh conversations:', err);
     } finally {
       setIsLoading(false);
     }

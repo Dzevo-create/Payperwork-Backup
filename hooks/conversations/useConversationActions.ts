@@ -12,6 +12,7 @@
 import { useCallback, useState } from 'react';
 import { useChatStore } from '@/store/chatStore.supabase';
 import { Conversation, Message } from '@/types/chat';
+import { logger } from '@/lib/logger';
 
 export interface UseConversationActionsReturn {
   /** Create new conversation */
@@ -96,7 +97,7 @@ export function useConversationActions(): UseConversationActionsReturn {
         const message =
           err instanceof Error ? err.message : 'Failed to create conversation';
         setError(message);
-        console.error('Failed to create conversation:', err);
+        logger.error('Failed to create conversation:', err);
         throw err;
       } finally {
         setIsLoading(false);
@@ -119,7 +120,7 @@ export function useConversationActions(): UseConversationActionsReturn {
         const message =
           err instanceof Error ? err.message : 'Failed to update conversation';
         setError(message);
-        console.error('Failed to update conversation:', err);
+        logger.error('Failed to update conversation:', err);
         throw err;
       } finally {
         setIsLoading(false);
@@ -142,7 +143,7 @@ export function useConversationActions(): UseConversationActionsReturn {
         const message =
           err instanceof Error ? err.message : 'Failed to delete conversation';
         setError(message);
-        console.error('Failed to delete conversation:', err);
+        logger.error('Failed to delete conversation:', err);
         throw err;
       } finally {
         setIsLoading(false);
@@ -184,7 +185,7 @@ export function useConversationActions(): UseConversationActionsReturn {
         const message =
           err instanceof Error ? err.message : 'Failed to duplicate conversation';
         setError(message);
-        console.error('Failed to duplicate conversation:', err);
+        logger.error('Failed to duplicate conversation:', err);
         return null;
       } finally {
         setIsLoading(false);
@@ -238,7 +239,7 @@ export function useConversationActions(): UseConversationActionsReturn {
         const message =
           err instanceof Error ? err.message : 'Failed to delete conversations';
         setError(message);
-        console.error('Failed to bulk delete conversations:', err);
+        logger.error('Failed to bulk delete conversations:', err);
         throw err;
       } finally {
         setIsLoading(false);

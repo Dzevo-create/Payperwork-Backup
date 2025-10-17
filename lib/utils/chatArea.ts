@@ -6,6 +6,7 @@
 import { Message, Attachment } from "@/types/chat";
 import { convertImageUrlToBase64 } from "@/lib/imageUtils";
 import { getCachedBase64 } from "@/lib/utils/imageCache";
+import { logger } from '@/lib/logger';
 
 /**
  * Convert image attachments to base64 format for API consumption
@@ -25,7 +26,7 @@ export async function convertAttachmentsToBase64(
           base64: base64,
         };
       } catch (error) {
-        console.error(`Failed to convert image ${att.name}:`, error);
+        logger.error('Failed to convert image ${att.name}:', error);
         return null;
       }
     })

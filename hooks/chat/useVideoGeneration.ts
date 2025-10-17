@@ -5,6 +5,7 @@ import { Message, Attachment } from "@/types/chat";
 import { addCameraMovementToPrompt } from "@/utils/cameraPrompts";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { videoCache } from "@/lib/utils/videoCache";
+import { chatLogger } from '@/lib/logger';
 
 /**
  * Interface for the hook's return value
@@ -218,7 +219,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
         const errorMessage = getErrorMessage(errorData.error || { status: videoResponse.status });
 
         // CRITICAL: Remove from queue if initial API call fails
-        console.error("❌ Video API call failed:", {
+        chatLogger.error('Video API call failed:', {
           status: videoResponse.status,
           error: errorData,
           messageId: assistantMessageId,
@@ -231,7 +232,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
 
       const videoData = await videoResponse.json();
 
-      console.log("📦 Video API Response:", {
+      chatLogger.debug('📦 Video API Response:', {
         messageId: assistantMessageId,
         tempTaskId,
         task_id: videoData.task_id,
@@ -245,7 +246,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
 
         // CRITICAL FIX: Update queue with real task ID (replace temp ID)
         // This must happen BEFORE any other updates to ensure polling works
-        console.log("🔄 Updating queue task ID:", {
+        chatLogger.info('Updating queue task ID:', {
           messageId: assistantMessageId,
           from: tempTaskId,
           to: videoData.task_id,
@@ -271,7 +272,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
           const videoUrl = videoData.videos[0].url;
           const fileName = `payperwork-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.mp4`;
 
-          console.log("🎉 IMMEDIATE VIDEO READY (fal.ai):", {
+          chatLogger.debug('🎉 IMMEDIATE VIDEO READY (fal.ai):', {
             messageId: assistantMessageId,
             taskId: videoData.task_id,
             videoUrl,
@@ -310,12 +311,12 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
 
           // CRITICAL FIX: For immediate completions (fal.ai), mark queue item as completed
           // This prevents it from staying in "processing" state forever
-          console.log("✅ Marking queue item as completed for immediate video");
+          chatLogger.info('Marking queue item as completed for immediate video');
           markVideoCompleted(assistantMessageId, videoUrl);
         }
       } else {
         // CRITICAL: Remove from queue if API response doesn't contain task_id
-        console.error("❌ Unexpected API response format:", {
+        chatLogger.error('Unexpected API response format:', {
           response: videoData,
           messageId: assistantMessageId,
           tempTaskId,
@@ -335,11 +336,11 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
 
       // Handle abort (user cancelled)
       if (error instanceof Error && error.name === "AbortError") {
-        console.log("Video generation stopped by user");
+        chatLogger.debug('Video generation stopped by user');
         return;
       }
 
-      console.error("Error calling Video API:", error);
+      chatLogger.error('Error calling Video API:', error);
 
       // Determine if error is retryable
       const isRetryable = !errorMessage.includes("API key") &&

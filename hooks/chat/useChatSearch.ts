@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { chatLogger } from '@/lib/logger';
 
 interface Message {
   id: string;
@@ -35,17 +36,17 @@ export function useChatSearch(conversations: Conversation[], limit: number = 50)
       return [];
     }
 
-    console.log("🔍 [Search] Query:", searchQuery, "Conversations:", conversations.length);
+    chatLogger.debug('[Search] Query:');
 
     const query = searchQuery.toLowerCase();
     const results: SearchResult[] = [];
 
     conversations.forEach((conv) => {
-      console.log(`🔍 [Search] Checking conversation "${conv.title}" with ${conv.messages?.length || 0} messages`);
+      chatLogger.debug('[Search] Checking conversation "${conv.title}" with ${conv.messages?.length || 0} messages');
 
       // Safety check: ensure messages array exists
       if (!conv.messages || !Array.isArray(conv.messages)) {
-        console.warn(`⚠️ [Search] Conversation ${conv.id} has no messages array`);
+        chatLogger.warn('[Search] Conversation ${conv.id} has no messages array');
         return;
       }
 
@@ -54,7 +55,7 @@ export function useChatSearch(conversations: Conversation[], limit: number = 50)
         const matchIndex = content.indexOf(query);
 
         if (matchIndex !== -1) {
-          console.log(`✅ [Search] Match found in message: "${msg.content.substring(0, 50)}..."`);
+          chatLogger.info('[Search] Match found in message: "${msg.content.substring(0, 50)}...');
           results.push({
             conversationId: conv.id,
             conversationTitle: conv.title,
@@ -70,7 +71,7 @@ export function useChatSearch(conversations: Conversation[], limit: number = 50)
       // Also search in conversation titles
       const titleIndex = conv.title.toLowerCase().indexOf(query);
       if (titleIndex !== -1 && conv.messages.length > 0) {
-        console.log(`✅ [Search] Match found in title: "${conv.title}"`);
+        chatLogger.info('[Search] Match found in title: "${conv.title}');
         const firstMessage = conv.messages[0];
         results.push({
           conversationId: conv.id,
@@ -84,7 +85,7 @@ export function useChatSearch(conversations: Conversation[], limit: number = 50)
       }
     });
 
-    console.log(`🔍 [Search] Total results: ${results.length}`);
+    chatLogger.debug('[Search] Total results: ${results.length}');
 
     // Sort by most recent
     results.sort(

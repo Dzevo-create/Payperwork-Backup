@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useChatStore } from "@/store/chatStore.supabase";
 import { useVideoQueueStore } from "@/store/videoQueueStore";
+import { logger } from '@/lib/logger';
 
 /**
  * Hook to handle browser navigation (back button) during generation
@@ -26,7 +27,7 @@ export function useNavigationCleanup() {
     const handlePopState = () => {
       // User pressed back button - cleanup ongoing operations
       if (isGenerating) {
-        console.log("⚠️ Navigation during generation - cleaning up");
+        logger.warn('Navigation during generation - cleaning up');
         setIsGenerating(false);
         clearError();
 

@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Video Cache Utility
  *
@@ -231,12 +233,12 @@ export async function getCachedVideo(
   // Check cache first (by task ID)
   const cached = videoCache.get(taskId);
   if (cached) {
-    console.log("✅ Video cache HIT:", taskId);
+    logger.info('Video cache HIT:');
     return cached.videoUrl;
   }
 
   // Cache miss - fetch and store
-  console.log("❌ Video cache MISS:", taskId);
+  logger.error('Video cache MISS:');
   const data = await fetcher();
 
   videoCache.set({

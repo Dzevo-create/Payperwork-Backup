@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { apiLogger } from '@/lib/logger';
 
 /**
  * DELETE /api/sketch-to-render/delete-generation
@@ -24,7 +25,7 @@ export async function DELETE(req: NextRequest) {
       .eq("id", generationId);
 
     if (error) {
-      console.error("[Delete Generation API] Error:", error);
+      apiLogger.error('[Delete Generation API] Error:', error);
       return NextResponse.json(
         { error: "Failed to delete generation" },
         { status: 500 }
@@ -33,7 +34,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("[Delete Generation API] Error:", error);
+    apiLogger.error('[Delete Generation API] Error:', error);
     return NextResponse.json(
       { error: error.message || "Failed to delete generation" },
       { status: 500 }

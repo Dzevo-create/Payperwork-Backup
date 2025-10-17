@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import RunwayML, { TaskFailedError } from "@runwayml/sdk";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { apiLogger } from '@/lib/logger';
 
 const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY;
 
 if (!RUNWAY_API_KEY) {
-  console.error("RUNWAY_API_KEY is not set");
+  apiLogger.error('RUNWAY_API_KEY is not set');
 }
 
 // Helper function to detect aspect ratio from image URL
@@ -47,7 +48,7 @@ async function detectAspectRatio(imageUrl: string): Promise<string> {
     // Default fallback
     return "1280:720";
   } catch (error) {
-    console.error("[Runway] Error detecting aspect ratio:", error);
+    apiLogger.error('[Runway] Error detecting aspect ratio:', error);
     return "1280:720"; // Default landscape
   }
 }
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     // Detect aspect ratio from image
     const aspectRatio = await detectAspectRatio(imageUrl);
-    console.log("[Runway] Detected aspect ratio:", aspectRatio);
+    apiLogger.debug('[Runway] Detected aspect ratio:');
 
     // Build the prompt text
     let promptText = prompt || "";
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
       promptText = `${promptText}. Camera movement: ${cameraMovement}`.trim();
     }
 
-    console.log("[Runway] Starting video generation:", {
+    apiLogger.debug('[Runway] Starting video generation:', {
       imageUrl: imageUrl.substring(0, 100),
       promptText,
       aspectRatio,
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
         timeout: 5 * 60 * 1000, // 5 minutes timeout
       });
 
-    console.log("[Runway] Video generation completed:", task.id);
+    apiLogger.debug('[Runway] Video generation completed:');
 
     if (!task.output || task.output.length === 0) {
       throw new Error("No video output received from Runway");
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
     const videoUrl = task.output[0];
 
     // Download the video from Runway's temporary URL
-    console.log("[Runway] Downloading video from:", videoUrl.substring(0, 100));
+    apiLogger.info('[Runway] Downloading video from URL', { url: videoUrl });
     const videoResponse = await fetch(videoUrl);
     if (!videoResponse.ok) {
       throw new Error(`Failed to download video: ${videoResponse.statusText}`);
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
     const fileName = `runway-${Date.now()}-${task.id}.mp4`;
     const filePath = fileName; // Just the filename, bucket already contains 'videos'
 
-    console.log("[Runway] Uploading to Supabase:", filePath);
+    apiLogger.info('[Runway] Uploading to Supabase:');
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from("videos")
       .upload(filePath, videoBlob, {
@@ -170,7 +171,7 @@ export async function POST(req: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("[Runway] Supabase upload error:", uploadError);
+      apiLogger.error('[Runway] Supabase upload error:');
       throw new Error(`Failed to upload video: ${uploadError.message}`);
     }
 
@@ -179,7 +180,7 @@ export async function POST(req: NextRequest) {
       data: { publicUrl },
     } = supabaseAdmin.storage.from("videos").getPublicUrl(filePath);
 
-    console.log("[Runway] Video uploaded successfully:", publicUrl);
+    apiLogger.info('[Runway] Video uploaded successfully:');
 
     return NextResponse.json({
       success: true,
@@ -188,7 +189,7 @@ export async function POST(req: NextRequest) {
       aspectRatio,
     });
   } catch (error: any) {
-    console.error("[Runway] Error:", error);
+    apiLogger.error('[Runway] Error:', error);
 
     if (error instanceof TaskFailedError) {
       return NextResponse.json(

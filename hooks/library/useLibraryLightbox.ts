@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { LibraryItem } from "@/types/library";
 
 export function useLibraryLightbox(
@@ -7,6 +7,7 @@ export function useLibraryLightbox(
 ) {
   const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleOpenLightbox = useCallback(
     (item: LibraryItem) => {
@@ -19,8 +20,14 @@ export function useLibraryLightbox(
 
   const handleCloseLightbox = useCallback(() => {
     setIsLightboxOpen(false);
+
+    // Clear previous timeout if it exists
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     // Delay clearing selectedItem to allow exit animation
-    setTimeout(() => setSelectedItem(null), 300);
+    timeoutRef.current = setTimeout(() => setSelectedItem(null), 300);
   }, []);
 
   const handleNavigate = useCallback(
@@ -42,6 +49,15 @@ export function useLibraryLightbox(
     },
     [selectedItem, filteredItems, markAsSeen]
   );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     selectedItem,

@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Automatically crops black borders from images
  * Useful for 21:9 images that have letterboxing
@@ -147,7 +149,7 @@ export async function cropBlackBorders(base64Data: string, mimeType: string): Pr
       mimeType,
     };
   } catch (error) {
-    console.error('Error cropping black borders:', error);
+    logger.error('Error cropping black borders:', error);
     // Return original if cropping fails
     return { data: base64Data, mimeType };
   }

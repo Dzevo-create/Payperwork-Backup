@@ -4,6 +4,7 @@ import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
 import { enhancePrompt } from "@/lib/api/providers/openai";
 import { detectEnhancementContext } from "@/lib/api/utils/contextDetection";
+import { apiLogger } from '@/lib/logger';
 import {
   buildNanoBananaPrompt,
   buildImageGenerationPrompt,
@@ -61,10 +62,10 @@ export async function POST(req: NextRequest) {
       videoContext,
     });
 
-    console.log("🎯 Context detected:", context);
-    console.log("📝 Original prompt:", prompt);
+    apiLogger.debug('Context detected:');
+    apiLogger.debug('📝 Original prompt:');
     if (imageSettings) {
-      console.log("🎨 Image settings:", imageSettings);
+      apiLogger.debug('🎨 Image settings:');
     }
 
     // Get appropriate system prompt based on context
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
     // Use OpenAI to enhance the prompt
     const enhancedPrompt = await enhancePrompt(prompt, systemPrompt);
 
-    console.log("✅ Enhanced prompt:", enhancedPrompt);
+    apiLogger.info('Enhanced prompt:');
 
     return NextResponse.json({ enhancedPrompt });
   } catch (error: any) {

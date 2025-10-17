@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { LibraryItem } from "@/types/library";
 import { useLibraryStore } from "@/store/libraryStore.v2";
 import { useToast } from "@/hooks/useToast";
+import { libraryLogger } from '@/lib/logger';
 
 export function useMediaCardActions(item: LibraryItem) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -44,7 +45,7 @@ export function useMediaCardActions(item: LibraryItem) {
 
       toast.success("Download gestartet");
     } catch (error) {
-      console.error("Download error:", error);
+      libraryLogger.error('Download error:', error);
       toast.error("Download fehlgeschlagen");
     }
   };

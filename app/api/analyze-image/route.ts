@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { apiRateLimiter, getClientId } from "@/lib/rate-limit";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
+import { apiLogger } from '@/lib/logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -74,7 +75,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log("🖼️ Analyzing image with detected format:", imageUrl.substring(0, 50) + "...");
+    apiLogger.debug('Analyzing image with detected format', {
+      formatPreview: detectedFormat.substring(0, 50) + "..."
+    });
 
     // Use OpenAI Vision API to analyze the image
     const response = await openai.chat.completions.create({

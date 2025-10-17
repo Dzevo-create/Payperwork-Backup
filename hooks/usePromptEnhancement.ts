@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
 import { Attachment } from "@/types/chat";
 import { ImageSettingsType } from "@/components/chat/Chat/ImageSettings";
 import { VideoSettingsType } from "@/components/chat/Chat/VideoSettings";
+import { logger } from '@/lib/logger';
 
 interface ReplyToData {
   messageId: string;
@@ -22,6 +23,15 @@ interface EnhancePromptOptions {
 export function usePromptEnhancement() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const toast = useToast();
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const enhancePrompt = async (options: EnhancePromptOptions): Promise<string> => {
     const { prompt, mode, attachments = [], replyTo, videoSettings, imageSettings } = options;
@@ -31,6 +41,10 @@ export function usePromptEnhancement() {
     }
 
     setIsEnhancing(true);
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
     try {
       // Check if there are images attached OR in reply message
@@ -46,11 +60,11 @@ export function usePromptEnhancement() {
 
       if (hasImage) {
         imageToAnalyze = attachments.find(att => att.type === "image");
-        console.log("🔍 Image attachment found in current message");
+        logger.debug('Image attachment found in current message');
       } else if (hasReplyImage && mode === "image") {
         // If replying to a message with an image in image mode, use that image for context
         imageToAnalyze = replyTo?.attachments?.find((att: Attachment) => att.type === "image");
-        console.log("🔍 Image attachment found in reply message:", {
+        logger.debug('Image attachment found in reply message:', {
           hasUrl: !!imageToAnalyze?.url,
           hasBase64: !!imageToAnalyze?.base64,
           name: imageToAnalyze?.name
@@ -59,8 +73,8 @@ export function usePromptEnhancement() {
         // If reply image has URL but no base64, convert it
         if (imageToAnalyze && imageToAnalyze.url && !imageToAnalyze.base64) {
           try {
-            console.log("📥 Converting reply image URL to base64...");
-            const response = await fetch(imageToAnalyze.url);
+            logger.debug('📥 Converting reply image URL to base64...');
+            const response = await fetch(imageToAnalyze.url, { signal });
             const blob = await response.blob();
             const base64 = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
@@ -75,15 +89,15 @@ export function usePromptEnhancement() {
               reader.readAsDataURL(blob);
             });
             imageToAnalyze.base64 = base64;
-            console.log("✅ Converted reply image to base64 (full data URL)");
+            logger.info('Converted reply image to base64 (full data URL)');
           } catch (error) {
-            console.error("❌ Failed to convert reply image:", error);
+            logger.error('Failed to convert reply image:', error);
           }
         }
       }
 
       if (imageToAnalyze) {
-        console.log("🔍 Analyzing image:", {
+        logger.debug('Analyzing image:', {
           hasBase64: !!imageToAnalyze?.base64,
           type: imageToAnalyze?.type,
           name: imageToAnalyze?.name
@@ -92,7 +106,7 @@ export function usePromptEnhancement() {
         if (imageToAnalyze && imageToAnalyze.base64) {
           // Analyze image with OpenAI Vision API to get description
           try {
-            console.log("📸 Analyzing image with Vision API...");
+            logger.debug('📸 Analyzing image with Vision API...');
             const visionResponse = await fetch("/api/analyze-image", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -100,23 +114,24 @@ export function usePromptEnhancement() {
                 image: imageToAnalyze.base64,
                 prompt: "Beschreibe detailliert, was auf diesem Bild zu sehen ist. Fokussiere auf Hauptobjekte, Farben, Stimmung und wichtige Details."
               }),
+              signal,
             });
 
             if (visionResponse.ok) {
               const visionData = await visionResponse.json();
               imageContext = visionData.description || "";
-              console.log("✅ Image analysis result:", imageContext);
+              logger.info('Image analysis result:');
             } else {
               const errorText = await visionResponse.text();
-              console.error("❌ Vision API failed:", errorText);
+              logger.error('Vision API failed:', errorText);
             }
           } catch (error) {
-            console.error("❌ Image analysis failed:", error);
+            logger.error('Image analysis failed:', error);
             // Fallback to filename if vision fails
             imageContext = `Bild angehängt: ${imageToAnalyze.name}`;
           }
         } else {
-          console.warn("⚠️ No base64 data in image attachment");
+          logger.warn('No base64 data in image attachment');
         }
       }
 
@@ -135,7 +150,9 @@ export function usePromptEnhancement() {
 
         if (pdfTexts.length > 0) {
           pdfContext = pdfTexts.join("\n\n");
-          console.log("📄 PDF context extracted from attachments:", pdfContext.substring(0, 100) + "...");
+          logger.debug('PDF context extracted from attachments', {
+            textPreview: pdfContext.substring(0, 100) + "..."
+          });
         }
       }
 
@@ -154,7 +171,7 @@ export function usePromptEnhancement() {
             pdfContext = pdfContext
               ? `${pdfContext}\n\n${replyPdfTexts.join("\n\n")}`
               : replyPdfTexts.join("\n\n");
-            console.log("📄 PDF context added from reply attachments");
+            logger.debug('📄 PDF context added from reply attachments');
           }
         }
       }
@@ -204,6 +221,7 @@ export function usePromptEnhancement() {
           imageSettings: mode === "image" ? imageSettings : undefined,
           imageSettingsContext: mode === "image" ? imageSettingsContext : undefined,
         }),
+        signal,
       });
 
       if (!response.ok) {
@@ -213,7 +231,11 @@ export function usePromptEnhancement() {
       const data = await response.json();
       return data.enhancedPrompt;
     } catch (error) {
-      console.error("Prompt enhancement error:", error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.debug('Prompt enhancement aborted');
+        return prompt;
+      }
+      logger.error('Prompt enhancement error:', error);
       toast.error("Prompt-Verbesserung fehlgeschlagen. Bitte erneut versuchen.");
       return prompt; // Return original prompt on error
     } finally {

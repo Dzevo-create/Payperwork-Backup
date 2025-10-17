@@ -2,6 +2,7 @@
 
 import { Maximize, Video } from "lucide-react";
 import { Attachment, Message } from "@/types/chat";
+import { chatLogger } from '@/lib/logger';
 
 interface VideoAttachmentProps {
   attachment: Attachment;
@@ -28,7 +29,7 @@ export function VideoAttachment({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error("Download failed:", error);
+      chatLogger.error('Download failed:', error);
       window.open(attachment.url, "_blank");
     }
   };

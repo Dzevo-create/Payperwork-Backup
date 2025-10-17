@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Copy, Check, Edit2 } from "lucide-react";
 import { Message } from "@/types/chat";
 
@@ -10,7 +11,7 @@ interface MessageActionsProps {
   onEdit: (messageId: string, content: string) => void;
 }
 
-export function MessageActions({
+export const MessageActions = memo(function MessageActions({
   message,
   copiedId,
   onCopy,
@@ -45,4 +46,4 @@ export function MessageActions({
       )}
     </div>
   );
-}
+});

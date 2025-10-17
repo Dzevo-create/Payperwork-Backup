@@ -106,11 +106,6 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
 
           {/* Before Card - Sketch */}
           <div className="relative h-[152px] rounded-xl border-2 border-pw-black/20 bg-pw-black/5 overflow-hidden">
-            <img
-              src="/images/Pictures/Workflows/Vorher nachher 1/Before 1.jpg"
-              alt="Beispiel - Skizze"
-              className="w-full h-full object-cover"
-            />
             <div className="absolute top-2 left-2 px-2 py-1 bg-pw-black rounded-md text-[9px] font-semibold text-white">
               BEFORE
             </div>
@@ -118,11 +113,6 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
 
           {/* After Card - Render */}
           <div className="relative h-[152px] rounded-xl border-2 border-pw-accent/40 bg-pw-accent/5 overflow-hidden">
-            <img
-              src="/images/Pictures/Workflows/Vorher nachher 1/After 2.jpg"
-              alt="Beispiel - Render"
-              className="w-full h-full object-cover"
-            />
             <div className="absolute top-2 left-2 px-2 py-1 bg-pw-black rounded-md text-[9px] font-semibold text-white">
               AFTER
             </div>

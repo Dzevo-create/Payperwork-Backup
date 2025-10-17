@@ -1,7 +1,8 @@
-import { supabase } from './supabase';
+import { supabase, setSupabaseUserContext } from './supabase';
 import { LibraryItem } from '@/types/library';
 import { libraryLogger } from './logger';
 import { getUserId } from './supabase/auth';
+import { initUserContext, extractStorageFilePath, executeVoidQueryWithUserContext } from './utils/supabaseHelpers';
 
 // Upload file to Supabase Storage
 export async function uploadFile(
@@ -51,6 +52,9 @@ export async function uploadBase64Image(base64: string, fileName: string): Promi
 export async function fetchLibraryItems(offset: number = 0, limit: number = 50): Promise<LibraryItem[]> {
   const userId = getUserId();
 
+  // Set user context for RLS
+  await setSupabaseUserContext(userId);
+
   const { data, error } = await supabase
     .from('library_items')
     .select('*')
@@ -85,6 +89,9 @@ export async function addLibraryItem(item: Omit<LibraryItem, 'id' | 'createdAt' 
   try {
     const userId = getUserId();
     libraryLogger.debug('Adding library item', { userId, itemType: item.type, itemName: item.name });
+
+    // Set user context for RLS
+    await setSupabaseUserContext(userId);
 
     // If URL is base64, upload it first
     let finalUrl = item.url;
@@ -168,42 +175,38 @@ export async function addLibraryItem(item: Omit<LibraryItem, 'id' | 'createdAt' 
 
 // Rename library item
 export async function renameLibraryItem(id: string, newName: string): Promise<void> {
-  const { error } = await supabase
-    .from('library_items')
-    .update({ name: newName })
-    .eq('id', id);
-
-  if (error) {
-    libraryLogger.error('Failed to rename library item', error, { itemId: id, newName });
-  }
+  await executeVoidQueryWithUserContext('renameLibraryItem', async () => {
+    return await supabase
+      .from('library_items')
+      .update({ name: newName })
+      .eq('id', id);
+  });
 }
 
 // Toggle favorite status
 export async function toggleFavoriteItem(id: string, isFavorite: boolean): Promise<void> {
-  const { error } = await supabase
-    .from('library_items')
-    .update({ is_favorite: isFavorite })
-    .eq('id', id);
-
-  if (error) {
-    libraryLogger.error('Failed to toggle favorite', error, { itemId: id, isFavorite });
-  }
+  await executeVoidQueryWithUserContext('toggleFavoriteItem', async () => {
+    return await supabase
+      .from('library_items')
+      .update({ is_favorite: isFavorite })
+      .eq('id', id);
+  });
 }
 
 // Mark item as seen
 export async function markItemAsSeen(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('library_items')
-    .update({ seen: true })
-    .eq('id', id);
-
-  if (error) {
-    libraryLogger.error('Failed to mark item as seen', error, { itemId: id });
-  }
+  await executeVoidQueryWithUserContext('markItemAsSeen', async () => {
+    return await supabase
+      .from('library_items')
+      .update({ seen: true })
+      .eq('id', id);
+  });
 }
 
 // Delete library item
 export async function deleteLibraryItem(id: string): Promise<void> {
+  const userId = await initUserContext();
+
   // First get the item to find the file URL
   const { data: item } = await supabase
     .from('library_items')
@@ -214,10 +217,9 @@ export async function deleteLibraryItem(id: string): Promise<void> {
   if (item && item.url) {
     // Extract file path from URL and delete from storage
     const bucket = item.type === 'image' ? 'images' : 'videos';
-    const urlParts = item.url.split(`/storage/v1/object/public/${bucket}/`);
+    const filePath = extractStorageFilePath(item.url, bucket);
 
-    if (urlParts.length > 1) {
-      const filePath = urlParts[1];
+    if (filePath) {
       await supabase.storage.from(bucket).remove([filePath]);
     }
   }
@@ -235,7 +237,7 @@ export async function deleteLibraryItem(id: string): Promise<void> {
 
 // Clear all items for user
 export async function clearLibrary(): Promise<void> {
-  const userId = getUserId();
+  const userId = await initUserContext();
 
   // Get all items to delete files
   const { data: items } = await supabase
@@ -248,10 +250,9 @@ export async function clearLibrary(): Promise<void> {
     for (const item of items) {
       if (item.url) {
         const bucket = item.type === 'image' ? 'images' : 'videos';
-        const urlParts = item.url.split(`/storage/v1/object/public/${bucket}/`);
+        const filePath = extractStorageFilePath(item.url, bucket);
 
-        if (urlParts.length > 1) {
-          const filePath = urlParts[1];
+        if (filePath) {
           await supabase.storage.from(bucket).remove([filePath]);
         }
       }

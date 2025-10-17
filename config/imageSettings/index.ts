@@ -17,6 +17,7 @@ export * from './lighting';
 export * from './aspectRatios';
 export * from './quality';
 export * from './numImages';
+export * from './structureFidelity';
 export * from './types';
 
 // Re-export commonly used types for convenience
@@ -26,6 +27,7 @@ import type { LightingValue } from './lighting';
 import type { AspectRatioValue } from './aspectRatios';
 import type { QualityValue } from './quality';
 import type { NumImagesValue } from './numImages';
+import type { StructureFidelityValue } from './structureFidelity';
 
 /**
  * Complete Image Settings Configuration Type
@@ -39,6 +41,7 @@ export interface ImageSettingsConfig {
   quality: QualityValue;
   aspectRatio: AspectRatioValue;
   numImages: NumImagesValue;
+  structureFidelity?: StructureFidelityValue;
 }
 
 /**
@@ -53,6 +56,7 @@ export const DEFAULT_IMAGE_SETTINGS: ImageSettingsConfig = {
   quality: 'high',
   aspectRatio: '1:1',
   numImages: 1,
+  structureFidelity: 100, // Default: exact structure preservation
 };
 
 /**
@@ -66,4 +70,5 @@ export type {
   AspectRatioValue,
   QualityValue,
   NumImagesValue,
+  StructureFidelityValue,
 };

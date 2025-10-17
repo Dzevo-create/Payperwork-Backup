@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, MoreVertical } from "lucide-react";
+import { MessageSquare, MoreVertical, Loader2 } from "lucide-react";
 import { ConversationMenu } from "./ConversationMenu";
+import { requestQueue } from "@/lib/requestQueue";
 
 interface Message {
   id: string;
@@ -39,6 +40,7 @@ export function ConversationItem({
   const [activeMenu, setActiveMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus input when editing
@@ -48,6 +50,22 @@ export function ConversationItem({
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  // Subscribe to request queue to show loading state
+  useEffect(() => {
+    const checkGeneratingState = () => {
+      const activeRequests = requestQueue.getActiveRequestsForConversation(conversation.id);
+      setIsGenerating(activeRequests.length > 0);
+    };
+
+    // Check initial state
+    checkGeneratingState();
+
+    // Subscribe to changes
+    const unsubscribe = requestQueue.subscribe(checkGeneratingState);
+
+    return unsubscribe;
+  }, [conversation.id]);
 
   const handleStartRename = () => {
     setIsEditing(true);
@@ -72,7 +90,11 @@ export function ConversationItem({
         }`}
       >
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 text-pw-black/60" />
+          {isGenerating ? (
+            <Loader2 className="w-3.5 h-3.5 flex-shrink-0 text-pw-accent animate-spin" />
+          ) : (
+            <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 text-pw-black/60" />
+          )}
           <div className="flex-1 min-w-0">
             {isEditing ? (
               <input

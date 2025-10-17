@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { apiLogger } from '@/lib/logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       text: transcription.text,
     });
   } catch (error: any) {
-    console.error("Whisper API Error:", error);
+    apiLogger.error('Whisper API Error:', error);
     return NextResponse.json(
       { error: error.message || "Failed to transcribe audio" },
       { status: 500 }

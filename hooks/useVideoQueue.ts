@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/useToast";
 import { VIDEO_CONFIG } from "@/lib/video/config/videoConfig";
 import { promiseAllWithLimit } from "@/lib/utils/concurrency";
 import { videoCache } from "@/lib/utils/videoCache";
+import { logger } from '@/lib/logger';
 
 export interface VideoQueueItem {
   messageId: string;
@@ -82,7 +83,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
       aspectRatio,
     };
 
-    console.log("➕ [addToQueue] Adding to queue:", {
+    logger.debug('➕ [addToQueue] Adding to queue:', {
       messageId,
       taskId,
       model,
@@ -92,13 +93,13 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
     // FIX: Use callback form to ensure atomic update
     setQueue((prev) => {
       const updated = [...prev, newItem];
-      console.log("✅ [addToQueue] Queue updated, new length:", updated.length);
+      logger.info('[addToQueue] Queue updated, new length:');
       return updated;
     });
 
     // Start polling if not already running
     if (!pollIntervalRef.current) {
-      console.log("⏯️ [addToQueue] Starting polling interval");
+      logger.debug('⏯️ [addToQueue] Starting polling interval');
       pollIntervalRef.current = setInterval(checkQueue, VIDEO_CONFIG.polling.intervalMs);
     }
   };
@@ -108,7 +109,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
     // FIX: Use ref to get current queue state (prevents stale closure)
     const currentQueue = queueRef.current;
 
-    console.log("🔍 [Queue Check] Current queue:", {
+    logger.debug('[Queue Check] Current queue:', {
       totalItems: currentQueue.length,
       items: currentQueue.map(q => ({
         messageId: q.messageId,
@@ -120,7 +121,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
     // FIX: Check if unmounted before any operations
     if (!isMountedRef.current) {
-      console.log("⏹️ [Queue Check] Component unmounted - skipping check");
+      logger.warn('⏹️ [Queue Check] Component unmounted - skipping check');
       return;
     }
 
@@ -128,7 +129,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
-        console.log("⏹️ [Queue Check] Queue empty - stopping polling");
+        logger.debug('⏹️ [Queue Check] Queue empty - stopping polling');
       }
       return;
     }
@@ -157,7 +158,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
     // Get processing videos from current queue state
     const processingVideos = currentQueue.filter((item) => item.status === "processing");
 
-    console.log("🔄 [Queue Check] Processing videos:", processingVideos.length);
+    logger.info('[Queue Check] Processing videos:');
 
     if (processingVideos.length === 0) return;
 
@@ -171,11 +172,11 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
     const checkTasks = processingVideos.map((video) => async () => {
       // Skip polling for temporary task IDs (not yet replaced with real ones)
       if (video.taskId.startsWith('temp-')) {
-        console.warn(`⚠️ [Poll Skip] Temporary task ID not yet replaced: ${video.taskId} (messageId: ${video.messageId})`);
+        logger.warn('[Poll Skip] Temporary task ID not yet replaced: ${video.taskId} (messageId: ${video.messageId})');
         return;
       }
 
-      console.log(`🔄 [Poll] Checking video status:`, {
+      logger.info('[Poll] Checking video status:', {
         messageId: video.messageId,
         taskId: video.taskId,
         model: video.model,
@@ -184,7 +185,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
       try {
         const url = `/api/generate-video?task_id=${video.taskId}&model=${video.model}&type=${video.type}`;
-        console.log(`🌐 [Poll] Fetching: ${url}`);
+        logger.debug('🌐 [Poll] Fetching: ${url}');
 
         const response = await fetch(url, {
           signal: abortControllerRef.current?.signal,
@@ -192,7 +193,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error("❌ [Poll] Video status check failed:", {
+          logger.error('[Poll] Video status check failed:', {
             status: response.status,
             statusText: response.statusText,
             error: errorData.error || errorData.message,
@@ -211,7 +212,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
         const data = await response.json();
 
-        console.log(`📦 [Poll] Status response:`, {
+        logger.debug('📦 [Poll] Status response:', {
           messageId: video.messageId,
           taskId: video.taskId,
           status: data.status,
@@ -222,7 +223,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
         if (data.status === "succeed" && data.videos && data.videos.length > 0) {
           const videoUrl = data.videos[0].url;
 
-          console.log("✅ VIDEO READY:", {
+          logger.info('VIDEO READY:', {
             messageId: video.messageId,
             videoUrl,
             taskId: video.taskId,
@@ -230,7 +231,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
           // FIX: Check if unmounted before any state updates or callbacks
           if (!isMountedRef.current) {
-            console.log("⏹️ Component unmounted - skipping video completion");
+            logger.warn('⏹️ Component unmounted - skipping video completion');
             return;
           }
 
@@ -260,19 +261,19 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
           // Callback - check mount status before calling
           if (isMountedRef.current) {
-            console.log("📞 ABOUT TO CALL onVideoReady callback");
-            console.log("📞 Parameters:", { messageId: video.messageId, videoUrl });
-            console.log("📞 onVideoReady function exists:", typeof onVideoReady === "function");
+            logger.debug('📞 ABOUT TO CALL onVideoReady callback');
+            logger.debug('📞 Parameters:', { messageId: video.messageId, videoUrl });
+            logger.debug('📞 onVideoReady function exists:');
 
             onVideoReady(video.messageId, videoUrl);
 
-            console.log("📞 onVideoReady callback COMPLETED");
+            logger.debug('📞 onVideoReady callback COMPLETED');
           }
 
           // Remove from queue after 30 seconds (extended for better visibility)
           const timeoutId = setTimeout(() => {
             if (!isMountedRef.current) return; // Don't update state if unmounted
-            console.log("🗑️ Removing video from queue:", video.messageId);
+            logger.debug('🗑️ Removing video from queue:');
             setQueue((prev) => prev.filter((item) => item.messageId !== video.messageId));
             timeoutRefsRef.current.delete(video.messageId);
           }, VIDEO_CONFIG.queue.completedVisibilityMs);
@@ -282,7 +283,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
           // FIX: Check if unmounted before any state updates or callbacks
           if (!isMountedRef.current) {
-            console.log("⏹️ Component unmounted - skipping video failure handling");
+            logger.warn('⏹️ Component unmounted - skipping video failure handling');
             return;
           }
 
@@ -316,26 +317,26 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
       } catch (error: any) {
         // Ignore AbortError (happens on cleanup)
         if (error.name === 'AbortError') {
-          console.log(`Polling aborted for ${video.messageId}`);
+          logger.debug('Polling aborted for ${video.messageId}');
           return;
         }
 
-        console.error(`Video polling error for ${video.messageId}:`, error);
+        logger.error('Video polling error for ${video.messageId}:', error);
 
         // Get current queue item to check consecutive errors
         const currentItem = queueRef.current.find(item => item.messageId === video.messageId);
         const consecutiveErrors = (currentItem?.consecutiveErrors || 0) + 1;
         const MAX_CONSECUTIVE_ERRORS = 10; // Auto-fail after 10 consecutive polling failures
 
-        console.warn(`⚠️ Consecutive errors for ${video.messageId}: ${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}`);
+        logger.warn('Consecutive errors for ${video.messageId}: ${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}');
 
         // Check if we've exceeded the retry limit
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-          console.error(`❌ Max retry limit reached for ${video.messageId}. Marking as failed.`);
+          logger.error('Max retry limit reached for ${video.messageId}. Marking as failed.');
 
           // FIX: Check if unmounted before any state updates or callbacks
           if (!isMountedRef.current) {
-            console.log("⏹️ Component unmounted - skipping max retry failure handling");
+            logger.warn('⏹️ Component unmounted - skipping max retry failure handling');
             return;
           }
 
@@ -381,7 +382,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
             );
           }
 
-          console.log(`🔄 Will retry polling for ${video.messageId} (attempt ${consecutiveErrors + 1})`);
+          logger.error('Will retry polling for ${video.messageId} (attempt ${consecutiveErrors + 1})');
         }
       }
     });
@@ -422,7 +423,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
   // Update task ID in queue (replace temp ID with real ID from API)
   const updateQueueTaskId = (messageId: string, newTaskId: string) => {
-    console.log("🔄 [updateQueueTaskId] Updating task ID:", {
+    logger.info('[updateQueueTaskId] Updating task ID:', {
       messageId,
       newTaskId,
       currentQueue: queueRef.current.map(q => ({ msgId: q.messageId, taskId: q.taskId })),
@@ -434,7 +435,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
         item.messageId === messageId ? { ...item, taskId: newTaskId } : item
       );
 
-      console.log("✅ [updateQueueTaskId] Updated queue:", {
+      logger.info('[updateQueueTaskId] Updated queue:', {
         found: updated.some(item => item.messageId === messageId),
         newTaskId,
       });
@@ -446,7 +447,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log("🧹 Cleaning up useVideoQueue...");
+      logger.debug('Cleaning up useVideoQueue...');
 
       // Clear interval
       if (pollIntervalRef.current) {
@@ -462,12 +463,12 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
 
       // Clear all pending timeouts
       timeoutRefsRef.current.forEach((timeoutId, messageId) => {
-        console.log(`🧹 Clearing timeout for ${messageId}`);
+        logger.debug('Clearing timeout for ${messageId}');
         clearTimeout(timeoutId);
       });
       timeoutRefsRef.current.clear();
 
-      console.log("✅ Cleanup complete");
+      logger.info('Cleanup complete');
     };
   }, []);
 

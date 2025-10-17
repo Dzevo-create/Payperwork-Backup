@@ -12,6 +12,7 @@ import { useToastStore } from "@/hooks/useToast";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useNavigationCleanup } from "@/hooks/useNavigationCleanup";
 import { Conversation } from "@/types/chat";
+import { chatLogger } from '@/lib/logger';
 
 // Dynamic import for ChatArea
 const ChatArea = dynamic(() => import("./Chat/ChatArea").then((m) => ({ default: m.ChatArea })), {
@@ -60,7 +61,7 @@ export function ChatLayout() {
   // Load conversations from Supabase on mount (ONLY ONCE per session)
   useEffect(() => {
     if (!isHydrated) {
-      console.log('💧 Hydrating store from Supabase...');
+      chatLogger.debug('💧 Hydrating store from Supabase...');
       hydrate();
     }
   }, []); // Empty dependency array - only run once on app startup
@@ -74,7 +75,7 @@ export function ChatLayout() {
     const convId = params.get('convId');
 
     if (convId && convId !== currentConversationId) {
-      console.log('📋 Loading conversation from URL parameter:', convId);
+      chatLogger.info('📋 Loading conversation from URL parameter:');
       const conv = conversations.find((c) => c.id === convId);
       if (conv) {
         hasRestoredRef.current = true; // Prevent duplicate restore
@@ -82,9 +83,9 @@ export function ChatLayout() {
         setCurrentConversationId(conv.id); // This automatically loads messages from store
         // Clean up URL parameter
         window.history.replaceState({}, '', '/chat');
-        console.log('✅ Conversation loaded from URL:', conv.id, 'with', conv.messages.length, 'messages');
+        chatLogger.info('Conversation loaded from URL:');
       } else {
-        console.warn('⚠️ Conversation from URL not found:', convId);
+        chatLogger.warn('Conversation from URL not found:');
         hasLoadedFromUrlRef.current = true; // Mark as attempted
         // Clean up invalid URL parameter
         window.history.replaceState({}, '', '/chat');
@@ -96,7 +97,7 @@ export function ChatLayout() {
     // Mark as restored if we have a currentConversationId after hydration
     // This happens when the store restored from localStorage
     if (isHydrated && currentConversationId && !hasRestoredRef.current) {
-      console.log('✅ Conversation already restored by store:', currentConversationId);
+      chatLogger.info('Conversation already restored by store:');
       hasRestoredRef.current = true;
     }
 
@@ -122,7 +123,7 @@ export function ChatLayout() {
 
     // Safety check: ensure messages is an array
     if (!Array.isArray(messages)) {
-      console.error("⚠️ ChatLayout: messages is not an array");
+      chatLogger.error('ChatLayout: messages is not an array');
       return;
     }
 
@@ -143,21 +144,21 @@ export function ChatLayout() {
 
           if (response.ok) {
             const { title } = await response.json();
-            console.log("🎯 Updating conversation with title:", title, "for ID:", currentConversationId);
+            chatLogger.debug('Updating conversation with title:', currentConversationId);
             updateConversation(currentConversationId, { title });
-            console.log("✅ Chat title generated:", title);
+            chatLogger.info('Chat title generated:');
           } else {
             throw new Error("Title generation failed");
           }
         } catch (error) {
-          console.error("Failed to generate chat title:", error);
+          chatLogger.error('Failed to generate chat title:', error);
           const fallbackTitle = firstUserMessage.content.slice(0, 50) || "Neuer Chat";
           updateConversation(currentConversationId, { title: fallbackTitle });
         }
       };
 
       generateTitle().catch((error) => {
-        console.error("Uncaught error in generateTitle:", error);
+        chatLogger.error('Uncaught error in generateTitle:', error);
         const fallbackTitle = firstUserMessage.content.slice(0, 50) || "Neuer Chat";
         updateConversation(currentConversationId, { title: fallbackTitle });
       });
@@ -219,21 +220,21 @@ export function ChatLayout() {
 
   // Load a conversation
   const handleLoadConversation = (convId: string) => {
-    console.log("🔄 Loading conversation:", convId);
+    chatLogger.info('Loading conversation:');
 
     // Don't save current conversation on load - this causes unnecessary updatedAt changes
     // that trigger re-sorting and jumping. Save happens naturally through message updates.
 
     const conv = conversations.find((c) => c.id === convId);
     if (conv) {
-      console.log("✅ Found conversation, loading messages:", conv.messages.length);
+      chatLogger.info('Found conversation, loading messages:');
 
       // Mark as restored FIRST to prevent useEffect from interfering
       hasRestoredRef.current = true;
 
       // If we need to navigate, do it in a way that preserves state
       if (pathname !== "/chat") {
-        console.log("🔀 Navigating to /chat");
+        chatLogger.debug('🔀 Navigating to /chat');
         // setCurrentConversationId already loads messages from store, no need to call setMessages
         setCurrentConversationId(conv.id);
         // Navigate after state is set
@@ -244,9 +245,9 @@ export function ChatLayout() {
         setCurrentConversationId(conv.id);
       }
 
-      console.log("✅ Conversation loaded:", conv.id, "with", conv.messages.length, "messages");
+      chatLogger.info('Conversation loaded:');
     } else {
-      console.warn("⚠️ Conversation not found:", convId);
+      chatLogger.warn('Conversation not found:');
     }
   };
 
@@ -321,7 +322,7 @@ export function ChatLayout() {
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
         onSearch={(query) => {
-          console.log("Search:", query);
+          chatLogger.debug('Search:');
           // Future: implement search logic
         }}
       />

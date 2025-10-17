@@ -2,6 +2,7 @@ import { VideoProvider } from "./BaseProvider";
 import { KlingProvider } from "./KlingProvider";
 import { FalProvider } from "./FalProvider";
 import type { VideoModel } from "@/types/video";
+import { videoLogger } from '@/lib/logger';
 
 /**
  * Singleton Provider Factory
@@ -23,14 +24,14 @@ class ProviderFactory {
       case "payperwork-v1":
         if (!this.klingProvider) {
           this.klingProvider = new KlingProvider();
-          console.log("🏭 Created new KlingProvider instance (singleton)");
+          videoLogger.debug('🏭 Created new KlingProvider instance (singleton)');
         }
         return this.klingProvider;
 
       case "payperwork-v2":
         if (!this.falProvider) {
           this.falProvider = new FalProvider();
-          console.log("🏭 Created new FalProvider instance (singleton)");
+          videoLogger.debug('🏭 Created new FalProvider instance (singleton)');
         }
         return this.falProvider;
 
@@ -45,7 +46,7 @@ class ProviderFactory {
   static reset(): void {
     this.klingProvider = null;
     this.falProvider = null;
-    console.log("🔄 Reset all provider instances");
+    videoLogger.info('Reset all provider instances');
   }
 }
 

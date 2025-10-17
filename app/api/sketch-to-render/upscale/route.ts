@@ -32,7 +32,7 @@ const FREEPIK_UPSCALE_URL = "https://api.freepik.com/v1/ai/image-upscaler-precis
  */
 export async function POST(req: NextRequest) {
   try {
-    console.log("🎨 [UPSCALE POST] Request received!");
+    apiLogger.debug('🎨 [UPSCALE POST] Request received!');
     apiLogger.info("Upscale request received");
 
     // Validate API key

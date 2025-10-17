@@ -1,4 +1,5 @@
 import imageCompression from 'browser-image-compression';
+import { logger } from '@/lib/logger';
 
 export interface CompressionOptions {
   maxSizeMB?: number;
@@ -27,7 +28,7 @@ export async function compressImage(
     const compressedFile = await imageCompression(file, defaultOptions);
     return compressedFile;
   } catch (error) {
-    console.error('Image compression failed:', error);
+    logger.error('Image compression failed:', error);
     // Return original file if compression fails
     return file;
   }

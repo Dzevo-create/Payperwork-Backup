@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { workflowLogger } from '@/lib/logger';
 
 interface UseUpscaleOptions {
   onSuccess?: (upscaledImageUrl: string) => void;
@@ -73,7 +74,7 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
 
             const data = await response.json();
 
-            console.log("[Upscale] Poll response:", {
+            workflowLogger.debug('[Upscale] Poll response:', {
               pollCount,
               status: data.status,
               hasGenerated: !!data.generated,
@@ -103,7 +104,7 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
                 imageUrl = data.image;
               }
 
-              console.log("[Upscale] Status COMPLETED - checking for image:", {
+              workflowLogger.debug('[Upscale] Status COMPLETED - checking for image:', {
                 hasImageUrl: !!imageUrl,
                 imageUrl: imageUrl || "null",
                 pollCount,
@@ -117,12 +118,12 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
                   clearInterval(pollingIntervalRef.current);
                 }
                 setProgress(100);
-                console.log("[Upscale] Success! Got image:", imageUrl);
+                workflowLogger.info('[Upscale] Success! Got image:');
                 resolve(imageUrl);
                 return;
               } else {
                 // Status is COMPLETED but no image yet - keep polling
-                console.warn("[Upscale] Status COMPLETED but no image URL yet (poll " + pollCount + "/60) - continuing to poll...");
+                workflowLogger.warn('[Upscale] Status COMPLETED but no image URL yet (poll " + pollCount + "/60) - continuing to poll...');
                 setProgress(Math.min(90 + pollCount, 95)); // 90-95% while waiting for URL
                 // Don't return - continue polling
               }
@@ -133,7 +134,7 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
               if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
               }
-              console.error("[Upscale] Task failed:", data);
+              workflowLogger.error('[Upscale] Task failed:');
 
               let errorMessage = "Upscaling fehlgeschlagen - Freepik API hat den Task abgelehnt.";
 
@@ -290,7 +291,7 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
         const data = await apiResponse.json();
         const newTaskId = data.task_id;
 
-        console.log("[Upscale] Task created:", {
+        workflowLogger.debug('[Upscale] Task created:', {
           task_id: newTaskId,
           status: data.status,
         });
@@ -301,7 +302,7 @@ export function useUpscale(options: UseUpscaleOptions = {}) {
         setProgress(30);
 
         // Poll for completion
-        console.log("[Upscale] Starting polling for task:", newTaskId);
+        workflowLogger.debug('[Upscale] Starting polling for task:');
         const upscaledImageUrl = await pollTaskStatus(newTaskId);
 
         if (!upscaledImageUrl) {

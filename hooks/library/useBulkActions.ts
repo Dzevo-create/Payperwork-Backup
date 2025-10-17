@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LibraryItem } from "@/types/library";
 import { useToast } from "@/hooks/useToast";
+import { libraryLogger } from '@/lib/logger';
 
 interface UseBulkActionsProps {
   items: LibraryItem[];
@@ -44,7 +45,7 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
       toast.success(`${deletedCount} Items gelöscht`);
       onComplete?.();
     } catch (error) {
-      console.error("Bulk delete failed:", error);
+      libraryLogger.error('Bulk delete failed:', error);
       toast.error("Fehler beim Löschen");
     } finally {
       setIsProcessing(false);
@@ -65,6 +66,7 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
 
     try {
       // Load JSZip from CDN if not already loaded
+      let scriptElement: HTMLScriptElement | null = null;
       if (!(window as any).JSZip) {
         await new Promise((resolve, reject) => {
           const script = document.createElement("script");
@@ -72,6 +74,7 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
           script.onload = resolve;
           script.onerror = reject;
           document.head.appendChild(script);
+          scriptElement = script;
         });
       }
 
@@ -91,7 +94,7 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
           zip.file(item.name, blob);
           successCount++;
         } catch (error) {
-          console.error(`Failed to add ${item.name} to ZIP:`, error);
+          libraryLogger.error('Failed to add ${item.name} to ZIP:', error);
         }
 
         processedCount++;
@@ -134,10 +137,12 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
         `ZIP mit ${successCount} ${successCount === 1 ? "Datei" : "Dateien"} heruntergeladen`
       );
     } catch (error) {
-      console.error("ZIP creation failed:", error);
+      libraryLogger.error('ZIP creation failed:', error);
       toast.error("ZIP-Erstellung fehlgeschlagen");
     } finally {
       setIsProcessing(false);
+      // Note: We don't remove the script element as it's cached globally for reuse
+      // and will be cleaned up when the page unloads
     }
   };
 

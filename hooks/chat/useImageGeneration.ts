@@ -14,6 +14,7 @@
 import { useRef } from "react";
 import { ImageSettingsType } from "@/components/chat/Chat/ImageSettings";
 import { Attachment, Message } from "@/types/chat";
+import { chatLogger } from '@/lib/logger';
 
 interface UseImageGenerationParams {
   imageSettings: ImageSettingsType;
@@ -136,7 +137,7 @@ export function useImageGeneration({
           const errorData = await imageResponse.json().catch(() => ({}));
           // Log debug info if available
           if (errorData.debug) {
-            console.error("🔍 Nano Banana Debug Info:", errorData.debug);
+            chatLogger.error('Nano Banana Debug Info:', errorData.debug);
           }
 
           // Check if error is retryable
@@ -182,19 +183,19 @@ export function useImageGeneration({
           // Use let with proper scoping instead of var inside if/else blocks
           let imageUrl: string;
           if (!uploadResponse.ok) {
-            console.error(`Failed to upload image ${i + 1} to Supabase, using base64 fallback`);
+            chatLogger.error('Failed to upload image ${i + 1} to Supabase, using base64 fallback');
             // Fallback to base64 if upload fails
             imageUrl = `data:${img.mimeType};base64,${img.data}`;
           } else {
             const uploadData = await uploadResponse.json();
             imageUrl = uploadData.url; // Supabase public URL
-            console.log(`✅ Image ${i + 1} uploaded to Supabase:`, imageUrl);
+            chatLogger.info('Image ${i + 1} uploaded to Supabase:');
           }
 
           imageUrls.push(imageUrl);
         }
 
-        console.log(`🖼️ Final imageUrls before updateMessageWithAttachments (${imageUrls.length} images):`, imageUrls);
+        chatLogger.debug('🖼️ Final imageUrls before updateMessageWithAttachments (${imageUrls.length} images):');
 
         // Update assistant message with generated images (multiple attachments)
         updateMessageWithAttachments(
@@ -213,7 +214,7 @@ export function useImageGeneration({
             const imgUrl = imageUrls[i];
             const imgName = `payperwork-${new Date().toISOString().split('T')[0]}-${new Date().toTimeString().split(' ')[0].replace(/:/g, '-')}-${i + 1}.png`;
 
-            console.log(`📚 Adding image ${i + 1} to library with:`, {
+            chatLogger.debug('📚 Adding image ${i + 1} to library with:', {
               type: "image",
               url: imgUrl,
               name: imgName,
@@ -232,9 +233,9 @@ export function useImageGeneration({
               messageId: assistantMessageId,
               conversationId: currentConversationId || undefined,
             });
-            console.log(`✅ Image ${i + 1} successfully added to library`);
+            chatLogger.info('Image ${i + 1} successfully added to library');
           } catch (error) {
-            console.error(`❌ Failed to add image ${i + 1} to library:`, error);
+            chatLogger.error('Failed to add image ${i + 1} to library:', error);
           }
         }
 
@@ -263,7 +264,7 @@ export function useImageGeneration({
         }
 
         // Log retry attempt
-        console.log(`🔄 Retrying image generation (attempt ${attempt + 1}/${maxRetries})`, {
+        chatLogger.info(`Retrying image generation (attempt ${attempt + 1}/${maxRetries})`, {
           error: typedError.message,
           status: "status" in typedError ? (typedError as Error & { status: number }).status : undefined,
         });

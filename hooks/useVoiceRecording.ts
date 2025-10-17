@@ -1,12 +1,28 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
+import { logger } from '@/lib/logger';
 
 export function useVoiceRecording() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const toast = useToast();
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Stop recording and release media stream if still active
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stop();
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+    };
+  }, [isRecording]);
 
   const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     setIsTranscribing(true);
@@ -27,7 +43,7 @@ export function useVoiceRecording() {
       const data = await response.json();
       return data.text;
     } catch (error) {
-      console.error("Transcription error:", error);
+      logger.error('Transcription error:', error);
       toast.error("Transkription fehlgeschlagen. Bitte erneut versuchen.");
       return "";
     } finally {
@@ -38,6 +54,7 @@ export function useVoiceRecording() {
   const startRecording = async (): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -53,7 +70,10 @@ export function useVoiceRecording() {
         const text = await transcribeAudio(audioBlob);
 
         // Stop all tracks to release microphone
-        stream.getTracks().forEach((track) => track.stop());
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+        }
 
         // Return transcribed text via callback
         if (text && onTranscriptionComplete) {
@@ -64,7 +84,7 @@ export function useVoiceRecording() {
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error("Error accessing microphone:", error);
+      logger.error('Error accessing microphone:', error);
       toast.error("Mikrofon-Zugriff fehlgeschlagen. Bitte Berechtigung erteilen.");
     }
   };
@@ -73,6 +93,7 @@ export function useVoiceRecording() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      // MediaStream cleanup happens in onstop handler
     }
   };
 

@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Image Cache Utility
  *
@@ -135,7 +137,9 @@ class ImageCache {
 
     if (oldestUrl) {
       this.cache.delete(oldestUrl);
-      console.log("🗑️ Evicted oldest cache entry:", oldestUrl.substring(0, 50) + "...");
+      logger.debug('Evicted oldest cache entry', {
+        urlPreview: oldestUrl.substring(0, 50) + "..."
+      });
     }
   }
 
@@ -155,7 +159,7 @@ class ImageCache {
     expiredUrls.forEach(url => this.cache.delete(url));
 
     if (expiredUrls.length > 0) {
-      console.log(`🧹 Cleaned up ${expiredUrls.length} expired cache entries`);
+      logger.debug('Cleaned up ${expiredUrls.length} expired cache entries');
     }
   }
 }
@@ -180,12 +184,16 @@ export async function getCachedBase64(
   // Check cache first
   const cached = imageCache.get(url);
   if (cached) {
-    console.log("✅ Image cache HIT:", url.substring(0, 50) + "...");
+    logger.info('Image cache HIT', {
+      urlPreview: url.substring(0, 50) + "..."
+    });
     return cached;
   }
 
   // Cache miss - convert and store
-  console.log("❌ Image cache MISS:", url.substring(0, 50) + "...");
+  logger.debug('Image cache MISS', {
+    urlPreview: url.substring(0, 50) + "..."
+  });
   const base64 = await converter(url);
   imageCache.set(url, base64);
 

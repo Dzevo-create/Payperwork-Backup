@@ -53,3 +53,9 @@ export type {
 
 // T-Button Prompt Generator (Dedicated for Sketch-to-Render)
 export { generateSketchToRenderPrompt } from "./promptGenerator";
+
+// Branding Enhancement (Brand Intelligence Integration)
+export {
+  enhanceBrandingPrompt,
+  generateBrandingPrompt,
+} from "./brandingEnhancer";

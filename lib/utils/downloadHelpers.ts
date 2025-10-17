@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Download a file from a URL with proper error handling
  * Extracted from ChatMessages.tsx for reusability
@@ -33,7 +35,7 @@ export async function downloadFile(url: string, filename: string): Promise<void>
     window.URL.revokeObjectURL(blobUrl);
     document.body.removeChild(a);
   } catch (error) {
-    console.error('Download failed:', error);
+    logger.error('Download failed:', error);
 
     // Fallback: try opening in new tab (browser may prompt download)
     window.open(url, '_blank');

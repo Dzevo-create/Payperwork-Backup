@@ -2,6 +2,7 @@ import { fal } from "@fal-ai/client";
 import { VideoProvider } from "./BaseProvider";
 import { ENV, PROVIDER_CONSTRAINTS } from "../config/videoConfig";
 import type { VideoGenerationRequest, VideoGenerationResponse, VideoType } from "@/types/video";
+import { videoLogger } from '@/lib/logger';
 
 // Configure fal.ai client
 fal.config({
@@ -66,10 +67,10 @@ export class FalProvider extends VideoProvider {
     const openaiApiKey = process.env.OPENAI_API_KEY;
     if (openaiApiKey) {
       payload.openai_api_key = openaiApiKey;
-      console.log("🔑 Using OpenAI API key for direct billing ($0.1/s) - FASTER PROCESSING");
+      videoLogger.debug('🔑 Using OpenAI API key for direct billing ($0.1/s) - FASTER PROCESSING');
     } else {
-      console.warn("⚠️ No OpenAI API key found - using fal.ai credits (slower queue times)");
-      console.warn("⚠️ Add OPENAI_API_KEY to .env.local for faster video generation");
+      videoLogger.warn('No OpenAI API key found - using fal.ai credits (slower queue times)');
+      videoLogger.warn('Add OPENAI_API_KEY to .env.local for faster video generation');
     }
 
     // For image2video: add resolution (can be "auto" or "720p")
@@ -81,21 +82,21 @@ export class FalProvider extends VideoProvider {
       payload.resolution = "720p";
     }
 
-    console.log(`🎬 Starting fal.ai Sora 2 ${type}...`, {
+    videoLogger.debug(`Starting fal.ai Sora 2 ${type}`, {
       endpoint,
       prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
       duration: validDuration,
       aspectRatio: validAspectRatio,
     });
 
-    console.log("📦 fal.ai payload:", JSON.stringify(payload, null, 2));
+    videoLogger.debug('fal.ai payload prepared', { payloadKeys: Object.keys(payload) });
 
     // Queue the fal.ai job (non-blocking - returns immediately with request_id)
     const { request_id } = await fal.queue.submit(endpoint, {
       input: payload,
     });
 
-    console.log("✅ fal.ai Sora 2 task queued:", request_id);
+    videoLogger.info('fal.ai Sora 2 task queued:');
 
     // Return immediately with task_id for polling
     return {
@@ -132,7 +133,7 @@ export class FalProvider extends VideoProvider {
       const statusMsg = status.status === "IN_QUEUE"
         ? `IN_QUEUE (position: ${queuePosition || 'unknown'})`
         : status.status;
-      console.log(`🔄 fal.ai status check for ${taskId}:`, statusMsg);
+      videoLogger.info('fal.ai status check for ${taskId}:');
 
       // Map fal.ai status to our VideoStatus
       if (status.status === "COMPLETED") {
@@ -187,7 +188,7 @@ export class FalProvider extends VideoProvider {
         };
       }
     } catch (error: any) {
-      console.error("fal.ai status check error:", error);
+      videoLogger.error('fal.ai status check error:', error);
       throw new Error(`Failed to check fal.ai task status: ${error.message}`);
     }
   }

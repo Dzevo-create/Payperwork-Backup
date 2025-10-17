@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useChatStore } from '@/store/chatStore.supabase';
+import { logger } from '@/lib/logger';
 
 export interface UseConversationSwitchOptions {
   /** Auto-save current conversation before switching */
@@ -83,7 +84,7 @@ export function useConversationSwitch(
         messages: [...messages],
       });
     } catch (error) {
-      console.error('Failed to save conversation before switch:', error);
+      logger.error('Failed to save conversation before switch:', error);
     }
   }, [autoSave, currentConversationId, messages, updateConversation]);
 
@@ -106,7 +107,7 @@ export function useConversationSwitch(
         const targetConversation = conversations.find((c) => c.id === conversationId);
 
         if (!targetConversation) {
-          console.warn('Conversation not found:', conversationId);
+          logger.warn('Conversation not found:');
           return;
         }
 
@@ -117,7 +118,7 @@ export function useConversationSwitch(
           `Switched to conversation: ${conversationId} (${targetConversation.messages.length} messages)`
         );
       } catch (error) {
-        console.error('Failed to switch conversation:', error);
+        logger.error('Failed to switch conversation:', error);
       } finally {
         setIsSwitching(false);
       }
@@ -230,7 +231,7 @@ export function useConversationSwitch(
     goToPrevious,
     createAndSwitch,
     switchTo,
-  ]);
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     switchTo,

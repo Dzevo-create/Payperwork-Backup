@@ -300,6 +300,8 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
           </div>
         )}
       </div>
+
+      {/* Structure Fidelity removed from chat UI - setting still exists in backend but not exposed to users */}
     </div>
   );
 }

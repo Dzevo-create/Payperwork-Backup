@@ -2,6 +2,7 @@
 
 import { Reply, Image as ImageIcon } from "lucide-react";
 import { Attachment, Message } from "@/types/chat";
+import { chatLogger } from '@/lib/logger';
 
 interface ImageAttachmentProps {
   attachment: Attachment;
@@ -30,7 +31,7 @@ export function ImageAttachment({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error("Download failed:", error);
+      chatLogger.error('Download failed:', error);
       window.open(attachment.url, "_blank");
     }
   };

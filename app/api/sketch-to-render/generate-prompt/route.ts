@@ -4,7 +4,9 @@ import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateSketchToRenderPrompt } from "@/lib/api/workflows/sketchToRender";
+import { generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender/brandingEnhancer";
 import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 
 /**
  * POST /api/sketch-to-render/generate-prompt
@@ -45,20 +47,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check if this is a branding request (has brandingText or venueType)
+    const isBrandingRequest = settings && ('brandingText' in settings || 'venueType' in settings);
+
     apiLogger.info("T-Button: Generating prompt", {
       clientId,
       hasUserPrompt: !!userPrompt,
       hasReference: !!referenceImage,
       hasSettings: !!settings,
+      isBranding: isBrandingRequest,
     });
 
-    // Generate prompt using dedicated T-Button function
-    const generatedPrompt = await generateSketchToRenderPrompt(
-      userPrompt || null,
-      sourceImage,
-      settings as RenderSettingsType | undefined,
-      referenceImage
-    );
+    // Generate prompt using appropriate function
+    let generatedPrompt: string;
+
+    if (isBrandingRequest) {
+      // Use branding-specific prompt generator
+      generatedPrompt = await generateBrandingPrompt(
+        userPrompt || null,
+        sourceImage,
+        settings as BrandingSettingsType | undefined,
+        referenceImage ? [referenceImage] : undefined
+      );
+    } else {
+      // Use standard sketch-to-render prompt generator
+      generatedPrompt = await generateSketchToRenderPrompt(
+        userPrompt || null,
+        sourceImage,
+        settings as RenderSettingsType | undefined,
+        referenceImage
+      );
+    }
 
     apiLogger.info("T-Button: Prompt generated successfully", {
       clientId,

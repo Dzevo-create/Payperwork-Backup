@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Image utility functions for handling image conversions and transformations
  */
@@ -48,7 +50,7 @@ export async function convertImageUrlToBase64(url: string): Promise<string> {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error('Failed to convert image URL to base64:', error);
+    logger.error('Failed to convert image URL to base64:', error);
     throw error;
   }
 }

@@ -12,6 +12,7 @@ import type {
   QualityValue,
   NumImagesValue,
 } from './index';
+import type { StructureFidelityValue } from './structureFidelity';
 
 /**
  * Complete Image Settings Type
@@ -25,6 +26,7 @@ export interface ImageSettingsType {
   quality: QualityValue;
   aspectRatio: AspectRatioValue;
   numImages: NumImagesValue;
+  structureFidelity?: StructureFidelityValue; // 0-100, controls how strictly to preserve source structure
 }
 
 /**

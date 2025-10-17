@@ -1,9 +1,11 @@
 "use client";
 
+import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import { Loader2 } from "lucide-react";
 import { Message } from "@/types/chat";
 import { C1Renderer } from "@/components/chat/C1Renderer";
+import { chatLogger } from '@/lib/logger';
 
 interface MessageContentProps {
   message: Message;
@@ -12,7 +14,7 @@ interface MessageContentProps {
   onC1Action?: (data: { llmFriendlyMessage: string }) => void;
 }
 
-export function MessageContent({
+export const MessageContent = memo(function MessageContent({
   message,
   isStreamingMessage,
   onEditMessage,
@@ -42,7 +44,7 @@ export function MessageContent({
     // SuperChat Mode: Render with C1Component for interactive UI
     // Check for wasGeneratedWithC1 flag (this is the correct flag from Supabase)
     if (message.role === "assistant" && message.wasGeneratedWithC1) {
-      console.log("🎯 Rendering C1 message:", {
+      chatLogger.debug('Rendering C1 message:', {
         id: message.id,
         wasGeneratedWithC1: message.wasGeneratedWithC1,
         isC1Streaming: message.isC1Streaming,
@@ -103,4 +105,4 @@ export function MessageContent({
   }
 
   return null;
-}
+});

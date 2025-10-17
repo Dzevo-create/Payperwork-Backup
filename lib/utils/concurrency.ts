@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Promise concurrency control utilities
  * Prevents overwhelming APIs with too many parallel requests
@@ -61,7 +63,7 @@ export async function promiseAllWithLimitSettled<T>(
 ): Promise<(T | null)[]> {
   const wrappedTasks = tasks.map((task) => () =>
     task().catch((error) => {
-      console.error('Task failed:', error);
+      logger.error('Task failed:', error);
       return null;
     })
   );

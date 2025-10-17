@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { chatLogger } from '@/lib/logger';
 
 /**
  * C1Renderer - Dynamically loads C1Component only when Super Chat is enabled
@@ -47,7 +48,7 @@ export function C1Renderer(props: C1RendererProps) {
           setIsLoading(false);
         }
       } catch (err: any) {
-        console.error("Failed to load C1 components:", err);
+        chatLogger.error('Failed to load C1 components:', err);
         if (mounted) {
           setError(err?.message || "Failed to load Super Chat");
           setIsLoading(false);
@@ -119,12 +120,12 @@ export function C1Renderer(props: C1RendererProps) {
   const match = props.c1Response.match(/<content>([\s\S]*?)<\/content>/);
   if (match && match[1]) {
     contentToRender = match[1];
-    console.log("🎯 C1Renderer extracted content from tags:", {
+    chatLogger.debug('C1Renderer extracted content from tags:', {
       originalLength: props.c1Response.length,
       extractedLength: contentToRender.length,
     });
   } else {
-    console.log("⚠️ C1Renderer: No <content> tags found, using as-is");
+    chatLogger.warn('C1Renderer: No <content> tags found, using as-is');
   }
 
   // Unescape HTML entities that may have been escaped during storage/transmission
@@ -155,7 +156,7 @@ export function C1Renderer(props: C1RendererProps) {
     }
 
     // Not streaming but still invalid JSON - fallback to plain text rendering
-    console.warn("⚠️ C1Renderer: Content is not valid JSON, falling back to plain text", {
+    chatLogger.warn('C1Renderer: Content is not valid JSON, falling back to plain text', {
       error: parseError instanceof Error ? parseError.message : String(parseError),
       contentPreview: unescapedContent.substring(0, 100)
     });

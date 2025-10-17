@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { X, Download, ChevronLeft, ChevronRight, Calendar, Sparkles, ImageIcon } from "lucide-react";
 import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { workflowLogger } from '@/lib/logger';
 
 interface RenderItem {
   id: string;
@@ -30,7 +31,7 @@ export function RenderLightbox({ isOpen, item, onClose, onNavigate, hasNext, has
   // Debug: Log item data
   useEffect(() => {
     if (isOpen) {
-      console.log("[Lightbox] Item data:", {
+      workflowLogger.debug('[Lightbox] Item data:', {
         type: item.type,
         hasSourceImage: !!item.sourceImageUrl,
         sourceImageUrl: item.sourceImageUrl?.substring(0, 50) + "...",

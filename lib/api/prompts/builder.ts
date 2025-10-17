@@ -17,6 +17,32 @@ export interface ImageSettings {
   quality?: string;
   aspectRatio?: string;
   preset?: string;
+  structureFidelity?: number; // 0-100, controls how strictly to preserve source structure
+}
+
+// Structure Fidelity Guides
+const STRUCTURE_FIDELITY_GUIDES: { [key: string]: string } = {
+  "100": "EXAKTE Strukturerhaltung - Gleiche Kamera, Layout, Proportionen. Nur Materialien/Farben ändern.",
+  "90": "Sehr hohe Treue - Minimale Abweichung von der Ausgangsstruktur",
+  "80": "Hohe Treue - Gleiche Grundstruktur, aber kreative Freiheit bei Details",
+  "70": "Medium-Hoch - Allgemeine Struktur beibehalten, mehr Kreativität",
+  "60": "Medium - Layout als Guidance, signifikante Freiheit",
+  "50": "Balanciert - Gleichermaßen Erhaltung und Kreativität",
+  "40": "Medium-Niedrig - Lose Interpretation, größere Änderungen OK",
+  "30": "Niedrig - Nur Inspiration, hohe Kreativität",
+  "20": "Sehr niedrig - Minimaler Einfluss, maximale Kreativität",
+  "10": "Inspiration - Nur thematische Inspiration, komplette Freiheit",
+};
+
+// Helper to get structure fidelity instruction
+function getStructureFidelityInstruction(fidelity?: number): string {
+  if (fidelity === undefined) fidelity = 100; // Default: exact preservation
+
+  // Find closest guide
+  const key = String(Math.round(fidelity / 10) * 10);
+  const guide = STRUCTURE_FIDELITY_GUIDES[key] || STRUCTURE_FIDELITY_GUIDES["100"];
+
+  return `\n- Strukturtreue (${fidelity}%): ${guide}`;
 }
 
 // Helper to build image settings context
@@ -44,6 +70,8 @@ export function buildImageSettingsContext(imageSettings?: ImageSettings): string
   if (imageSettings.preset && imageSettings.preset !== "none" && PRESET_GUIDES[imageSettings.preset]) {
     context += `\n- Preset: ${PRESET_GUIDES[imageSettings.preset]}`;
   }
+
+  // Structure Fidelity removed from chat prompt (still available in settings, but not shown in prompt text)
 
   context += `\n\nINTEGRIERE diese Vorgaben natürlich in den Prompt.`;
   return context;

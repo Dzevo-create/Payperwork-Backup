@@ -8,6 +8,7 @@ import { MessageBubble } from "./MessageBubble";
 import { EmptyState } from "./EmptyState";
 import { useMessageActions } from "@/hooks/chat/useMessageActions";
 import { useMessageLightbox } from "@/hooks/chat/useMessageLightbox";
+import { chatLogger } from '@/lib/logger';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -54,7 +55,7 @@ export const ChatMessages = memo(function ChatMessages({
     const currentConvId = messages.length > 0 ? messages[0]?.id?.split('-')[0] : null;
 
     if (currentConvId !== lastConversationIdRef.current) {
-      console.log('🔄 [ChatMessages] Conversation changed, resetting scroll state');
+      chatLogger.info('[ChatMessages] Conversation changed, resetting scroll state');
       lastConversationIdRef.current = currentConvId;
       hasInitialScrolledRef.current = false;
       previousMessagesLengthRef.current = 0;
@@ -64,7 +65,7 @@ export const ChatMessages = memo(function ChatMessages({
   // Initial scroll to bottom when conversation loads
   useEffect(() => {
     if (messages.length > 0 && !hasInitialScrolledRef.current) {
-      console.log('📍 [ChatMessages] Initial scroll to bottom');
+      chatLogger.debug('📍 [ChatMessages] Initial scroll to bottom');
       hasInitialScrolledRef.current = true;
       // Scroll immediately to bottom
       setTimeout(() => {
@@ -99,8 +100,8 @@ export const ChatMessages = memo(function ChatMessages({
 
   // Safety check: Ensure messages is an array
   if (!Array.isArray(messages)) {
-    console.error("⚠️ messages is not an array:", messages);
-    console.error("Attempting to recover by treating as empty array...");
+    chatLogger.error('messages is not an array:');
+    chatLogger.error('Attempting to recover by treating as empty array...');
     return <EmptyState />;
   }
 

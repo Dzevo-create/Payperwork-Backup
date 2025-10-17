@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
+import { chatLogger } from '@/lib/logger';
 import "react-image-crop/dist/ReactCrop.css";
 import { X, Check, Download } from "lucide-react";
 
@@ -37,7 +38,7 @@ export default function ImageCropModal({
       onCropComplete(croppedImage);
       onClose();
     } catch (error) {
-      console.error("Error cropping image:", error);
+      chatLogger.error('Error cropping image:', error);
     }
   };
 
@@ -63,7 +64,7 @@ export default function ImageCropModal({
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      console.error("Error downloading image:", error);
+      chatLogger.error('Error downloading image:', error);
     }
   };
 

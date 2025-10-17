@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { X, Download, ChevronLeft, ChevronRight, Calendar, Sparkles, Film, ImageIcon } from "lucide-react";
 import { LibraryItem } from "@/types/library";
 import { useToast } from "@/hooks/useToast";
+import { libraryLogger } from '@/lib/logger';
 
 interface MediaLightboxProps {
   isOpen: boolean;
@@ -78,7 +79,7 @@ export function MediaLightbox({ isOpen, item, onClose, onNavigate, hasNext, hasP
 
       toast.success("Download gestartet");
     } catch (error) {
-      console.error("Download error:", error);
+      libraryLogger.error('Download error:', error);
       toast.error("Download fehlgeschlagen");
     }
   };

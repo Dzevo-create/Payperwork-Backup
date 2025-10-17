@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRecentGenerations } from "@/lib/supabase-sketch-to-render";
+import { apiLogger } from '@/lib/logger';
 
 /**
  * API Route to get recent sketch-to-render generations
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
       generations,
     });
   } catch (error: any) {
-    console.error("[GetGenerations API] Error:", error);
+    apiLogger.error('[GetGenerations API] Error:', error);
     return NextResponse.json(
       { error: error.message || "Failed to fetch generations" },
       { status: 500 }

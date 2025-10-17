@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Message, Conversation, ChatError } from '@/types/chat';
+import { chatLogger } from '@/lib/logger';
 
 interface ChatStore {
   // State
@@ -66,7 +67,7 @@ export const useChatStore = create<ChatStore>()(
       updateMessage: (id, content) => set((state) => {
         // Safety check: ensure state.messages is an array
         if (!Array.isArray(state.messages)) {
-          console.error("⚠️ updateMessage: state.messages is not an array, resetting");
+          chatLogger.error('updateMessage: state.messages is not an array, resetting');
           return { messages: [] };
         }
 
@@ -92,7 +93,7 @@ export const useChatStore = create<ChatStore>()(
       }),
 
       updateMessageWithAttachments: (id, content, attachments, videoTask, generationAttempt) => set((state) => {
-        console.log("💾 updateMessageWithAttachments CALLED:", {
+        chatLogger.debug('💾 updateMessageWithAttachments CALLED:', {
           id,
           content,
           attachments,
@@ -102,7 +103,7 @@ export const useChatStore = create<ChatStore>()(
         });
 
         const messageFound = state.messages.find((msg) => msg.id === id);
-        console.log("🔎 Message found:", messageFound ? "YES" : "NO", messageFound);
+        chatLogger.debug('🔎 Message found:', messageFound);
 
         const messages = state.messages.map((msg) =>
           msg.id === id ? {
@@ -114,7 +115,7 @@ export const useChatStore = create<ChatStore>()(
           } : msg
         );
 
-        console.log("📝 Updated messages array:", messages.map(m => ({ id: m.id, content: m.content.substring(0, 50), attachments: m.attachments, videoTask: m.videoTask })));
+        chatLogger.debug('📝 Updated messages array:', 50);, attachments: m.attachments, videoTask: m.videoTask })));
 
         // FIX: Capture currentConversationId at the start to avoid race condition
         const conversationId = state.currentConversationId;
@@ -126,11 +127,11 @@ export const useChatStore = create<ChatStore>()(
               ? { ...conv, messages, updatedAt: new Date() }
               : conv
           );
-          console.log("💬 Updating conversation:", conversationId);
+          chatLogger.debug('💬 Updating conversation:');
           return { messages, conversations };
         }
 
-        console.log("✅ Returning updated messages (no conversation)");
+        chatLogger.info('Returning updated messages (no conversation)');
         return { messages };
       }),
 
@@ -230,14 +231,14 @@ export const useChatStore = create<ChatStore>()(
       // Add error handling for quota exceeded + data validation
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.error('Failed to rehydrate storage:', error);
+          chatLogger.error('Failed to rehydrate storage:', error);
           // Clear localStorage if quota exceeded
           if (error.name === 'QuotaExceededError') {
-            console.warn('🚨 Storage quota exceeded, clearing old data...');
+            chatLogger.warn('🚨 Storage quota exceeded, clearing old data...');
             try {
               localStorage.removeItem('payperwork-chat-storage');
             } catch (e) {
-              console.error('Failed to clear storage:', e);
+              chatLogger.error('Failed to clear storage:');
             }
           }
         }
@@ -246,12 +247,12 @@ export const useChatStore = create<ChatStore>()(
         if (state) {
           // Ensure messages is always an array
           if (!Array.isArray(state.messages)) {
-            console.error('⚠️ Corrupted messages detected, resetting to empty array');
+            chatLogger.error('Corrupted messages detected, resetting to empty array');
             state.messages = [];
           }
           // Ensure conversations is always an array
           if (!Array.isArray(state.conversations)) {
-            console.error('⚠️ Corrupted conversations detected, resetting to empty array');
+            chatLogger.error('Corrupted conversations detected, resetting to empty array');
             state.conversations = [];
           }
 
@@ -259,7 +260,7 @@ export const useChatStore = create<ChatStore>()(
           if (Array.isArray(state.conversations)) {
             state.conversations = state.conversations.map((conv) => {
               if (!Array.isArray(conv.messages)) {
-                console.error(`⚠️ Corrupted messages in conversation ${conv.id}, resetting`);
+                chatLogger.error('Corrupted messages in conversation ${conv.id}, resetting');
                 return { ...conv, messages: [] };
               }
               return conv;
@@ -270,7 +271,7 @@ export const useChatStore = create<ChatStore>()(
           if (Array.isArray(state.messages)) {
             state.messages = state.messages.filter((msg) => {
               if (!msg.id || !msg.role || msg.content === undefined) {
-                console.error('⚠️ Invalid message detected, removing:', msg);
+                chatLogger.error('Invalid message detected, removing:');
                 return false;
               }
               return true;

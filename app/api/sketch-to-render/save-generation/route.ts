@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveSketchToRenderGeneration } from "@/lib/supabase-sketch-to-render";
+import { apiLogger } from '@/lib/logger';
 
 /**
  * API Route to save a sketch-to-render generation to the database
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save to database
-    console.log("[SaveGeneration API] Attempting to save generation:", {
+    apiLogger.debug('[SaveGeneration API] Attempting to save generation:', {
       userId,
       type,
       model,
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!generation) {
-      console.error("[SaveGeneration API] saveSketchToRenderGeneration returned null");
+      apiLogger.error('[SaveGeneration API] saveSketchToRenderGeneration returned null');
       return NextResponse.json(
         {
           error: "Failed to save generation to database",
@@ -79,14 +80,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("[SaveGeneration API] Generation saved successfully:", generation.id);
+    apiLogger.info('[SaveGeneration API] Generation saved successfully:');
 
     return NextResponse.json({
       success: true,
       generation,
     });
   } catch (error: any) {
-    console.error("[SaveGeneration API] Unexpected error:", {
+    apiLogger.error('[SaveGeneration API] Unexpected error:', {
       message: error.message,
       stack: error.stack,
       name: error.name,

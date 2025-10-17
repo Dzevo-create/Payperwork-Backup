@@ -26,20 +26,39 @@ export function getSupabaseUserId(): string {
 }
 
 /**
+ * Set user context in Supabase session for RLS policies
+ * MUST be called before any query that uses RLS
+ */
+export async function setSupabaseUserContext(userId?: string): Promise<void> {
+  const userIdToSet = userId || getSupabaseUserId();
+
+  try {
+    // Call the set_user_id function in Supabase
+    // This sets the session variable that RLS policies use
+    const { error } = await supabase.rpc('set_user_id', { user_id: userIdToSet });
+
+    if (error) {
+      logger.warn('Failed to set user context for RLS', { error, userId: userIdToSet });
+    } else {
+      logger.debug('User context set for RLS', { userId: userIdToSet });
+    }
+  } catch (error) {
+    logger.error('Error setting user context', error as Error, { userId: userIdToSet });
+  }
+}
+
+/**
  * Create a Supabase client with RLS context (user_id set)
  * Use this for all queries to ensure RLS policies work correctly
+ *
+ * IMPORTANT: This returns a promise! Use with await.
+ * Example: const client = await getSupabaseClientWithRLS();
  */
-export function getSupabaseClientWithRLS(): SupabaseClient {
+export async function getSupabaseClientWithRLS(): Promise<SupabaseClient> {
   const userId = getSupabaseUserId();
 
-  // Create client with custom headers to set user context
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        'x-user-id': userId,
-      },
-    },
-  });
+  // Set user context in session for RLS
+  await setSupabaseUserContext(userId);
 
-  return client;
+  return supabase;
 }

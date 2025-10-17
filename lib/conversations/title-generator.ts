@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Conversation Title Generator
  *
@@ -42,7 +44,7 @@ export async function generateAITitle(message: string): Promise<string> {
     const { title } = await response.json();
     return title || generateLocalTitle(message);
   } catch (error) {
-    console.error('Failed to generate AI title:', error);
+    logger.error('Failed to generate AI title:', error);
     return generateLocalTitle(message);
   }
 }

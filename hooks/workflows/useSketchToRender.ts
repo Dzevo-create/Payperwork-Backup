@@ -45,11 +45,20 @@ export function useSketchToRender(options: UseSketchToRenderOptions = {}) {
   // Use refs to avoid re-creating callback on every render
   const onSuccessRef = useRef(options.onSuccess);
   const onErrorRef = useRef(options.onError);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     onSuccessRef.current = options.onSuccess;
     onErrorRef.current = options.onError;
   }, [options.onSuccess, options.onError]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const generate = useCallback(
     async (
@@ -163,7 +172,7 @@ export function useSketchToRender(options: UseSketchToRenderOptions = {}) {
       } finally {
         setIsGenerating(false);
         // Reset progress after a short delay
-        setTimeout(() => setProgress(0), 1000);
+        timeoutRef.current = setTimeout(() => setProgress(0), 1000);
       }
     },
     []

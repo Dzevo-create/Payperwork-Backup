@@ -4,6 +4,7 @@ import { validateAndFixKlingSettings } from "@/utils/klingValidation";
 import { fetchWithRetry } from "@/utils/fetchWithTimeout";
 import { ENV, VIDEO_CONFIG } from "../config/videoConfig";
 import type { VideoGenerationRequest, VideoGenerationResponse, VideoType } from "@/types/video";
+import { videoLogger } from '@/lib/logger';
 
 /**
  * JWT Token Cache
@@ -32,7 +33,7 @@ export class KlingProvider extends VideoProvider {
 
     // Return cached token if still valid (with 5 min buffer)
     if (this.tokenCache && this.tokenCache.expiresAt > now + 300) {
-      console.log("🔑 Using cached JWT token");
+      videoLogger.debug('🔑 Using cached JWT token');
       return this.tokenCache.token;
     }
 
@@ -59,7 +60,7 @@ export class KlingProvider extends VideoProvider {
 
     // Cache the token
     this.tokenCache = { token, expiresAt };
-    console.log("🔑 Generated new JWT token (valid for 30 min)");
+    videoLogger.debug('🔑 Generated new JWT token (valid for 30 min)');
 
     return token;
   }
@@ -96,7 +97,7 @@ export class KlingProvider extends VideoProvider {
     const { params, warnings } = validateAndFixKlingSettings(settingsToValidate as any);
 
     if (warnings.length > 0) {
-      console.log("⚠️ Auto-corrected video settings:", warnings);
+      videoLogger.warn('Auto-corrected video settings:');
     }
 
     // Build request body based on type
@@ -127,7 +128,7 @@ export class KlingProvider extends VideoProvider {
     // Determine API endpoint
     const endpoint = `${ENV.kling.apiUrl}/v1/videos/${type}`;
 
-    console.log(`🎬 Starting Kling AI ${type}...`, {
+    videoLogger.debug('🎬 Starting Kling AI ${type}...', {
       duration: params.duration,
       aspectRatio: aspectRatio || "original",
       mode: params.mode,
@@ -151,7 +152,7 @@ export class KlingProvider extends VideoProvider {
 
       const createData = await createResponse.json();
 
-      console.log(`📊 Kling API Create Response:`, {
+      videoLogger.debug('📊 Kling API Create Response:', {
         ok: createResponse.ok,
         status: createResponse.status,
         code: createData.code,
@@ -160,7 +161,7 @@ export class KlingProvider extends VideoProvider {
 
       if (!createResponse.ok || createData.code !== 0) {
         const errorMessage = createData.message || `HTTP ${createResponse.status}: ${createResponse.statusText}`;
-        console.error("❌ Kling AI task creation failed:", {
+        videoLogger.error('Kling AI task creation failed:', {
           status: createResponse.status,
           code: createData.code,
           message: createData.message,
@@ -171,7 +172,7 @@ export class KlingProvider extends VideoProvider {
 
       const taskId = createData.data.task_id;
 
-      console.log(`✅ Kling AI task created: ${taskId}`);
+      videoLogger.info('Kling AI task created: ${taskId}');
 
       return {
         task_id: taskId,
@@ -182,7 +183,7 @@ export class KlingProvider extends VideoProvider {
         type,
       };
     } catch (error) {
-      console.error(`❌ Kling task creation failed:`, {
+      videoLogger.error('Kling task creation failed:', {
         type,
         endpoint,
         error: error instanceof Error ? error.message : String(error),
@@ -199,7 +200,7 @@ export class KlingProvider extends VideoProvider {
 
     const endpoint = `${ENV.kling.apiUrl}/v1/videos/${type}/${taskId}`;
 
-    console.log(`🔍 Checking Kling AI status for task: ${taskId}`);
+    videoLogger.debug('Checking Kling AI status for task: ${taskId}');
 
     try {
       const statusResponse = await fetchWithRetry(
@@ -216,7 +217,7 @@ export class KlingProvider extends VideoProvider {
 
       const statusData = await statusResponse.json();
 
-      console.log(`📊 Kling API Response:`, {
+      videoLogger.debug('📊 Kling API Response:', {
         ok: statusResponse.ok,
         status: statusResponse.status,
         code: statusData.code,
@@ -225,7 +226,7 @@ export class KlingProvider extends VideoProvider {
 
       if (!statusResponse.ok || statusData.code !== 0) {
         const errorMessage = statusData.message || `HTTP ${statusResponse.status}: ${statusResponse.statusText}`;
-        console.error(`❌ Kling API Error:`, {
+        videoLogger.error('Kling API Error:', {
           status: statusResponse.status,
           code: statusData.code,
           message: statusData.message,
@@ -244,7 +245,7 @@ export class KlingProvider extends VideoProvider {
         type,
       };
     } catch (error) {
-      console.error(`❌ Kling status check failed:`, {
+      videoLogger.error('Kling status check failed:', {
         taskId,
         type,
         endpoint,

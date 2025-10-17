@@ -4,6 +4,7 @@ import { Reply, Video, Maximize, Image as ImageIcon, FileText } from "lucide-rea
 import { Message, Attachment } from "@/types/chat";
 import { VideoGenerationPlaceholder } from "../VideoGenerationPlaceholder";
 import { getImageGridLayout } from "@/lib/utils/messageFormatting";
+import { chatLogger } from '@/lib/logger';
 
 interface MessageAttachmentsProps {
   message: Message;
@@ -139,7 +140,7 @@ export function MessageAttachments({
                         window.URL.revokeObjectURL(url);
                         document.body.removeChild(a);
                       } catch (error) {
-                        console.error('Download failed:', error);
+                        chatLogger.error('Download failed:', error);
                         window.open(att.url, '_blank');
                       }
                     }}
@@ -224,7 +225,7 @@ export function MessageAttachments({
                         window.URL.revokeObjectURL(url);
                         document.body.removeChild(a);
                       } catch (error) {
-                        console.error('Download failed:', error);
+                        chatLogger.error('Download failed:', error);
                         // Fallback: try direct download
                         window.open(att.url, '_blank');
                       }

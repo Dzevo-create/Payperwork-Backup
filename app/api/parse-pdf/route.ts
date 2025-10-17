@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PDFExtract } from "pdf.js-extract";
+import { apiLogger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("PDF parsing error:", error);
+    apiLogger.error('PDF parsing error:', error);
     return NextResponse.json(
       { error: "Failed to parse PDF" },
       { status: 500 }

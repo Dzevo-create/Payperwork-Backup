@@ -1,0 +1,340 @@
+/**
+ * Brand Intelligence Agent
+ *
+ * AI-powered agent that analyzes brand identities and extracts detailed guidelines
+ * for creating brand-accurate architectural renderings.
+ *
+ * This agent researches:
+ * - Brand colors and logo details
+ * - Store design patterns and layouts
+ * - Materials and textures used in physical locations
+ * - Product display strategies
+ * - Brand atmosphere and personality
+ * - Signature design elements
+ */
+
+import { openaiClient, OPENAI_MODELS, retryWithBackoff } from "@/lib/api/providers/openai";
+import { apiLogger } from "@/lib/logger";
+
+/**
+ * Brand Guidelines extracted by the Brand Intelligence Agent
+ */
+export interface BrandGuidelines {
+  brandName: string;
+  colors: string[];
+  materials: string[];
+  atmosphere: string;
+  layout: string;
+  products: string;
+  signatureElements: string[];
+  lighting: string;
+  storeType?: string;
+  additionalDetails?: string;
+}
+
+/**
+ * System prompt for Brand Intelligence Agent
+ * Defines the AI's role as a brand research specialist
+ */
+const BRAND_INTELLIGENCE_SYSTEM_PROMPT = `You are a Brand Intelligence Specialist with expertise in:
+- Retail store design and flagship store architecture
+- Brand identity systems (colors, logos, typography, materials)
+- Commercial interior design and spatial branding
+- Product display and merchandising strategies
+- Brand atmosphere and customer experience design
+- Physical brand touchpoints and environmental graphics
+
+Your task is to analyze brand identities and extract detailed design guidelines for creating brand-accurate architectural renderings of their physical spaces (stores, boutiques, restaurants, hotels, offices, etc.).
+
+When analyzing a brand, research and provide:
+1. **Brand Colors**: Primary and accent colors (with specific names/hex if possible)
+2. **Materials**: Flooring, walls, fixtures, display materials
+3. **Atmosphere**: Overall mood, ambiance, customer experience
+4. **Layout**: Space organization, traffic flow, zoning
+5. **Products**: How products are displayed and presented
+6. **Signature Elements**: Unique brand-specific design features
+7. **Lighting**: Lighting strategy and fixtures
+8. **Store Type**: Flagship, boutique, cafe, showroom characteristics
+
+Focus on PHYSICAL SPACE design - how the brand manifests in architecture and interior design.
+Be specific, detailed, and actionable for 3D rendering purposes.`;
+
+/**
+ * Analyzes a brand and extracts comprehensive design guidelines
+ *
+ * Uses GPT-4o to research the brand's physical space design patterns,
+ * materials, colors, and signature elements.
+ *
+ * @param brandName - Name of the brand to analyze (e.g., "Nike", "Audemars Piguet", "Starbucks")
+ * @param venueType - Optional venue type for context (e.g., "retail", "cafe", "hotel")
+ * @returns Promise resolving to BrandGuidelines object
+ * @throws Error if analysis fails or API returns invalid response
+ *
+ * @example
+ * ```typescript
+ * const guidelines = await analyzeBrand("Audemars Piguet", "retail");
+ * console.log(guidelines.colors); // ["Royal Blue", "Gold", "Black"]
+ * console.log(guidelines.materials); // ["Marble", "Brushed Metal", "Glass"]
+ * ```
+ */
+export async function analyzeBrand(
+  brandName: string,
+  venueType?: string
+): Promise<BrandGuidelines> {
+  const startTime = Date.now();
+
+  apiLogger.info("Brand Intelligence: Starting analysis", {
+    brandName,
+    venueType,
+  });
+
+  try {
+    // Build context-aware prompt
+    const venueContext = venueType
+      ? `\n\nContext: Focus on ${venueType} space design (${mapVenueTypeToDescription(venueType)}).`
+      : "";
+
+    const userPrompt = `Analyze the brand "${brandName}" and extract detailed design guidelines for their physical spaces.${venueContext}
+
+Provide a comprehensive analysis in the following JSON format:
+
+{
+  "brandName": "${brandName}",
+  "colors": ["primary color", "accent color 1", "accent color 2", ...],
+  "materials": ["material 1", "material 2", "material 3", ...],
+  "atmosphere": "detailed description of the overall mood and customer experience",
+  "layout": "description of typical space organization and flow",
+  "products": "how products/services are displayed and presented",
+  "signatureElements": ["unique element 1", "unique element 2", ...],
+  "lighting": "lighting strategy and fixtures description",
+  "storeType": "flagship/boutique/cafe/showroom characteristics",
+  "additionalDetails": "any other relevant design details"
+}
+
+Focus on PHYSICAL ARCHITECTURAL DETAILS that would be visible in a photorealistic 3D rendering.
+Be specific about colors, materials, textures, and spatial design.`;
+
+    // Call GPT-5 with retry logic (better reasoning for brand analysis)
+    const completion = await retryWithBackoff(
+      async () => {
+        return await openaiClient.chat.completions.create({
+          model: "gpt-4o", // Using GPT-5 for superior brand intelligence
+          messages: [
+            { role: "system", content: BRAND_INTELLIGENCE_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt }
+          ],
+          max_tokens: 1500, // Changed from max_tokens for GPT-5
+          response_format: { type: "json_object" },
+        });
+      },
+      3, // max retries
+      1000, // initial delay
+      "Brand Intelligence API (GPT-5)"
+    );
+
+    // Debug: Log entire completion object to understand what's happening
+    apiLogger.debug("Brand Intelligence: Full completion object", {
+      brandName,
+      hasChoices: !!completion.choices,
+      choicesLength: completion.choices?.length,
+      firstChoice: completion.choices?.[0] ? {
+        finishReason: completion.choices[0].finish_reason,
+        hasMessage: !!completion.choices[0].message,
+        messageRole: completion.choices[0].message?.role,
+        hasContent: !!completion.choices[0].message?.content,
+        contentLength: completion.choices[0].message?.content?.length || 0,
+        refusal: completion.choices[0].message?.refusal,
+      } : null,
+    });
+
+    const responseText = completion.choices[0]?.message?.content;
+
+    if (!responseText) {
+      // Check if there was a refusal
+      const refusal = completion.choices[0]?.message?.refusal;
+      if (refusal) {
+        apiLogger.error("Brand Intelligence: GPT-5 refused the request", {
+          brandName,
+          refusal,
+        });
+        throw new Error(`GPT-5 refused: ${refusal}`);
+      }
+      throw new Error("Empty response from Brand Intelligence Agent");
+    }
+
+    // Parse JSON response
+    let guidelines: BrandGuidelines;
+    try {
+      guidelines = JSON.parse(responseText);
+    } catch (parseError) {
+      apiLogger.error("Brand Intelligence: Failed to parse JSON response", {
+        error: parseError,
+        responseText: responseText.substring(0, 500),
+      });
+      throw new Error("Invalid JSON response from Brand Intelligence Agent");
+    }
+
+    // Validate required fields
+    if (!guidelines.brandName || !guidelines.colors || !guidelines.materials) {
+      throw new Error("Incomplete brand guidelines received");
+    }
+
+    const duration = Date.now() - startTime;
+
+    apiLogger.info("Brand Intelligence: Analysis complete", {
+      brandName,
+      duration,
+      colorsCount: guidelines.colors.length,
+      materialsCount: guidelines.materials.length,
+      hasSignatureElements: guidelines.signatureElements.length > 0,
+    });
+
+    return guidelines;
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+
+    apiLogger.error("Brand Intelligence: Analysis failed", {
+      error,
+      brandName,
+      venueType,
+      duration,
+    });
+
+    throw error;
+  }
+}
+
+/**
+ * Formats brand guidelines into a detailed prompt section
+ *
+ * Converts structured BrandGuidelines object into a natural language
+ * prompt section that can be inserted into image generation prompts.
+ *
+ * @param guidelines - Brand guidelines to format
+ * @returns Formatted prompt section string
+ *
+ * @example
+ * ```typescript
+ * const guidelines = await analyzeBrand("Nike");
+ * const promptSection = formatBrandGuidelinesForPrompt(guidelines);
+ * // Returns: "BRAND IDENTITY - Nike:\n- Colors: Black, Orange, White\n..."
+ * ```
+ */
+export function formatBrandGuidelinesForPrompt(guidelines: BrandGuidelines): string {
+  const sections: string[] = [
+    `BRAND IDENTITY - ${guidelines.brandName}:`,
+  ];
+
+  if (guidelines.colors.length > 0) {
+    sections.push(`- Brand colors: ${guidelines.colors.join(", ")}`);
+  }
+
+  if (guidelines.materials.length > 0) {
+    sections.push(`- Materials: ${guidelines.materials.join(", ")}`);
+  }
+
+  if (guidelines.atmosphere) {
+    sections.push(`- Atmosphere: ${guidelines.atmosphere}`);
+  }
+
+  if (guidelines.layout) {
+    sections.push(`- Layout: ${guidelines.layout}`);
+  }
+
+  if (guidelines.products) {
+    sections.push(`- Product display: ${guidelines.products}`);
+  }
+
+  if (guidelines.lighting) {
+    sections.push(`- Lighting: ${guidelines.lighting}`);
+  }
+
+  if (guidelines.signatureElements.length > 0) {
+    sections.push(`- Signature elements: ${guidelines.signatureElements.join(", ")}`);
+  }
+
+  if (guidelines.storeType) {
+    sections.push(`- Store type: ${guidelines.storeType}`);
+  }
+
+  if (guidelines.additionalDetails) {
+    sections.push(`- Additional details: ${guidelines.additionalDetails}`);
+  }
+
+  return sections.join("\n");
+}
+
+/**
+ * Maps venue type to a descriptive phrase for better context
+ */
+function mapVenueTypeToDescription(venueType: string): string {
+  const venueMap: Record<string, string> = {
+    retail: "retail store, shop, or boutique",
+    concert: "concert venue or music hall",
+    event: "event space or venue",
+    wedding: "wedding venue or reception hall",
+    restaurant: "restaurant or dining establishment",
+    hotel: "hotel lobby or guest areas",
+    office: "office or workspace",
+    exhibition: "exhibition space or gallery",
+    club: "nightclub or lounge",
+    festival: "festival grounds or outdoor venue",
+    cafe: "cafe or coffee shop",
+    bar: "bar or pub",
+    gym: "fitness center or gym",
+    spa: "spa or wellness center",
+    shop: "shop or retail location",
+  };
+
+  return venueMap[venueType] || venueType;
+}
+
+/**
+ * Cache for brand guidelines to avoid repeated API calls
+ * Key: brandName, Value: { guidelines, timestamp }
+ */
+const brandGuidelinesCache = new Map<string, {
+  guidelines: BrandGuidelines;
+  timestamp: number;
+}>();
+
+const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
+
+/**
+ * Analyzes a brand with caching to improve performance
+ *
+ * Caches brand guidelines for 24 hours to avoid redundant API calls
+ * for the same brand.
+ *
+ * @param brandName - Name of the brand to analyze
+ * @param venueType - Optional venue type for context
+ * @returns Promise resolving to BrandGuidelines object
+ */
+export async function analyzeBrandCached(
+  brandName: string,
+  venueType?: string
+): Promise<BrandGuidelines> {
+  const cacheKey = `${brandName.toLowerCase()}-${venueType || "default"}`;
+  const cached = brandGuidelinesCache.get(cacheKey);
+
+  // Check cache validity
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    apiLogger.debug("Brand Intelligence: Using cached guidelines", {
+      brandName,
+      cacheAge: Date.now() - cached.timestamp,
+    });
+    return cached.guidelines;
+  }
+
+  // Fetch fresh guidelines
+  const guidelines = await analyzeBrand(brandName, venueType);
+
+  // Update cache
+  brandGuidelinesCache.set(cacheKey, {
+    guidelines,
+    timestamp: Date.now(),
+  });
+
+  return guidelines;
+}

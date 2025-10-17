@@ -3,6 +3,7 @@
 import { X, Download } from "lucide-react";
 import { useEffect } from "react";
 import Image from "next/image";
+import { chatLogger } from '@/lib/logger';
 
 interface ImageLightboxProps {
   imageUrl: string;
@@ -45,7 +46,7 @@ export function ImageLightbox({ imageUrl, imageName, onClose }: ImageLightboxPro
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Download failed:", error);
+      chatLogger.error('Download failed:', error);
     }
   };
 

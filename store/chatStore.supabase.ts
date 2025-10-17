@@ -11,7 +11,8 @@
  */
 
 import { create } from 'zustand';
-import { Message, Conversation, ChatError } from '@/types/chat';
+import { Message, Conversation, ChatError, Attachment } from '@/types/chat';
+import { chatLogger } from '@/lib/logger';
 import {
   fetchConversations,
   createConversation as createConvSupabase,
@@ -35,11 +36,13 @@ interface ChatStore {
   hydrate: () => Promise<void>; // Load from Supabase
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => Promise<void>; // Now async!
+  addMessageToConversation: (conversationId: string, message: Message) => Promise<void>; // NEW: Add to any conversation
   updateMessage: (id: string, content: string, skipSync?: boolean) => Promise<void>;
+  updateMessageInConversation: (conversationId: string, id: string, content: string, skipSync?: boolean) => Promise<void>; // NEW: Update in specific conversation
   updateMessageWithAttachments: (
     id: string,
     content: string,
-    attachments: any[],
+    attachments: Attachment[],
     videoTask?: Message['videoTask'],
     generationAttempt?: number
   ) => Promise<void>;
@@ -75,14 +78,14 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   hydrate: async () => {
     // Skip if already hydrated or currently hydrating
     if (hasHydrated || isHydrating) {
-      console.log('⏭️ Skipping hydration (already done or in progress)');
+      chatLogger.warn('Skipping hydration (already done or in progress)');
       return;
     }
 
     isHydrating = true;
 
     try {
-      console.log('🔄 Loading conversations from Supabase...');
+      chatLogger.info('Loading conversations from Supabase...');
       const conversations = await fetchConversations();
 
       // Restore currentConversationId from localStorage (for page reload)
@@ -93,7 +96,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
 
       // Verify the restored conversation exists
       if (restoredConvId && !conversations.find(c => c.id === restoredConvId)) {
-        console.warn('⚠️ Restored conversation ID not found, clearing:', restoredConvId);
+        chatLogger.warn('Restored conversation ID not found, clearing:');
         restoredConvId = null;
         if (typeof window !== 'undefined') {
           localStorage.removeItem('currentConversationId');
@@ -112,12 +115,12 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       hasHydrated = true;
       isHydrating = false;
 
-      console.log(`✅ Loaded ${conversations.length} conversations from Supabase`);
+      chatLogger.info('Loaded ${conversations.length} conversations from Supabase');
       if (restoredConvId) {
-        console.log(`✅ Restored conversation: ${restoredConvId}`);
+        chatLogger.info('Restored conversation: ${restoredConvId}');
       }
     } catch (error) {
-      console.error('❌ Failed to hydrate from Supabase:', error);
+      chatLogger.error('Failed to hydrate from Supabase:', error);
       set({
         error: {
           message: 'Failed to load conversations',
@@ -136,44 +139,101 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
 
   addMessage: async (message) => {
     const conversationId = get().currentConversationId;
+    if (!conversationId) {
+      chatLogger.error('Cannot add message: No current conversation');
+      return;
+    }
+    await get().addMessageToConversation(conversationId, message);
+  },
 
-    // Optimistic update - add to UI immediately AND to conversation
-    set((state) => ({
-      messages: [...state.messages, message],
-      // IMPORTANT: Also update the conversation's messages array
-      conversations: state.conversations.map(conv =>
+  addMessageToConversation: async (conversationId, message) => {
+    const state = get();
+    const isCurrentConversation = conversationId === state.currentConversationId;
+
+    // Capture current state for potential rollback
+    const rollbackState = {
+      messages: state.messages,
+      conversations: state.conversations
+    };
+
+    // Optimistic update - add to conversation
+    set((state) => {
+      const updatedConversations = state.conversations.map(conv =>
         conv.id === conversationId
           ? { ...conv, messages: [...(conv.messages || []), message], updatedAt: new Date() }
           : conv
-      )
-    }));
+      );
+
+      // If it's the current conversation, also update messages array
+      const updatedMessages = isCurrentConversation
+        ? [...state.messages, message]
+        : state.messages;
+
+      return {
+        messages: updatedMessages,
+        conversations: updatedConversations
+      };
+    });
 
     // Sync to Supabase in background
-    if (conversationId) {
-      try {
-        await createMessageSupabase(conversationId, message);
-        console.log('✅ Message synced to Supabase');
-      } catch (error) {
-        console.error('❌ Failed to sync message to Supabase:', error);
-        // Don't revert optimistic update - we'll retry on next action
+    try {
+      await createMessageSupabase(conversationId, message);
+      chatLogger.info(`Message synced to Supabase for conversation ${conversationId}`);
+
+      // If this was a background conversation, show a notification
+      if (!isCurrentConversation && typeof window !== 'undefined') {
+        // Create a custom event that components can listen to
+        const event = new CustomEvent('backgroundMessageReceived', {
+          detail: { conversationId, message }
+        });
+        window.dispatchEvent(event);
+        chatLogger.info(`Background message notification dispatched for conversation ${conversationId}`);
       }
+    } catch (error) {
+      chatLogger.error('Failed to sync message to Supabase:', error);
+      // ROLLBACK: Restore previous state
+      set(rollbackState);
+      // Set error for UI to display
+      set({
+        error: {
+          message: 'Failed to save message. Please try again.',
+          retryable: true
+        }
+      });
+      throw error; // Propagate error to caller
     }
   },
 
   updateMessage: async (id, content, skipSync = false) => {
     const conversationId = get().currentConversationId;
+    if (!conversationId) {
+      chatLogger.error('Cannot update message: No current conversation');
+      return;
+    }
+    await get().updateMessageInConversation(conversationId, id, content, skipSync);
+  },
+
+  updateMessageInConversation: async (conversationId, id, content, skipSync = false) => {
     const state = get();
+    const isCurrentConversation = conversationId === state.currentConversationId;
 
     // CRITICAL: Find the existing message to preserve ALL its properties
-    const existingMessage = state.messages.find(msg => msg.id === id);
+    // Look in the target conversation, not just current messages
+    const targetConversation = state.conversations.find(c => c.id === conversationId);
+    const existingMessage = targetConversation?.messages?.find(msg => msg.id === id);
 
     if (!existingMessage) {
-      console.error('⚠️ updateMessage called for non-existent message:', id);
+      chatLogger.error('updateMessageInConversation called for non-existent message:', {
+        messageId: id,
+        conversationId,
+      });
       return;
     }
 
-    console.log("🔍 updateMessage - Before update:", {
+    chatLogger.debug('updateMessageInConversation - Before update:', {
       messageId: id,
+      conversationId,
+      isCurrentConversation,
       wasGeneratedWithC1: existingMessage.wasGeneratedWithC1,
       isC1Streaming: existingMessage.isC1Streaming,
       contentPreview: content.substring(0, 50),
@@ -187,17 +247,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       isC1Streaming: existingMessage.wasGeneratedWithC1 ? false : existingMessage.isC1Streaming,
     };
 
-    // Optimistic update - update both messages and conversations
+    // Optimistic update - update conversations (and messages if current)
     set((state) => {
-      if (!Array.isArray(state.messages)) {
-        console.error('⚠️ state.messages is not an array');
-        return { messages: [] };
-      }
-
-      const messages = state.messages.map((msg) =>
-        msg.id === id ? updatedMessage : msg
-      );
-
       // Update conversation messages WITHOUT updating updatedAt (prevents reload)
       const conversations = state.conversations.map(conv =>
         conv.id === conversationId
@@ -210,6 +261,11 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
             }
           : conv
       );
+
+      // If this is the current conversation, also update messages array
+      const messages = isCurrentConversation
+        ? state.messages.map((msg) => msg.id === id ? updatedMessage : msg)
+        : state.messages;
 
       return { messages, conversations };
     });
@@ -228,17 +284,18 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
           updatePayload.wasGeneratedWithC1 = existingMessage.wasGeneratedWithC1;
         }
 
-        console.log('✅ Syncing to Supabase with flags:', {
+        chatLogger.info('Syncing to Supabase with flags:', {
           messageId: id,
+          conversationId,
           wasGeneratedWithC1: updatePayload.wasGeneratedWithC1,
           isC1Streaming: updatePayload.isC1Streaming,
           contentLength: content.length,
         });
 
         await updateMessageSupabase(id, updatePayload);
-        console.log('✅ Message updated in Supabase');
+        chatLogger.info('Message updated in Supabase');
       } catch (error) {
-        console.error('❌ Failed to update message in Supabase:', error);
+        chatLogger.error('Failed to update message in Supabase:', error);
       }
     }
   },
@@ -287,9 +344,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         videoTask,
         generationAttempt,
       });
-      console.log('✅ Message with attachments updated in Supabase');
+      chatLogger.info('Message with attachments updated in Supabase');
     } catch (error) {
-      console.error('❌ Failed to update message with attachments in Supabase:', error);
+      chatLogger.error('Failed to update message with attachments in Supabase:', error);
     }
   },
 
@@ -302,9 +359,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     // Sync to Supabase
     try {
       await deleteMessageSupabase(id);
-      console.log('✅ Message deleted from Supabase');
+      chatLogger.info('Message deleted from Supabase');
     } catch (error) {
-      console.error('❌ Failed to delete message from Supabase:', error);
+      chatLogger.error('Failed to delete message from Supabase:', error);
     }
   },
 
@@ -320,9 +377,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     // Sync to Supabase
     try {
       await createConvSupabase(conversation);
-      console.log('✅ Conversation created in Supabase');
+      chatLogger.info('Conversation created in Supabase');
     } catch (error) {
-      console.error('❌ Failed to create conversation in Supabase:', error);
+      chatLogger.error('Failed to create conversation in Supabase:', error);
     }
   },
 
@@ -337,9 +394,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     // Sync to Supabase
     try {
       await updateConvSupabase(id, updates);
-      console.log('✅ Conversation updated in Supabase');
+      chatLogger.info('Conversation updated in Supabase');
     } catch (error) {
-      console.error('❌ Failed to update conversation in Supabase:', error);
+      chatLogger.error('Failed to update conversation in Supabase:', error);
     }
   },
 
@@ -352,9 +409,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     // Sync to Supabase
     try {
       await deleteConvSupabase(id);
-      console.log('✅ Conversation deleted from Supabase');
+      chatLogger.info('Conversation deleted from Supabase');
     } catch (error) {
-      console.error('❌ Failed to delete conversation from Supabase:', error);
+      chatLogger.error('Failed to delete conversation from Supabase:', error);
     }
   },
 
@@ -376,18 +433,24 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     // ⚠️ CRITICAL FIX: Don't reload messages if we're already in this conversation
     // and generation is in progress (prevents overwriting during streaming)
     if (id === state.currentConversationId && state.isGenerating) {
-      console.log('⚠️ Skipping message reload - generation in progress for conversation:', id);
+      chatLogger.warn('Skipping message reload - generation in progress for conversation:');
       return;
     }
 
+    // 🎯 UX FIX: Clear messages immediately when switching conversations
+    // This prevents the flash of old messages from the previous conversation
+    if (id !== state.currentConversationId) {
+      set({ messages: [] });
+    }
+
     if (conversation && conversation.messages) {
-      console.log(`🔄 Loading ${conversation.messages.length} messages for conversation ${id}`);
+      chatLogger.info('Loading ${conversation.messages.length} messages for conversation ${id}');
       set({
         currentConversationId: id,
         messages: conversation.messages
       });
     } else {
-      console.log(`🔄 Switching to conversation ${id} (no messages yet)`);
+      chatLogger.info('Switching to conversation ${id} (no messages yet)');
       set({
         currentConversationId: id,
         messages: []

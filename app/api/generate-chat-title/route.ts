@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { apiRateLimiter, getClientId } from "@/lib/rate-limit";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
+import { apiLogger } from '@/lib/logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -83,7 +84,7 @@ Antworte NUR mit der Überschrift, keine Erklärungen oder Anführungszeichen.`,
       title = title.substring(0, 47) + "...";
     }
 
-    console.log("✅ Generated chat title:", title, "from prompt:", prompt.substring(0, 50));
+    apiLogger.info('Generated chat title', { title, originalLength: title.length });
 
     return NextResponse.json({ title });
   } catch (error) {

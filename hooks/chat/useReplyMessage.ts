@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Message, Attachment } from "@/types/chat";
 import { ImageSettingsType } from "@/components/chat/Chat/ImageSettings";
+import { chatLogger } from '@/lib/logger';
 
 export interface UseReplyMessageReturn {
   replyTo: Message | null;
@@ -26,6 +27,19 @@ export function useReplyMessage({
   onImageSettingsChange,
 }: UseReplyMessageOptions): UseReplyMessageReturn {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const imageLoadersRef = useRef<Set<HTMLImageElement>>(new Set());
+
+  useEffect(() => {
+    return () => {
+      // Cleanup all pending image loaders
+      imageLoadersRef.current.forEach(img => {
+        img.onload = null;
+        img.onerror = null;
+        img.src = '';
+      });
+      imageLoadersRef.current.clear();
+    };
+  }, []);
 
   /**
    * Handle replying to a message
@@ -53,7 +67,12 @@ export function useReplyMessage({
         if (imageAttachment && imageAttachment.url) {
           // Load image to detect aspect ratio
           const img = new Image();
+          imageLoadersRef.current.add(img);
+
           img.onload = () => {
+            // Remove from tracking set
+            imageLoadersRef.current.delete(img);
+
             const width = img.naturalWidth;
             const height = img.naturalHeight;
             const ratio = width / height;
@@ -70,13 +89,25 @@ export function useReplyMessage({
             else if (ratio > 1.5) detectedRatio = "16:9"; // Default landscape
             else if (ratio < 0.7) detectedRatio = "9:16"; // Default portrait
 
-            console.log("🖼️ Auto-detected aspect ratio:", detectedRatio, `(${width}x${height}, ratio: ${ratio.toFixed(2)})`);
+            chatLogger.debug('Auto-detected aspect ratio', {
+              width,
+              height,
+              ratio,
+              detectedRatio
+            });
 
             onImageSettingsChange(prev => ({
               ...prev,
               aspectRatio: detectedRatio
             }));
           };
+
+          img.onerror = () => {
+            // Remove from tracking set on error
+            imageLoadersRef.current.delete(img);
+            chatLogger.error('Failed to load image for aspect ratio detection');
+          };
+
           img.src = imageAttachment.url;
         }
       } else if (message.generationType === "video") {
@@ -93,7 +124,12 @@ export function useReplyMessage({
           const imageAttachment = message.attachments.find(att => att.type === "image");
           if (imageAttachment && imageAttachment.url) {
             const img = new Image();
+            imageLoadersRef.current.add(img);
+
             img.onload = () => {
+              // Remove from tracking set
+              imageLoadersRef.current.delete(img);
+
               const width = img.naturalWidth;
               const height = img.naturalHeight;
               const ratio = width / height;
@@ -109,13 +145,25 @@ export function useReplyMessage({
               else if (ratio > 1.5) detectedRatio = "16:9";
               else if (ratio < 0.7) detectedRatio = "9:16";
 
-              console.log("🖼️ Auto-detected aspect ratio (fallback):", detectedRatio, `(${width}x${height}, ratio: ${ratio.toFixed(2)})`);
+              chatLogger.debug('Auto-detected aspect ratio (fallback)', {
+                width,
+                height,
+                ratio,
+                detectedRatio
+              });
 
               onImageSettingsChange(prev => ({
                 ...prev,
                 aspectRatio: detectedRatio
               }));
             };
+
+            img.onerror = () => {
+              // Remove from tracking set on error
+              imageLoadersRef.current.delete(img);
+              chatLogger.error('Failed to load image for aspect ratio detection (fallback)');
+            };
+
             img.src = imageAttachment.url;
           }
         } else if (hasVideo) {

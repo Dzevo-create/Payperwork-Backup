@@ -1,18 +1,32 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { compressAndConvertToBase64 } from "@/lib/imageCompression";
 import { useToast } from "@/hooks/useToast";
+import { logger } from '@/lib/logger';
 
 export function useFileUpload() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const toast = useToast();
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleFileClick = () => {
     fileInputRef.current?.click();
   };
 
   const processFile = async (file: File) => {
+    // Create new abort controller for this upload
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     // Upload file
     const formData = new FormData();
     formData.append("file", file);
@@ -20,6 +34,7 @@ export function useFileUpload() {
     const uploadResponse = await fetch("/api/upload", {
       method: "POST",
       body: formData,
+      signal,
     });
 
     if (!uploadResponse.ok) {
@@ -47,6 +62,7 @@ export function useFileUpload() {
       const parseResponse = await fetch("/api/parse-pdf", {
         method: "POST",
         body: pdfFormData,
+        signal,
       });
 
       if (parseResponse.ok) {
@@ -75,7 +91,11 @@ export function useFileUpload() {
         setAttachments((prev) => [...prev, uploadData]);
       }
     } catch (error) {
-      console.error("File upload error:", error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.debug('File upload aborted');
+        return;
+      }
+      logger.error('File upload error:', error);
       toast.error("Datei-Upload fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setIsUploading(false);
@@ -97,7 +117,11 @@ export function useFileUpload() {
         setAttachments((prev) => [...prev, uploadData]);
       }
     } catch (error) {
-      console.error("File upload error:", error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.debug('File drop upload aborted');
+        return;
+      }
+      logger.error('File upload error:', error);
       toast.error("Datei-Upload fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setIsUploading(false);

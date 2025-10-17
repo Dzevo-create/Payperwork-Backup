@@ -18,6 +18,7 @@ import { useRenderEdit } from "@/hooks/workflows/useRenderEdit";
 import { useUpscale } from "@/hooks/workflows/useUpscale";
 import { getUserId } from "@/lib/supabase/auth";
 import { uploadBase64Image, uploadFile } from "@/lib/supabase-library";
+import { workflowLogger } from '@/lib/logger';
 
 export default function SketchToRenderPage() {
   const router = useRouter();
@@ -72,7 +73,7 @@ export default function SketchToRenderPage() {
           setRecentGenerations(generations);
         }
       } catch (error) {
-        console.error("[Sketch-to-Render] Error loading generations:", error);
+        workflowLogger.error('[Sketch-to-Render] Error loading generations:', error);
       } finally {
         setIsLoadingGenerations(false);
       }
@@ -94,7 +95,7 @@ export default function SketchToRenderPage() {
   }) => {
     try {
       const userId = getUserId();
-      console.log("[SaveGeneration] Attempting to save:", {
+      workflowLogger.debug('[SaveGeneration] Attempting to save:', {
         userId,
         type: generation.type,
         name: generation.name,
@@ -121,17 +122,17 @@ export default function SketchToRenderPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("[SaveGeneration] Failed to save:", {
+        workflowLogger.error('[SaveGeneration] Failed to save:', {
           status: response.status,
           statusText: response.statusText,
           error: errorData
         });
       } else {
         const result = await response.json();
-        console.log("[SaveGeneration] Successfully saved:", result);
+        workflowLogger.info('[SaveGeneration] Successfully saved:');
       }
     } catch (error) {
-      console.error("[Sketch-to-Render] Error saving generation to DB:", error);
+      workflowLogger.error('[Sketch-to-Render] Error saving generation to DB:', error);
     }
   };
 
@@ -216,7 +217,7 @@ export default function SketchToRenderPage() {
       if (uploadedResult) {
         storageImageUrl = uploadedResult;
       } else {
-        console.error("[Upload] Failed to upload result image, using base64");
+        workflowLogger.error('[Upload] Failed to upload result image, using base64');
       }
 
       // Upload source image
@@ -228,11 +229,11 @@ export default function SketchToRenderPage() {
         if (uploadedSource) {
           storageSourceUrl = uploadedSource;
         } else {
-          console.error("[Upload] Failed to upload source image, using base64");
+          workflowLogger.error('[Upload] Failed to upload source image, using base64');
         }
       }
     } catch (error) {
-      console.error("[Upload] Error uploading images:", error);
+      workflowLogger.error('[Upload] Error uploading images:', error);
       // Continue with base64 URLs as fallback
     }
 
@@ -317,7 +318,7 @@ export default function SketchToRenderPage() {
         if (uploadedEdited) {
           storageEditedUrl = uploadedEdited;
         } else {
-          console.error("[Upload] Failed to upload edited image, using base64");
+          workflowLogger.error('[Upload] Failed to upload edited image, using base64');
         }
 
         // Upload previous image (could be base64, storage URL, or Freepik URL)
@@ -352,7 +353,7 @@ export default function SketchToRenderPage() {
           }
         }
       } catch (error) {
-        console.error("[Upload] Error uploading images:", error);
+        workflowLogger.error('[Upload] Error uploading images:', error);
         // Continue with original URLs as fallback
       }
 
@@ -402,7 +403,7 @@ export default function SketchToRenderPage() {
 
   const handleUpscaleSuccess = useCallback(
     async (upscaledImageUrl: string) => {
-      console.log("[Upscale] Success! Displaying upscaled image in Results View");
+      workflowLogger.info('[Upscale] Success! Displaying upscaled image in Results View');
 
       // Generate new name for upscaled image
       const autoName = generateRenderName();
@@ -426,7 +427,7 @@ export default function SketchToRenderPage() {
         if (uploadedUpscaled) {
           storageUpscaledUrl = uploadedUpscaled;
         } else {
-          console.error("[Upload] Failed to upload upscaled image, using Freepik URL");
+          workflowLogger.error('[Upload] Failed to upload upscaled image, using Freepik URL');
         }
 
         // Upload previous image (could be base64, storage URL, or Freepik URL)
@@ -461,7 +462,7 @@ export default function SketchToRenderPage() {
           }
         }
       } catch (error) {
-        console.error("[Upload] Error uploading images:", error);
+        workflowLogger.error('[Upload] Error uploading images:', error);
         // Continue with original URLs as fallback
       }
 
@@ -548,12 +549,12 @@ export default function SketchToRenderPage() {
     const type = mediaType || resultMediaType;
 
     if (!urlToDownload || typeof urlToDownload !== 'string') {
-      console.error("[Download] No valid URL to download", { urlToDownload, type: typeof urlToDownload });
+      workflowLogger.error('[Download] No valid URL to download', { urlToDownload, type: typeof urlToDownload });
       return;
     }
 
     try {
-      console.log("[Download] Starting download:", {
+      workflowLogger.debug('[Download] Starting download:', {
         url: urlToDownload.substring(0, 50) + "...",
         type,
         mediaType,
@@ -570,7 +571,7 @@ export default function SketchToRenderPage() {
 
       const downloadName = filename || `${renderName || `render-${Date.now()}`}${extension}`;
 
-      console.log("[Download] Download info:", {
+      workflowLogger.debug('[Download] Download info:', {
         extension,
         downloadName,
         isVideo: type === "video",
@@ -579,7 +580,7 @@ export default function SketchToRenderPage() {
 
       // For videos and external URLs, use fetch + blob with correct MIME type
       if (type === "video" || urlToDownload.startsWith("http")) {
-        console.log("[Download] Fetching video/external URL");
+        workflowLogger.debug('[Download] Fetching video/external URL');
         const response = await fetch(urlToDownload);
 
         if (!response.ok) {
@@ -589,7 +590,7 @@ export default function SketchToRenderPage() {
         // Get the blob with correct MIME type
         let blob = await response.blob();
 
-        console.log("[Download] Original blob:", {
+        workflowLogger.debug('[Download] Original blob:', {
           size: blob.size,
           type: blob.type
         });
@@ -597,12 +598,12 @@ export default function SketchToRenderPage() {
         // Ensure correct MIME type for videos
         if (type === "video" || extension === ".mp4") {
           if (!blob.type.includes("video")) {
-            console.log("[Download] Correcting MIME type to video/mp4");
+            workflowLogger.debug('[Download] Correcting MIME type to video/mp4');
             blob = new Blob([blob], { type: "video/mp4" });
           }
         }
 
-        console.log("[Download] Final blob:", {
+        workflowLogger.debug('[Download] Final blob:', {
           size: blob.size,
           type: blob.type,
           extension
@@ -621,7 +622,7 @@ export default function SketchToRenderPage() {
         setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
       } else {
         // For base64 data URLs, use direct download
-        console.log("[Download] Using direct base64 download");
+        workflowLogger.debug('[Download] Using direct base64 download');
         const link = document.createElement("a");
         link.href = urlToDownload;
         link.download = downloadName;
@@ -630,9 +631,9 @@ export default function SketchToRenderPage() {
         document.body.removeChild(link);
       }
 
-      console.log("[Download] Download completed:", downloadName);
+      workflowLogger.debug('[Download] Download completed:');
     } catch (error) {
-      console.error("[Download] Download failed:", error);
+      workflowLogger.error('[Download] Download failed:', error);
       alert("Download fehlgeschlagen. Bitte versuche es erneut.");
     }
   };
@@ -673,7 +674,7 @@ export default function SketchToRenderPage() {
         }
       }
 
-      console.log("[Sketch-to-Render] Starting Runway video generation...");
+      workflowLogger.debug('[Sketch-to-Render] Starting Runway video generation...');
 
       const response = await fetch("/api/generate-runway-video", {
         method: "POST",
@@ -693,7 +694,7 @@ export default function SketchToRenderPage() {
       }
 
       const data = await response.json();
-      console.log("[Sketch-to-Render] Video generated:", data.videoUrl);
+      workflowLogger.debug('[Sketch-to-Render] Video generated:');
 
       // Generate new name for video
       const autoName = generateRenderName().replace("sketchtorender", "v.turbo");
@@ -738,7 +739,7 @@ export default function SketchToRenderPage() {
 
       alert("Video erfolgreich erstellt! ✨");
     } catch (error: any) {
-      console.error("[Sketch-to-Render] Video generation error:", error);
+      workflowLogger.error('[Sketch-to-Render] Video generation error:', error);
       alert(`Video-Generierung fehlgeschlagen: ${error.message}`);
     } finally {
       setIsGeneratingVideo(false);
@@ -751,11 +752,13 @@ export default function SketchToRenderPage() {
     const imageToUpscale = gen?.imageUrl || resultImage;
 
     if (!imageToUpscale) {
-      console.error("[Upscale] No image to upscale");
+      workflowLogger.error('[Upscale] No image to upscale');
       return;
     }
 
-    console.log("[Upscale] Starting upscale for:", imageToUpscale?.substring(0, 50) + "...");
+    workflowLogger.debug('Starting upscale for image', {
+      urlPreview: imageToUpscale.substring(0, 50) + "..."
+    });
 
     // Use default upscale settings (good quality)
     await upscale(imageToUpscale, {
@@ -1042,7 +1045,7 @@ export default function SketchToRenderPage() {
                                 body: JSON.stringify({ generationId: id }),
                               });
                             } catch (error) {
-                              console.error("[Sketch-to-Render] Error deleting generation:", error);
+                              workflowLogger.error('[Sketch-to-Render] Error deleting generation:', error);
                             }
                           }}
                           onEdit={handleLoadForEdit}

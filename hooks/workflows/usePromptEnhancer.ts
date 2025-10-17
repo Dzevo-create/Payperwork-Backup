@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 
 interface ImageData {
   file: File | null;
@@ -44,7 +45,7 @@ export function usePromptEnhancer(options: UsePromptEnhancerOptions = {}) {
     async (
       userPrompt: string,
       sourceImage: ImageData,
-      settings: RenderSettingsType,
+      settings: RenderSettingsType | BrandingSettingsType,
       referenceImage?: ImageData
     ): Promise<string | null> => {
       // Validation
@@ -68,7 +69,7 @@ export function usePromptEnhancer(options: UsePromptEnhancerOptions = {}) {
         const payload: {
           userPrompt: string | null;
           sourceImage: { data: string; mimeType: string };
-          settings: RenderSettingsType;
+          settings: RenderSettingsType | BrandingSettingsType;
           referenceImage?: { data: string; mimeType: string };
         } = {
           userPrompt: userPrompt.trim() || null,

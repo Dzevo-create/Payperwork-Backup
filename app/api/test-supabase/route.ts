@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { apiRateLimiter, getClientId } from "@/lib/rate-limit";
 import { validateApiKeys } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
+import { apiLogger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   const clientId = getClientId(req);
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
       return rateLimitErrorResponse(rateLimitResult.reset);
     }
 
-    console.log('🧪 Testing Supabase connection...');
+    apiLogger.debug('🧪 Testing Supabase connection...');
 
     // Test 1: Check tables exist
     const { data: conversations, error: convError } = await supabase

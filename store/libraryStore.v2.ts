@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { LibraryItem, LibraryFilters, LibraryStore } from '@/types/library';
 import * as supabaseLibrary from '@/lib/supabase-library';
+import { chatLogger } from '@/lib/logger';
 
 export const useLibraryStore = create<LibraryStore>()((set, get) => ({
   items: [],
@@ -40,7 +41,7 @@ export const useLibraryStore = create<LibraryStore>()((set, get) => ({
 
   // Add item (compatible with old API)
   addItem: async (itemData) => {
-    console.log('📚 Adding to library (Supabase):', itemData);
+    chatLogger.debug('📚 Adding to library (Supabase):');
 
     // Save to Supabase (will upload base64 if needed)
     const newItem = await supabaseLibrary.addLibraryItem(itemData);
@@ -53,7 +54,7 @@ export const useLibraryStore = create<LibraryStore>()((set, get) => ({
         return { items, unseenCount };
       });
     } else {
-      console.error('❌ Failed to add item to library - addLibraryItem returned null');
+      chatLogger.error('Failed to add item to library - addLibraryItem returned null');
       throw new Error('Failed to add item to library');
     }
   },

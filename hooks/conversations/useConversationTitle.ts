@@ -10,6 +10,7 @@
 
 import { useCallback, useState } from 'react';
 import { useChatStore } from '@/store/chatStore.supabase';
+import { logger } from '@/lib/logger';
 
 export interface UseConversationTitleReturn {
   /** Generate title from first message */
@@ -59,6 +60,8 @@ export function useConversationTitle(): UseConversationTitleReturn {
       setIsGenerating(true);
       setError(null);
 
+      const abortController = new AbortController();
+
       try {
         const conversation = conversations.find((c) => c.id === conversationId);
         if (!conversation) {
@@ -77,6 +80,7 @@ export function useConversationTitle(): UseConversationTitleReturn {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: firstUserMessage.content }),
+          signal: abortController.signal,
         });
 
         if (!response.ok) {
@@ -88,12 +92,17 @@ export function useConversationTitle(): UseConversationTitleReturn {
         // Update conversation
         await updateConversation(conversationId, { title });
 
-        console.log('Generated title:', title);
+        logger.debug('Generated title:');
         return title;
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          logger.debug('Title generation aborted');
+          return '';
+        }
+
         const message = err instanceof Error ? err.message : 'Failed to generate title';
         setError(message);
-        console.error('Failed to generate title:', err);
+        logger.error('Failed to generate title:', err);
 
         // Fallback: Use first message content
         const conversation = conversations.find((c) => c.id === conversationId);

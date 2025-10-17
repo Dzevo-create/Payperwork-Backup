@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { Loader2, X, FileText } from "lucide-react";
 import { Message, Attachment } from "@/types/chat";
 import { ImageAttachment } from "../Chat/ImageAttachment";
@@ -7,6 +8,7 @@ import { VideoAttachment } from "../Chat/VideoAttachment";
 import { VideoGenerationPlaceholder } from "../VideoGenerationPlaceholder";
 import { ImageGenerationPlaceholder } from "../ImageGenerationPlaceholder";
 import { getImageGridLayout } from "@/lib/utils/messageFormatting";
+import { chatLogger } from '@/lib/logger';
 
 interface MessageAttachmentsProps {
   message: Message;
@@ -16,7 +18,7 @@ interface MessageAttachmentsProps {
   onReplyMessage?: (message: Message, specificAttachment?: Attachment) => void;
 }
 
-export function MessageAttachments({
+export const MessageAttachments = memo(function MessageAttachments({
   message,
   isStreamingMessage,
   setLightboxImage,
@@ -41,8 +43,18 @@ export function MessageAttachments({
     return null;
   }
 
+  // Memoize filtered attachments to avoid recalculating on every render
+  const images = useMemo(
+    () => message.attachments?.filter((att) => att.type === "image") || [],
+    [message.attachments]
+  );
+
+  const otherAttachments = useMemo(
+    () => message.attachments?.filter((att) => att.type !== "image") || [],
+    [message.attachments]
+  );
+
   const renderImageAttachments = () => {
-    const images = message.attachments?.filter((att) => att.type === "image") || [];
     if (images.length === 0) return null;
 
     const layout = getImageGridLayout(
@@ -96,14 +108,12 @@ export function MessageAttachments({
   };
 
   const renderOtherAttachments = () => {
-    const otherAttachments =
-      message.attachments?.filter((att) => att.type !== "image") || [];
     if (otherAttachments.length === 0) return null;
 
     // Debug log for video attachments
     const videoAttachments = otherAttachments.filter((att) => att.type === "video");
     if (videoAttachments.length > 0) {
-      console.log("🎥 Video attachments found:", {
+      chatLogger.debug('Video attachments found', {
         messageId: message.id,
         videoCount: videoAttachments.length,
         attachments: videoAttachments.map(att => ({
@@ -181,4 +191,4 @@ export function MessageAttachments({
       {renderVideoGenerationStatus()}
     </div>
   );
-}
+});
