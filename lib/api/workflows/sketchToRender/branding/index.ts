@@ -135,50 +135,114 @@ export async function generateBrandingPrompt(
   });
 
   try {
-    // Step 1: Analyze brand
+    // Step 1: Analyze brand if provided
     const { guidelines } = await analyzeBrand(settings);
 
-    // Step 2: Build brand context
+    // Step 2: Build T-Button system prompt (SPECIFIC for T-Button, different from enhancement!)
+    const systemPrompt = `You are a Brand Space Visualization Expert specializing in analyzing spaces and generating detailed prompts for branded environment renderings.
+
+Analyze the provided space image and generate a COMPLETE, DETAILED prompt for transforming it into a branded space.
+
+Your prompt should focus on FURNISHINGS and OBJECTS that FILL the space, not just architectural finishes.
+
+Please include:
+- 5-7 specific furniture items (sofas, chairs, tables, shelving units, display cases, counters)
+- 3-4 decorative elements (wall art, plants, sculptures, rugs, cushions)
+- 2-3 lighting fixtures (chandeliers, floor lamps, spotlights, pendant lights)
+- Product displays or brand merchandising (if retail/hospitality)
+- Seating areas or functional zones
+- Brand-specific colors and materials
+- Atmospheric details (ambiance, style, feeling)
+
+Please focus on describing what fills the space (furniture, displays, decor), not just walls, floors, and ceilings. Describe the desired furnished end result with specific objects.
+
+FORMATTING RULES (CRITICAL):
+- Write as FLOWING TEXT, like a natural paragraph
+- NO numbered lists or bullet points
+- NO markdown formatting (no asterisks ** for bold, no _ for italics, no # for headers)
+- Use commas and connecting words to create smooth flowing sentences
+- Describe everything in continuous prose
+- Write naturally, like describing a scene to someone
+
+BAD EXAMPLE (only architecture):
+"Polished marble floors with dark inlays. Cream-colored stone walls. Dark gray marble columns. Coffered ceiling with ambient lighting."
+
+GOOD EXAMPLE (furniture-focused as flowing text):
+"Exact same camera angle and perspective as source. Transform this space into a Nike flagship retail store. Sleek modern interior with polished concrete floors and white walls featuring bold black Nike swoosh logos. Central display area with illuminated glass shelving showcasing signature sneakers like Air Jordan and Air Max. Comfortable seating area with black leather benches and orange accent cushions for trying on shoes. Large floor-to-ceiling LED screens displaying athlete imagery and brand campaigns. Minimalist product displays with floating shelves holding featured footwear collections. Industrial-style pendant lighting with focused spotlights highlighting key products. Brand colors of black, white, and vibrant orange throughout the space. Potted greenery accent plants adding freshness. Modern retail ambiance with high-end finishes and welcoming atmosphere."
+
+Generate a comprehensive, furniture-focused prompt that could be used directly for image generation.
+Output ONLY the prompt text as flowing prose, no formatting, no explanations.`;
+
+    // Step 3: Build user message
+    let userMessage = `Analyze this space and generate a detailed prompt for transforming it into a photorealistic branded environment rendering.`;
+
+    // Add brand guidelines
     const brandContext = formatBrandContext(
       guidelines,
       settings?.brandingText,
       settings?.venueType
     );
 
-    // Step 3: Build T-Button user message
-    let userMessage = `Analyze this space and generate a detailed prompt for transforming it into a photorealistic branded environment rendering.`;
-
     if (brandContext) {
       userMessage += `\n\n${brandContext}`;
     }
 
+    // Add user hint if provided
     if (userPrompt) {
       userMessage += `\n\nUser preference: ${userPrompt}`;
     }
 
-    // Add settings context
+    // Add settings
     if (settings?.renderStyle) {
       userMessage += `\n\nRender style: ${settings.renderStyle}`;
     }
     if (settings?.timeOfDay) {
       userMessage += `\n\nTime of day: ${settings.timeOfDay}`;
     }
-    if (settings?.preserveEmptySpace) {
-      userMessage += `\n\nKeep spaces minimal and unfurnished.`;
-    } else {
-      userMessage += `\n\nFill the space with furniture, decorations, and brand elements.`;
+
+    // Add critical instruction about empty space handling
+    if (!settings?.preserveEmptySpace) {
+      userMessage += `\n\nPlease generate a furniture-rich prompt that describes a fully furnished space:
+- Include around 5-7 specific furniture items (sofas, chairs, tables, shelving, display cases, counters)
+- Include around 3-4 decorative elements (wall art, plants, sculptures, rugs)
+- Include around 2-3 lighting fixtures (chandeliers, lamps, spotlights, pendant lights)
+- Describe seating areas, product displays, or functional brand zones
+- Focus on objects and furnishings that fill the space, not just architectural finishes
+- Describe the desired furnished result, not the current empty state`;
     }
 
-    userMessage += `\n\nStart with: "Exact same camera angle and perspective as source. Transform this space into a ${settings?.brandingText || "branded"} ${settings?.venueType || "space"}."`;
+    userMessage += `\n\nGenerate a complete, detailed prompt that preserves the exact camera angle and transforms this space into a branded environment.`;
 
-    // Step 4: Build messages (with reference images if provided)
-    const messages = buildMessagesWithImages(
-      userMessage,
-      sourceImage,
-      referenceImages
-    );
+    // Step 4: Build messages with images (using the T-Button specific system prompt!)
+    const messages: any[] = [
+      { role: "system", content: systemPrompt }
+    ];
 
-    // Step 5: Call API
+    const userContent: any[] = [{ type: "text", text: userMessage }];
+
+    // Add reference images if provided
+    if (referenceImages && referenceImages.length > 0) {
+      for (const refImage of referenceImages) {
+        userContent.push({
+          type: "image_url",
+          image_url: {
+            url: `data:${refImage.mimeType};base64,${refImage.data}`,
+          },
+        });
+      }
+    }
+
+    // Add source image LAST
+    userContent.push({
+      type: "image_url",
+      image_url: {
+        url: `data:${sourceImage.mimeType};base64,${sourceImage.data}`,
+      },
+    });
+
+    messages.push({ role: "user", content: userContent });
+
+    // Step 5: Call API (still uses GPT-4o but with the correct system prompt now!)
     const generatedPrompt = await callBrandingEnhancement(
       messages,
       settings?.brandingText

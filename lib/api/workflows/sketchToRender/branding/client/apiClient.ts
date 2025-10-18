@@ -21,14 +21,6 @@ export async function callBrandingEnhancement(
     brand: brandName,
   });
 
-  // TEMP DEBUG: Log user message content (text only, not images)
-  const userMessage = messages.find(m => m.role === "user");
-  const textContent = userMessage?.content?.find((c: any) => c.type === "text");
-  apiLogger.debug("T-Button user message text", {
-    brand: brandName,
-    userMessageText: textContent?.text,
-  });
-
   const response = await retryWithBackoff(
     () =>
       openaiClient.chat.completions.create({
@@ -54,12 +46,6 @@ export async function callBrandingEnhancement(
       contentLength: response.choices[0].message?.content?.length || 0,
       refusal: response.choices[0].message?.refusal,
     } : null,
-  });
-
-  // TEMP DEBUG: Log actual response content
-  apiLogger.debug("GPT-4o actual response content", {
-    brand: brandName,
-    content: response.choices[0]?.message?.content,
   });
 
   const enhancedPrompt = response.choices[0]?.message?.content?.trim();
