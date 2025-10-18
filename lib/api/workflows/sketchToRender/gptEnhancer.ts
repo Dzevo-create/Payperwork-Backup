@@ -245,11 +245,32 @@ Keep prompts under 80 words. Output ONLY the prompt.`;
 
   userMessage += `\n\nMUST start with: "Exact same camera angle and perspective as source. Fully photorealistic, no sketch lines."`;
 
+  // OpenAI message types
+  interface TextContent {
+    type: "text";
+    text: string;
+  }
+
+  interface ImageContent {
+    type: "image_url";
+    image_url: {
+      url: string;
+      detail: "high" | "low";
+    };
+  }
+
+  type MessageContent = TextContent | ImageContent;
+
+  interface ChatMessage {
+    role: "system" | "user";
+    content: string | MessageContent[];
+  }
+
   // Build messages with images
-  const messages: any[] = [{ role: "system", content: systemMessage }];
+  const messages: ChatMessage[] = [{ role: "system", content: systemMessage }];
 
   // Add user message with source image
-  const userContent: any[] = [
+  const userContent: MessageContent[] = [
     { type: "text", text: userMessage },
     {
       type: "image_url",
@@ -285,11 +306,12 @@ Keep prompts under 80 words. Output ONLY the prompt.`;
   });
 
   try {
+    // Cast messages to any for OpenAI SDK compatibility (SDK uses complex internal types)
     const response = await retryWithBackoff(
       () =>
         openaiClient.chat.completions.create({
           model: "gpt-4o",
-          messages,
+          messages: messages as never, // OpenAI SDK requires complex ChatCompletionMessageParam[] type
           temperature: 0.3, // Lower temperature for more consistent structure preservation
           max_tokens: 200, // Shorter prompts
         }),

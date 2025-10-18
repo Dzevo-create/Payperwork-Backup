@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { LibraryItem, LibraryFilters, LibraryStore } from "@/types/library";
+import { libraryLogger } from "@/lib/logger";
 
 export const useLibraryStore = create<LibraryStore>()(
   persist(
@@ -113,7 +114,7 @@ export const useLibraryStore = create<LibraryStore>()(
             localStorage.setItem(name, JSON.stringify(value));
           } catch (error) {
             // QuotaExceededError - clear old items and retry
-            console.warn("localStorage quota exceeded, clearing old items...");
+            libraryLogger.warn("localStorage quota exceeded, clearing old items", { name });
             const state = value?.state;
             if (state?.items && Array.isArray(state.items)) {
               // Keep only last 20 items
@@ -124,7 +125,7 @@ export const useLibraryStore = create<LibraryStore>()(
               try {
                 localStorage.setItem(name, JSON.stringify({ ...value, state: reducedState }));
               } catch (retryError) {
-                console.error("Failed to save to localStorage even after reducing items");
+                libraryLogger.error("Failed to save to localStorage even after reducing items", retryError instanceof Error ? retryError : undefined, { name });
               }
             }
           }

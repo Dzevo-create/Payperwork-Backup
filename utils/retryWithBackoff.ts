@@ -10,8 +10,8 @@ export interface RetryOptions {
   initialDelay?: number;
   maxDelay?: number;
   backoffMultiplier?: number;
-  shouldRetry?: (error: any, attempt: number) => boolean;
-  onRetry?: (error: any, attempt: number, delay: number) => void;
+  shouldRetry?: (error: Error, attempt: number) => boolean;
+  onRetry?: (error: Error, attempt: number, delay: number) => void;
 }
 
 const DEFAULT_OPTIONS: Required<RetryOptions> = {
@@ -19,11 +19,11 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
   initialDelay: 1000, // 1 second
   maxDelay: 10000, // 10 seconds
   backoffMultiplier: 2,
-  shouldRetry: (error: any) => {
+  shouldRetry: (error: Error & { status?: number }) => {
     // Default: Retry on network errors, timeouts, and 5xx errors
     if (error.name === 'AbortError') return false; // Don't retry user cancellations
     if (error.message?.includes('timeout')) return true;
-    if (error.status >= 500) return true;
+    if (error.status && error.status >= 500) return true;
     if (error.message?.includes('network')) return true;
     return false;
   },
@@ -73,14 +73,14 @@ export async function retryWithBackoff<T>(
   options: RetryOptions = {}
 ): Promise<T> {
   const config = { ...DEFAULT_OPTIONS, ...options };
-  let lastError: any;
+  let lastError: Error | undefined;
 
   for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
     try {
       const result = await operation();
       return result;
-    } catch (error: any) {
-      lastError = error;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
 
       // Check if we should retry this error
       const shouldRetry = config.shouldRetry(error, attempt);
@@ -118,7 +118,7 @@ export const imageGenerationRetryConfig: RetryOptions = {
   initialDelay: 2000, // 2 seconds initial delay
   maxDelay: 15000, // 15 seconds max delay
   backoffMultiplier: 2,
-  shouldRetry: (error: any, _attempt: number) => {
+  shouldRetry: (error: Error & { status?: number }, _attempt: number) => {
     // Don't retry user cancellations
     if (error.name === 'AbortError') return false;
 
@@ -136,7 +136,7 @@ export const imageGenerationRetryConfig: RetryOptions = {
     // Retry all other errors (network, 500, etc.)
     return true;
   },
-  onRetry: (error: any, attempt: number, delay: number) => {
+  onRetry: (error: Error & { status?: number }, attempt: number, delay: number) => {
     logger.info(`Image generation retry ${attempt}/4 after ${delay}ms`, {
       error: error.message,
       status: error.status,
@@ -160,7 +160,10 @@ export async function fetchWithRetryBackoff(
 
     // Create error with status code for retry logic
     if (!response.ok) {
-      const error: any = new Error(`HTTP ${response.status}`);
+      const error = new Error(`HTTP ${response.status}`) as Error & {
+        status: number;
+        response: Response;
+      };
       error.status = response.status;
       error.response = response;
       throw error;

@@ -2,11 +2,20 @@
 
 import { useState, useCallback } from 'react';
 
+export interface LightboxItem {
+  id: string;
+  imageUrl: string;
+  timestamp: Date;
+  name?: string;
+  prompt?: string;
+  type?: 'render' | 'video' | 'upscale';
+}
+
 export interface UseWorkflowLightbox {
   lightboxOpen: boolean;
-  lightboxItem: any | null;
+  lightboxItem: LightboxItem | null;
   lightboxIndex: number;
-  openLightbox: (item: any, index: number) => void;
+  openLightbox: (item: LightboxItem, index: number) => void;
   closeLightbox: () => void;
   setLightboxIndex: (index: number) => void;
 }
@@ -17,10 +26,10 @@ export interface UseWorkflowLightbox {
  */
 export function useWorkflowLightbox(): UseWorkflowLightbox {
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxItem, setLightboxItem] = useState<any | null>(null);
+  const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  const openLightbox = useCallback((item: any, index: number) => {
+  const openLightbox = useCallback((item: LightboxItem, index: number) => {
     setLightboxItem(item);
     setLightboxIndex(index);
     setLightboxOpen(true);

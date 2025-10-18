@@ -35,9 +35,20 @@ import {
 } from "@/hooks/workflows";
 
 /**
+ * Workflow generation result interface
+ */
+export interface WorkflowGenerationResult {
+  imageUrl: string;
+  id?: string;
+  timestamp?: Date;
+  prompt?: string;
+  settings?: Record<string, unknown>;
+}
+
+/**
  * Workflow Configuration Interface
  */
-export interface WorkflowPageConfig<TSettings = any> {
+export interface WorkflowPageConfig<TSettings = Record<string, unknown>> {
   /** Workflow name (e.g. "Sketch to Render") */
   name: string;
 
@@ -56,30 +67,39 @@ export interface WorkflowPageConfig<TSettings = any> {
     onEnhancePrompt?: () => void;
     isEnhancing?: boolean;
     disabled?: boolean;
-    settings: any;
-    onSettingsChange: (settings: any) => void;
+    settings: TSettings;
+    onSettingsChange: (settings: TSettings) => void;
   }>;
 
   /** Hooks */
   hooks: {
     useGenerate: () => {
-      generate: (params: any) => Promise<any>;
+      generate: (params: {
+        prompt: string;
+        settings: TSettings;
+        sourceImage: string | null;
+        referenceImages: (string | null)[];
+      }) => Promise<WorkflowGenerationResult | null>;
       isGenerating: boolean;
       error: string | null;
       progress: number;
     };
-    useEnhance?: (sourceImage: string | null, settings: any) => {
+    useEnhance?: (sourceImage: string | null, settings: TSettings) => {
       enhance: (prompt: string) => Promise<string>;
       isEnhancing: boolean;
       error: string | null;
     };
     useEdit?: () => {
-      edit: (params: any) => Promise<any>;
+      edit: (params: {
+        editPrompt: string;
+        currentImageUrl: string;
+        originalPrompt: string;
+      }) => Promise<WorkflowGenerationResult | null>;
       isEditing: boolean;
       error: string | null;
     };
     useUpscale?: () => {
-      upscale: (params: any) => Promise<any>;
+      upscale: (params: { imageUrl: string }) => Promise<string | null>;
       isUpscaling: boolean;
       error: string | null;
     };
@@ -98,11 +118,11 @@ export interface WorkflowPageConfig<TSettings = any> {
   }) => ReactNode;
 }
 
-interface WorkflowPageProps<TSettings = any> {
+interface WorkflowPageProps<TSettings = Record<string, unknown>> {
   config: WorkflowPageConfig<TSettings>;
 }
 
-export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSettings>) {
+export function WorkflowPage<TSettings = Record<string, unknown>>({ config }: WorkflowPageProps<TSettings>) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -205,7 +225,7 @@ export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSet
     }
   };
 
-  const handleUpscale = async (gen?: any) => {
+  const handleUpscale = async (gen?: { imageUrl: string }) => {
     const imageToUpscale = gen?.imageUrl || workflowState.resultImage;
     if (!imageToUpscale || !upscaleHook) {
       workflowLogger.error('[Upscale] No image to upscale');
@@ -415,7 +435,7 @@ export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSet
                             const mediaType = isVideo ? "video" : "image";
                             const extension = isVideo ? ".mp4" : ".jpg";
 
-                            console.log('[WorkflowPage] Download Debug:', {
+                            workflowLogger.debug('Download Debug', {
                               genType: gen.type,
                               genMediaType: (gen as any).mediaType ?? 'unknown',
                               isVideo,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { logger } from '@/lib/logger';
 
 /**
  * CORS & Security Middleware
@@ -126,7 +127,7 @@ export function middleware(request: NextRequest) {
   // Check if origin header is present and allowed
   if (origin) {
     if (!allowedOrigins.includes(origin)) {
-      console.log(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      logger.warn('Blocked request from unauthorized origin', { origin, component: 'CORS' });
       return NextResponse.json(
         { error: 'Forbidden', message: 'Origin not allowed' },
         { status: 403 }

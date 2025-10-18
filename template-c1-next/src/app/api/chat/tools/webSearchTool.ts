@@ -11,6 +11,7 @@ import {
   GoogleCustomSearchResponseItem,
   TransformedWebResult,
 } from "../types/search";
+import { apiLogger } from "@/lib/logger";
 
 /**
  * Transforms Google search response to a more usable format
@@ -166,7 +167,7 @@ export const googleWebSearchTool = (
                 url,
               };
             } catch (error) {
-              console.error(`Error processing ${url}:`, error);
+              apiLogger.error(`Error processing ${url}`, error instanceof Error ? error : undefined, { url });
               return {
                 summary: "Processing failed.",
                 url,

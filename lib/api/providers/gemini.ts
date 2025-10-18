@@ -51,7 +51,10 @@ export const IMAGE_ASPECT_RATIO_DESCRIPTIONS: Record<string, string> = {
 };
 
 // Build enhanced prompt with settings
-export function buildEnhancedImagePrompt(prompt: string, settings: any): string {
+export function buildEnhancedImagePrompt(
+  prompt: string,
+  settings: Record<string, unknown>
+): string {
   let enhancedPrompt = prompt;
 
   if (!settings) return enhancedPrompt;
@@ -109,9 +112,17 @@ export function buildEnhancedImagePrompt(prompt: string, settings: any): string 
   return enhancedPrompt;
 }
 
+// Gemini generation configuration interface
+interface GeminiGenerationConfig {
+  responseModalities: string[];
+  imageConfig?: {
+    aspectRatio: string;
+  };
+}
+
 // Build generation configuration
-export function buildGenerationConfig(settings: any): any {
-  const generationConfig: any = {
+export function buildGenerationConfig(settings: Record<string, unknown>): GeminiGenerationConfig {
+  const generationConfig: GeminiGenerationConfig = {
     responseModalities: ["IMAGE"],
   };
 
@@ -125,12 +136,26 @@ export function buildGenerationConfig(settings: any): any {
   return generationConfig;
 }
 
+// Gemini content part types
+interface TextPart {
+  text: string;
+}
+
+interface InlineDataPart {
+  inlineData: {
+    mimeType: string;
+    data: string;
+  };
+}
+
+type ContentPart = TextPart | InlineDataPart;
+
 // Build content parts for image generation
 export function buildContentParts(
   enhancedPrompt: string,
   referenceImages?: Array<{ data: string; mimeType: string }>
-): any[] {
-  const parts: any[] = [{ text: enhancedPrompt }];
+): ContentPart[] {
+  const parts: ContentPart[] = [{ text: enhancedPrompt }];
 
   // Add reference images if provided (for editing/character consistency)
   if (referenceImages && Array.isArray(referenceImages)) {
@@ -149,9 +174,26 @@ export function buildContentParts(
   return parts;
 }
 
+// Gemini response interfaces
+interface GeminiCandidate {
+  content?: {
+    parts?: Array<{ inlineData?: { data: string; mimeType: string } }>;
+  };
+  inlineData?: { data: string; mimeType: string };
+  parts?: Array<{ inlineData?: { data: string; mimeType: string } }>;
+}
+
+interface GeminiResponse {
+  candidates?: GeminiCandidate[];
+}
+
+interface GeminiResult {
+  response: GeminiResponse;
+}
+
 // Parse image from Gemini response
 export function parseImageFromResponse(
-  result: any,
+  result: GeminiResult,
   index: number,
   numImages: number,
   clientId: string
@@ -170,7 +212,7 @@ export function parseImageFromResponse(
   // Try different possible response structures
   // Option 1: Check if parts array exists in content
   if (candidates[0].content?.parts && Array.isArray(candidates[0].content.parts)) {
-    const imagePart = candidates[0].content.parts.find((part: any) => part.inlineData);
+    const imagePart = candidates[0].content.parts.find((part) => part.inlineData);
     if (imagePart?.inlineData) {
       imageData = imagePart.inlineData.data;
       mimeType = imagePart.inlineData.mimeType;
@@ -185,7 +227,7 @@ export function parseImageFromResponse(
 
   // Option 3: Check if parts is directly on candidate
   if (!imageData && candidates[0].parts && Array.isArray(candidates[0].parts)) {
-    const imagePart = candidates[0].parts.find((part: any) => part.inlineData);
+    const imagePart = candidates[0].parts.find((part) => part.inlineData);
     if (imagePart?.inlineData) {
       imageData = imagePart.inlineData.data;
       mimeType = imagePart.inlineData.mimeType;
@@ -210,15 +252,20 @@ export function parseImageFromResponse(
   };
 }
 
+// Gemini model interface (compatible with Google Generative AI SDK GenerativeModel)
+export interface GeminiModel {
+  generateContent: (params: unknown) => Promise<GeminiResult>;
+}
+
 // Generate a single image with retry logic
 export async function generateSingleImage(
-  model: any,
-  parts: any[],
-  generationConfig: any,
+  model: GeminiModel,
+  parts: ContentPart[],
+  generationConfig: GeminiGenerationConfig,
   index: number,
   numImages: number,
   clientId: string
-) {
+): Promise<GeminiResult> {
   return await retryWithBackoff(
     async () => {
       apiLogger.debug(`Calling Gemini API for image generation ${index + 1}/${numImages}`, {
@@ -232,7 +279,7 @@ export async function generateSingleImage(
     },
     {
       ...imageGenerationRetryConfig,
-      onRetry: (error: any, attempt: number, delay: number) => {
+      onRetry: (error: Error, attempt: number, delay: number) => {
         apiLogger.warn(
           `Retrying image generation ${index + 1}/${numImages} (attempt ${attempt}/4)`,
           {

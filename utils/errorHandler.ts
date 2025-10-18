@@ -45,7 +45,7 @@ const ERROR_MESSAGES: ErrorMap = {
 /**
  * Get user-friendly error message from error code or API response
  */
-export function getErrorMessage(error: any): string {
+export function getErrorMessage(error: unknown): string {
   // If error is a string, check if it's a known error code
   if (typeof error === 'string') {
     // Check for quota exceeded message
@@ -98,7 +98,7 @@ export function getErrorMessage(error: any): string {
  */
 export async function handleApiResponse(response: Response): Promise<Response> {
   if (!response.ok) {
-    let errorData: any = {};
+    let errorData: Record<string, unknown> = {};
 
     try {
       errorData = await response.json();
@@ -123,7 +123,7 @@ export async function handleApiResponse(response: Response): Promise<Response> {
 /**
  * Extract and format error for display
  */
-export function formatErrorForDisplay(error: any): {
+export function formatErrorForDisplay(error: unknown): {
   title: string;
   message: string;
   retryable: boolean;

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Message, Conversation, ChatError } from '@/types/chat';
 import * as supabaseChat from '@/lib/supabase-chat';
+import { chatLogger } from '@/lib/logger';
 
 interface ChatStore {
   // State
@@ -94,7 +95,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   },
 
   updateMessageWithAttachments: async (id, content, attachments, videoTask) => {
-    console.log("💾 updateMessageWithAttachments CALLED (Supabase):", { id, content, attachments, videoTask });
+    chatLogger.debug("updateMessageWithAttachments CALLED (Supabase)", { id, content, attachments, videoTask });
 
     // Optimistically update UI
     set((state) => ({

@@ -102,7 +102,7 @@ export function prepareImagesForGeneration(
  * @param sourceImage - The source image to validate
  * @returns Validation result with error message if invalid
  */
-export function validateSourceImage(sourceImage: any): ValidationResult {
+export function validateSourceImage(sourceImage: unknown): ValidationResult {
   if (!sourceImage) {
     return {
       valid: false,
@@ -157,7 +157,7 @@ export function validateSourceImage(sourceImage: any): ValidationResult {
  * @param referenceImages - Array of reference images to validate
  * @returns Validation result with error message if invalid
  */
-export function validateReferenceImages(referenceImages?: any[]): ValidationResult {
+export function validateReferenceImages(referenceImages?: unknown[]): ValidationResult {
   // Reference images are optional
   if (!referenceImages || referenceImages.length === 0) {
     return { valid: true };
@@ -215,8 +215,8 @@ export function validateReferenceImages(referenceImages?: any[]): ValidationResu
  * @returns Validation result with error message if invalid
  */
 export function validateImages(
-  sourceImage: any,
-  referenceImages?: any[]
+  sourceImage: unknown,
+  referenceImages?: unknown[]
 ): ValidationResult {
   // Validate source image first
   const sourceValidation = validateSourceImage(sourceImage);

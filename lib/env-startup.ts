@@ -9,6 +9,7 @@
  */
 
 import { validateEnvironmentIfServer } from './validateEnv';
+import { logger } from './logger';
 
 // Validate immediately on import (server-side only)
 // This will throw and prevent the app from starting if env vars are missing
@@ -17,15 +18,8 @@ if (typeof window === 'undefined') {
     validateEnvironmentIfServer();
   } catch (error) {
     // Log the error with full details
-    console.error('\n' + '='.repeat(80));
-    console.error('ENVIRONMENT VALIDATION FAILED');
-    console.error('='.repeat(80));
-    if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error('Unknown error:', error);
-    }
-    console.error('='.repeat(80) + '\n');
+    const separator = '='.repeat(80);
+    logger.error(`\n${separator}\nENVIRONMENT VALIDATION FAILED\n${separator}`, error instanceof Error ? error : undefined);
 
     // In development, throw to prevent server from starting
     // In production, also throw - we don't want to run with missing keys

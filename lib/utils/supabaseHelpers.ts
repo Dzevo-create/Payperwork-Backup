@@ -20,7 +20,7 @@ export function initUserContext(): string {
  */
 export async function executeWithUserContext<T>(
   operation: string,
-  queryFn: (userId: string) => Promise<{ data: T | null; error: any }>
+  queryFn: (userId: string) => Promise<{ data: T | null; error: Error | null }>
 ): Promise<T | null> {
   try {
     const userId = initUserContext();
@@ -43,7 +43,7 @@ export async function executeWithUserContext<T>(
  */
 export async function executeArrayQueryWithUserContext<T>(
   operation: string,
-  queryFn: (userId: string) => Promise<{ data: T[] | null; error: any }>
+  queryFn: (userId: string) => Promise<{ data: T[] | null; error: Error | null }>
 ): Promise<T[]> {
   try {
     const userId = initUserContext();
@@ -66,7 +66,7 @@ export async function executeArrayQueryWithUserContext<T>(
  */
 export async function executeVoidQueryWithUserContext(
   operation: string,
-  queryFn: (userId: string) => Promise<{ error: any }>
+  queryFn: (userId: string) => Promise<{ error: Error | null }>
 ): Promise<boolean> {
   try {
     const userId = initUserContext();
@@ -88,11 +88,11 @@ export async function executeVoidQueryWithUserContext(
  * Build update object from partial updates
  * Filters out undefined values to avoid unnecessary database updates
  */
-export function buildUpdateObject<T extends Record<string, any>>(
+export function buildUpdateObject<T extends Record<string, unknown>>(
   updates: Partial<T>,
   fieldMap?: Record<keyof T, string>
-): Record<string, any> {
-  const updateData: Record<string, any> = {};
+): Record<string, unknown> {
+  const updateData: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(updates)) {
     if (value !== undefined) {

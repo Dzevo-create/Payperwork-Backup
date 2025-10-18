@@ -13,6 +13,14 @@ export interface WorkflowHandlersConfig {
   generateFilename: () => string;
 }
 
+export interface GenerationResult {
+  imageUrl: string;
+  id?: string;
+  timestamp?: Date;
+  prompt?: string;
+  settings?: Record<string, unknown>;
+}
+
 export interface UseWorkflowHandlers {
   // Save to database
   saveGenerationToDb: (generation: {
@@ -22,12 +30,12 @@ export interface UseWorkflowHandlers {
     prompt?: string;
     sourceType?: "original" | "from_render" | "from_video";
     parentId?: string;
-    settings?: any;
+    settings?: Record<string, unknown>;
     sourceImage?: string;
   }) => Promise<void>;
 
   // Success handlers
-  handleGenerateSuccess: (result: any) => Promise<void>;
+  handleGenerateSuccess: (result: GenerationResult) => Promise<void>;
   handleEditSuccess: (editedImageUrl: string) => Promise<void>;
   handleUpscaleSuccess: (upscaledImageUrl: string) => Promise<void>;
 
@@ -64,7 +72,7 @@ export function useWorkflowHandlers<TSettings>(
     prompt?: string;
     sourceType?: "original" | "from_render" | "from_video";
     parentId?: string;
-    settings?: any;
+    settings?: Record<string, unknown>;
     sourceImage?: string;
   }) => {
     try {
@@ -107,7 +115,7 @@ export function useWorkflowHandlers<TSettings>(
   }, [config.apiEndpoint, config.workflowName]);
 
   // Handle generation success
-  const handleGenerateSuccess = useCallback(async (result: any) => {
+  const handleGenerateSuccess = useCallback(async (result: GenerationResult) => {
     const autoName = config.generateFilename();
 
     // Upload images to storage
@@ -500,9 +508,10 @@ export function useWorkflowHandlers<TSettings>(
 
       window.scrollTo({ top: 0, behavior: "smooth" });
       alert("Video erfolgreich erstellt! ✨");
-    } catch (error: any) {
-      workflowLogger.error(`[${config.workflowName}] Video generation error:`, error);
-      alert(`Video-Generierung fehlgeschlagen: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      workflowLogger.error(`[${config.workflowName}] Video generation error:`, error instanceof Error ? error : new Error(String(error)));
+      alert(`Video-Generierung fehlgeschlagen: ${errorMessage}`);
     } finally {
       setIsGeneratingVideo(false);
     }

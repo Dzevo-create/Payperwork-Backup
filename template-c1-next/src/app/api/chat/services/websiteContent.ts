@@ -4,6 +4,7 @@ import { GenerateContentResponse, GoogleGenAI } from "@google/genai";
 import axios from "axios";
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
+import { apiLogger } from "@/lib/logger";
 
 // Types for website content extraction
 export interface ExtractWebsiteContentRequest {
@@ -61,7 +62,7 @@ export async function extractWebsiteContent(
             content: article?.textContent || "",
           });
         } catch (error) {
-          console.error(`Error extracting content from ${url}:`, error);
+          apiLogger.error(`Error extracting content from ${url}`, error instanceof Error ? error : undefined, { url });
           results.push({
             url,
             content: "",
@@ -73,7 +74,7 @@ export async function extractWebsiteContent(
 
     return { results };
   } catch (error) {
-    console.error("Error in extractWebsiteContent:", error);
+    apiLogger.error("Error in extractWebsiteContent", error instanceof Error ? error : undefined);
     throw error;
   }
 }
@@ -134,14 +135,14 @@ export async function summarizeWebsiteContent(
       const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
       return text?.trim() || "";
     } catch (error) {
-      console.error("Error during website summarization:", error);
+      apiLogger.error("Error during website summarization", error instanceof Error ? error : undefined);
       if ((error as Error).message === "Summarization timed out") {
         return "Summarization timed out. Please try again with less content or a longer timeout.";
       }
       return "Failed to summarize website content";
     }
   } catch (error) {
-    console.error("Error in summarizeWebsiteContent:", error);
+    apiLogger.error("Error in summarizeWebsiteContent", error instanceof Error ? error : undefined);
     return "Error summarizing content.";
   }
 }

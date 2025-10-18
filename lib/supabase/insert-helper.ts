@@ -9,6 +9,7 @@
 
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 const USER_ID_KEY = 'payperwork_user_id';
 
@@ -77,7 +78,7 @@ export async function insertWithUserId<T extends { user_id?: string }>(
     .single();
 
   if (error) {
-    console.error(`[insertWithUserId] Error inserting into ${table}:`, error);
+    logger.error(`Error inserting into ${table}`, error, { table, userId, component: 'insertWithUserId' });
     throw error;
   }
 
@@ -116,7 +117,7 @@ export async function insertManyWithUserId<T extends { user_id?: string }>(
     .select();
 
   if (error) {
-    console.error(`[insertManyWithUserId] Error inserting into ${table}:`, error);
+    logger.error(`Error inserting multiple records into ${table}`, error, { table, userId, count: dataArray.length, component: 'insertManyWithUserId' });
     throw error;
   }
 
