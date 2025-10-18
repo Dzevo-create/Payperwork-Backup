@@ -33,10 +33,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     apiLogger.error('[Delete Generation API] Error:', error);
     return NextResponse.json(
-      { error: error.message || "Failed to delete generation" },
+      { error: error instanceof Error ? error.message : String(error) || "Failed to delete generation" },
       { status: 500 }
     );
   }

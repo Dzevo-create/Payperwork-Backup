@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       task_id: data.data.task_id,
       status: data.data.status || "CREATED",
     });
-  } catch (error: any) {
+  } catch (error) {
     return handleApiError(error, "branding-upscale");
   }
 }
@@ -234,7 +234,7 @@ export async function GET(req: NextRequest) {
       generated: generatedImage,
       error: data.data?.error || data.error || null,
     });
-  } catch (error: any) {
+  } catch (error) {
     return handleApiError(error, "branding-upscale-poll");
   }
 }

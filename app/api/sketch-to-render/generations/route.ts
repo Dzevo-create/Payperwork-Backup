@@ -27,10 +27,10 @@ export async function GET(req: NextRequest) {
       success: true,
       generations,
     });
-  } catch (error: any) {
+  } catch (error) {
     apiLogger.error('[GetGenerations API] Error:', error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch generations" },
+      { error: error instanceof Error ? error.message : String(error) || "Failed to fetch generations" },
       { status: 500 }
     );
   }

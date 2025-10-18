@@ -10,10 +10,16 @@ export interface PendingVideoTask {
   estimatedDuration: number; // in seconds
 }
 
+interface VideoTaskResult {
+  status: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
 class VideoPollingManager {
   private pendingTasks: Map<string, PendingVideoTask> = new Map();
   private pollingInterval: NodeJS.Timeout | null = null;
-  private onTaskComplete?: (taskId: string, result: any) => void;
+  private onTaskComplete?: (taskId: string, result: VideoTaskResult) => void;
   private onTaskUpdate?: (taskId: string, progress: number) => void;
 
   constructor() {
@@ -46,7 +52,7 @@ class VideoPollingManager {
     }
   }
 
-  onComplete(callback: (taskId: string, result: any) => void) {
+  onComplete(callback: (taskId: string, result: VideoTaskResult) => void) {
     this.onTaskComplete = callback;
   }
 

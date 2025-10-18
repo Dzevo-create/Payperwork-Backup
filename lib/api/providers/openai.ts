@@ -60,12 +60,15 @@ export async function retryWithBackoff<T>(
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await fn();
-    } catch (error: any) {
-      lastError = error;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
 
       // Don't retry on client errors (4xx)
-      if (error.status && error.status >= 400 && error.status < 500) {
-        throw error;
+      if (error && typeof error === 'object' && 'status' in error) {
+        const statusError = error as { status: number };
+        if (statusError.status >= 400 && statusError.status < 500) {
+          throw error;
+        }
       }
 
       // Last retry, throw error
@@ -108,12 +111,12 @@ export async function enhancePrompt(
 }
 
 // Create streaming chat completion with model selection
-export async function createChatStream(messages: any[], model: "gpt-4o" | "gpt-5" = "gpt-4o") {
+export async function createChatStream(messages: Array<{ role: string; content: string }>, model: "gpt-4o" | "gpt-5" = "gpt-4o") {
   return await retryWithBackoff(
     () =>
       openaiClient.chat.completions.create({
         ...getOpenAIChatConfig(model),
-        messages,
+        messages: messages as never, // OpenAI SDK requires complex ChatCompletionMessageParam[] type
         stream: true,
       }),
     3,

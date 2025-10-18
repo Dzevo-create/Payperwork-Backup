@@ -51,10 +51,10 @@ export async function POST(req: NextRequest) {
       type: fileType,
       name: file.name,
     });
-  } catch (error: any) {
+  } catch (error) {
     apiLogger.error('Upload error:', error);
     return NextResponse.json(
-      { error: error.message || "Failed to upload file" },
+      { error: error instanceof Error ? error.message : String(error) || "Failed to upload file" },
       { status: 500 }
     );
   }

@@ -131,21 +131,25 @@ export async function POST(req: NextRequest) {
         rateLimitResult
       ),
     });
-  } catch (error: any) {
-    apiLogger.error("C1 API Error", error, { clientId });
+  } catch (error) {
+    apiLogger.error("C1 API Error", error instanceof Error ? error : undefined, { clientId });
 
-    if (error.status === 401) {
-      return NextResponse.json(
-        { error: "C1 API-Schlüssel ungültig oder fehlend" },
-        { status: 401 }
-      );
-    }
+    if (error && typeof error === 'object' && 'status' in error) {
+      const statusError = error as { status: number };
 
-    if (error.status === 429) {
-      return NextResponse.json(
-        { error: "C1 API-Rate-Limit erreicht. Bitte später erneut versuchen." },
-        { status: 429 }
-      );
+      if (statusError.status === 401) {
+        return NextResponse.json(
+          { error: "C1 API-Schlüssel ungültig oder fehlend" },
+          { status: 401 }
+        );
+      }
+
+      if (statusError.status === 429) {
+        return NextResponse.json(
+          { error: "C1 API-Rate-Limit erreicht. Bitte später erneut versuchen." },
+          { status: 429 }
+        );
+      }
     }
 
     return NextResponse.json(

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Message, Conversation, ChatError } from '@/types/chat';
+import { Message, Conversation, ChatError, Attachment } from '@/types/chat';
 import { chatLogger } from '@/lib/logger';
 
 interface ChatStore {
@@ -15,7 +15,7 @@ interface ChatStore {
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
   updateMessage: (id: string, content: string) => void;
-  updateMessageWithAttachments: (id: string, content: string, attachments: any[], videoTask?: Message['videoTask'], generationAttempt?: number) => void;
+  updateMessageWithAttachments: (id: string, content: string, attachments: Attachment[], videoTask?: Message['videoTask'], generationAttempt?: number) => void;
   deleteMessage: (id: string) => void;
 
   setConversations: (conversations: Conversation[]) => void;
@@ -192,7 +192,7 @@ export const useChatStore = create<ChatStore>()(
       name: 'payperwork-chat-storage',
       partialize: (state) => {
         // Helper function to strip base64 from attachments
-        const stripBase64FromAttachments = (attachments: any[] | undefined) => {
+        const stripBase64FromAttachments = (attachments: Attachment[] | undefined) => {
           if (!attachments) return attachments;
           return attachments.map((att) => {
             // Remove base64 data from images to save space

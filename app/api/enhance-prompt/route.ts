@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     apiLogger.info('Enhanced prompt:');
 
     return NextResponse.json({ enhancedPrompt });
-  } catch (error: any) {
+  } catch (error) {
     return handleApiError(error, "enhance-prompt-api");
   }
 }

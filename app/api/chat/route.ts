@@ -95,47 +95,52 @@ export async function POST(req: NextRequest) {
     const stream = await createChatStream(processedMessages, gptModel);
 
     return createStreamingResponse(stream);
-  } catch (error: any) {
-    apiLogger.error("OpenAI API Error", error, { clientId });
+  } catch (error) {
+    apiLogger.error("OpenAI API Error", error instanceof Error ? error : undefined, { clientId });
 
     // Handle specific OpenAI errors
-    if (error.status === 429) {
-      return NextResponse.json(
-        {
-          error: "Zu viele Anfragen. Bitte versuche es in einem Moment erneut.",
-          retryable: true,
-        },
-        { status: 429 }
-      );
+    if (error && typeof error === 'object' && 'status' in error) {
+      const statusError = error as { status: number; message?: string };
+
+      if (statusError.status === 429) {
+        return NextResponse.json(
+          {
+            error: "Zu viele Anfragen. Bitte versuche es in einem Moment erneut.",
+            retryable: true,
+          },
+          { status: 429 }
+        );
+      }
+
+      if (statusError.status === 401) {
+        apiLogger.error("OpenAI authentication failed");
+        return NextResponse.json(
+          { error: "API Authentifizierung fehlgeschlagen", retryable: false },
+          { status: 500 }
+        );
+      }
+
+      if (statusError.status === 400) {
+        return NextResponse.json(
+          { error: statusError.message || "Ungültige Anfrage", retryable: false },
+          { status: 400 }
+        );
+      }
+
+      if (statusError.status >= 500) {
+        return NextResponse.json(
+          {
+            error: "OpenAI Service vorübergehend nicht verfügbar. Bitte versuche es erneut.",
+            retryable: true,
+          },
+          { status: 503 }
+        );
+      }
     }
 
-    if (error.status === 401) {
-      apiLogger.error("OpenAI authentication failed");
-      return NextResponse.json(
-        { error: "API Authentifizierung fehlgeschlagen", retryable: false },
-        { status: 500 }
-      );
-    }
-
-    if (error.status === 400) {
-      return NextResponse.json(
-        { error: error.message || "Ungültige Anfrage", retryable: false },
-        { status: 400 }
-      );
-    }
-
-    if (error.status >= 500) {
-      return NextResponse.json(
-        {
-          error: "OpenAI Service vorübergehend nicht verfügbar. Bitte versuche es erneut.",
-          retryable: true,
-        },
-        { status: 503 }
-      );
-    }
-
+    const errorMessage = error instanceof Error ? error.message : "Ein Fehler ist aufgetreten";
     return NextResponse.json(
-      { error: error.message || "Ein Fehler ist aufgetreten", retryable: true },
+      { error: errorMessage, retryable: true },
       { status: 500 }
     );
   }

@@ -167,10 +167,11 @@ export async function enhanceArchitecturalPrompt(
     });
 
     return enhancedPrompt;
-  } catch (error: any) {
-    apiLogger.error("Failed to enhance architectural prompt", error, {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    apiLogger.error("Failed to enhance architectural prompt", error instanceof Error ? error : undefined, {
       originalPrompt: trimmedPrompt,
-      errorMessage: error.message,
+      errorMessage,
     });
 
     // Fallback to original prompt on error
@@ -371,8 +372,8 @@ export async function enhanceArchitecturalPromptBatch(
     }
 
     return enhancedPrompts;
-  } catch (error: any) {
-    apiLogger.error("Failed to batch enhance prompts", error);
+  } catch (error) {
+    apiLogger.error("Failed to batch enhance prompts", error instanceof Error ? error : undefined);
     throw error;
   }
 }
@@ -458,8 +459,8 @@ export async function enhanceArchitecturalPromptWithOptions(
     );
 
     return response.choices[0]?.message?.content?.trim() || userPrompt.trim();
-  } catch (error: any) {
-    apiLogger.error("Failed to enhance prompt with options", error);
+  } catch (error) {
+    apiLogger.error("Failed to enhance prompt with options", error instanceof Error ? error : undefined);
     return userPrompt.trim();
   }
 }

@@ -26,11 +26,11 @@ export async function fetchWithTimeout(
 
     clearTimeout(id);
     return response;
-  } catch (error: any) {
+  } catch (error) {
     clearTimeout(id);
 
     // Check if it was a timeout
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Request timeout after ${timeout}ms`);
     }
 
@@ -83,11 +83,11 @@ export async function fetchWithRetry(
       }
 
       lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
-    } catch (error: any) {
-      lastError = error;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
 
       // Don't retry if manually aborted by user
-      if (error.name === 'AbortError' && options.signal?.aborted) {
+      if (error instanceof Error && error.name === 'AbortError' && options.signal?.aborted) {
         throw error;
       }
     }

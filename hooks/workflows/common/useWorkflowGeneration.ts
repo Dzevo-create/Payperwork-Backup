@@ -158,7 +158,12 @@ export function buildGenerationPayload(
 } {
   const { base64: sourceBase64, mimeType: sourceMimeType } = extractBase64Data(sourceImage.preview!);
 
-  const payload: any = {
+  const payload: {
+    prompt: string;
+    sourceImage: { data: string; mimeType: string };
+    referenceImage?: { data: string; mimeType: string };
+    settings: RenderSettingsType;
+  } = {
     prompt: prompt.trim(),
     sourceImage: {
       data: sourceBase64,
@@ -183,9 +188,9 @@ export function buildGenerationPayload(
  */
 export async function makeGenerationRequest(
   apiEndpoint: string,
-  payload: any,
+  payload: Record<string, unknown>,
   setProgress: (progress: number) => void
-): Promise<any> {
+): Promise<Record<string, unknown>> {
   setProgress(20);
 
   const response = await fetch(apiEndpoint, {

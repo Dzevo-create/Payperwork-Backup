@@ -41,7 +41,7 @@ export class FalProvider extends VideoProvider {
 
     // Validate and normalize settings for fal.ai Sora 2 API
     const durationNum = parseInt(duration);
-    const validDuration = PROVIDER_CONSTRAINTS.fal.durations.includes(durationNum as any)
+    const validDuration = (PROVIDER_CONSTRAINTS.fal.durations as readonly number[]).includes(durationNum)
       ? durationNum
       : parseInt(PROVIDER_CONSTRAINTS.fal.defaults.duration);
 
@@ -50,13 +50,22 @@ export class FalProvider extends VideoProvider {
     if (type === "image2video" && aspectRatio === "auto") {
       validAspectRatio = "auto";
     } else {
-      validAspectRatio = PROVIDER_CONSTRAINTS.fal.aspectRatios.includes(aspectRatio as any)
+      validAspectRatio = (PROVIDER_CONSTRAINTS.fal.aspectRatios as readonly string[]).includes(aspectRatio)
         ? aspectRatio
         : PROVIDER_CONSTRAINTS.fal.defaults.aspectRatio;
     }
 
     // Build request payload
-    const payload: any = {
+    interface FalPayload {
+      prompt: string;
+      duration: number;
+      aspect_ratio: string;
+      openai_api_key?: string;
+      resolution?: string;
+      image_url?: string;
+    }
+
+    const payload: FalPayload = {
       prompt,
       duration: validDuration,
       aspect_ratio: validAspectRatio,
@@ -129,7 +138,7 @@ export class FalProvider extends VideoProvider {
       });
 
       // Log detailed status with timing info
-      const queuePosition = 'queue_position' in status ? (status as any).queue_position : undefined;
+      const queuePosition = 'queue_position' in status ? (status as Record<string, unknown>).queue_position : undefined;
       const statusMsg = status.status === "IN_QUEUE"
         ? `IN_QUEUE (position: ${queuePosition ?? 'unknown'})`
         : status.status;
@@ -188,9 +197,10 @@ export class FalProvider extends VideoProvider {
           type,
         };
       }
-    } catch (error: any) {
-      videoLogger.error('fal.ai status check error:', error);
-      throw new Error(`Failed to check fal.ai task status: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      videoLogger.error('fal.ai status check error:', error instanceof Error ? error : undefined);
+      throw new Error(`Failed to check fal.ai task status: ${errorMessage}`);
     }
   }
 }

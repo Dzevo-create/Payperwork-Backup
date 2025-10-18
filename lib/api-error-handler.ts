@@ -14,7 +14,7 @@ import { ValidationError } from './validation';
 export interface ApiErrorResponse {
   error: string;
   code: string;
-  details?: any;
+  details?: Record<string, unknown>;
   timestamp?: string;
 }
 
@@ -59,7 +59,7 @@ const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
 export function createErrorResponse(
   code: ErrorCode,
   message: string,
-  details?: any
+  details?: Record<string, unknown>
 ): NextResponse<ApiErrorResponse> {
   const status = ERROR_STATUS_MAP[code];
 
@@ -104,7 +104,7 @@ export function handleApiError(error: unknown, context?: string): NextResponse<A
 
   // OpenAI API errors
   if (error && typeof error === 'object' && 'status' in error) {
-    const apiError = error as any;
+    const apiError = error as { status: number; [key: string]: unknown };
 
     if (apiError.status === 401) {
       return createErrorResponse(

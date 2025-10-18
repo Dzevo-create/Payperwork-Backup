@@ -213,11 +213,25 @@ Output ONLY the prompt text as flowing prose, no formatting, no explanations.`;
     userMessage += `\n\nGenerate a complete, detailed prompt that preserves the exact camera angle and transforms this space into a branded environment.`;
 
     // Step 4: Build messages with images (using the T-Button specific system prompt!)
-    const messages: any[] = [
+    interface MessageContent {
+      type: "text" | "image_url";
+      text?: string;
+      image_url?: {
+        url: string;
+        detail?: "high" | "low";
+      };
+    }
+
+    interface ChatMessage {
+      role: "system" | "user";
+      content: string | MessageContent[];
+    }
+
+    const messages: ChatMessage[] = [
       { role: "system", content: systemPrompt }
     ];
 
-    const userContent: any[] = [{ type: "text", text: userMessage }];
+    const userContent: MessageContent[] = [{ type: "text", text: userMessage }];
 
     // Add reference images if provided
     if (referenceImages && referenceImages.length > 0) {

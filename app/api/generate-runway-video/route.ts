@@ -266,7 +266,7 @@ export async function POST(req: NextRequest) {
       aspectRatio: ratio,
       processedImageUrl: processedUrl,
     });
-  } catch (error: any) {
+  } catch (error) {
     apiLogger.error('[Runway] Error:', error);
 
     if (error instanceof TaskFailedError) {

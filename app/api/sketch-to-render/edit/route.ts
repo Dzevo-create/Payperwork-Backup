@@ -118,7 +118,15 @@ export async function POST(req: NextRequest) {
     };
 
     // Step 4: Build content parts (prompt + current image)
-    const parts: any[] = [
+    interface ContentPart {
+      text?: string;
+      inlineData?: {
+        data: string;
+        mimeType: string;
+      };
+    }
+
+    const parts: ContentPart[] = [
       { text: enhancedPrompt },
       {
         inlineData: {
@@ -173,11 +181,12 @@ export async function POST(req: NextRequest) {
         } else {
           throw new Error("Kein Bild in der Antwort gefunden");
         }
-      } catch (error: any) {
-        lastError = error;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        const errorMessage = error instanceof Error ? error.message : String(error);
         apiLogger.warn(`Edit attempt ${attempt} failed`, {
           clientId,
-          error: error.message,
+          error: errorMessage,
           willRetry: attempt < MAX_RETRIES,
         });
 
@@ -221,7 +230,7 @@ export async function POST(req: NextRequest) {
         model: GEMINI_MODELS.imageGeneration,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     return handleApiError(error, "sketch-to-render-edit");
   }
 }

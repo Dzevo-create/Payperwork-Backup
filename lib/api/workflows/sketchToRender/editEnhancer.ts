@@ -92,7 +92,21 @@ IMPORTANT:
 Provide ONLY the enhanced edit prompt, no explanations.`;
 
     // Build messages with image
-    const messages: any[] = [
+    interface MessageContent {
+      type: "text" | "image_url";
+      text?: string;
+      image_url?: {
+        url: string;
+        detail: "high" | "low";
+      };
+    }
+
+    interface ChatMessage {
+      role: "system" | "user";
+      content: string | MessageContent[];
+    }
+
+    const messages: ChatMessage[] = [
       { role: "system", content: systemMessage },
       {
         role: "user",
@@ -114,7 +128,7 @@ Provide ONLY the enhanced edit prompt, no explanations.`;
       () =>
         openaiClient.chat.completions.create({
           model: "gpt-4o",
-          messages,
+          messages: messages as never, // OpenAI SDK requires complex ChatCompletionMessageParam[] type
           temperature: 0.7,
           max_tokens: 300,
         }),
@@ -136,10 +150,11 @@ Provide ONLY the enhanced edit prompt, no explanations.`;
     });
 
     return enhancedPrompt;
-  } catch (error: any) {
-    apiLogger.error("Failed to enhance edit prompt", error, {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    apiLogger.error("Failed to enhance edit prompt", error instanceof Error ? error : undefined, {
       editPrompt: trimmedPrompt,
-      errorMessage: error.message,
+      errorMessage,
     });
 
     // Fallback: add basic enhancement to original prompt

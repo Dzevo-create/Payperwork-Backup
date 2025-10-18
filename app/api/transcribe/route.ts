@@ -29,10 +29,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       text: transcription.text,
     });
-  } catch (error: any) {
+  } catch (error) {
     apiLogger.error('Whisper API Error:', error);
     return NextResponse.json(
-      { error: error.message || "Failed to transcribe audio" },
+      { error: error instanceof Error ? error.message : String(error) || "Failed to transcribe audio" },
       { status: 500 }
     );
   }

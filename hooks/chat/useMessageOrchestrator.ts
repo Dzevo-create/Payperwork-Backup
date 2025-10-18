@@ -52,12 +52,28 @@ interface UseMessageOrchestratorParams {
     contextImages: Attachment[];
     abortSignal: AbortSignal;
   }) => Promise<void>;
-  handleVideoGeneration: (params: any) => Promise<void>;
+  handleVideoGeneration: (params: {
+    content: string;
+    attachments?: Attachment[];
+    contextImages: Attachment[];
+    videoSettings: VideoSettingsType;
+    selectedVideoModel: VideoModel;
+    assistantMessageId: string;
+    currentConversationId: string | null;
+    updateMessageWithAttachments: (messageId: string, attachments: Attachment[]) => Promise<void>;
+    addToQueue: (messageId: string, taskId: string, model: VideoModel, type: "text2video" | "image2video", prompt: string, thumbnailUrl?: string, estimatedDuration?: number, duration?: string, aspectRatio?: string) => void;
+    updateQueueTaskId: (messageId: string, taskId: string) => void;
+    markVideoCompleted: (messageId: string, videoUrl: string) => void;
+    removeFromQueue: (messageId: string) => void;
+    setIsGenerating: (generating: boolean) => void;
+    setError: (error: { message: string; retryable: boolean } | null) => void;
+    messages: Message[];
+  }) => Promise<void>;
   addToQueue: (
     messageId: string,
     taskId: string,
-    model: any,
-    type: any,
+    model: VideoModel,
+    type: "text2video" | "image2video",
     prompt: string,
     thumbnailUrl?: string,
     estimatedDuration?: number,
