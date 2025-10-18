@@ -4,6 +4,7 @@ import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateFurnishEmptyPrompt } from "@/lib/api/workflows/furnishEmpty/promptGenerator";
+import { enhanceFurnishEmptyPromptWithGPT } from "@/lib/api/workflows/furnishEmpty/gptEnhancer";
 import { FurnishEmptySettingsType } from "@/types/workflows/furnishEmptySettings";
 import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
 import { perfMonitor } from "@/lib/performance/monitor";
@@ -98,11 +99,34 @@ export async function POST(req: NextRequest) {
       cacheHit: false,
     });
 
-    // Generate prompt using furnish-empty prompt generator
-    const generatedPrompt = generateFurnishEmptyPrompt(
-      settings as FurnishEmptySettingsType,
-      userPrompt || undefined
-    );
+    // Generate prompt using GPT-4o Vision to analyze the empty room image
+    let generatedPrompt: string;
+
+    try {
+      // Try GPT-4 Vision first for intelligent, context-aware prompt generation
+      generatedPrompt = await enhanceFurnishEmptyPromptWithGPT({
+        userPrompt: userPrompt || "",
+        sourceImage,
+        settings: settings as FurnishEmptySettingsType,
+        referenceImages: referenceImage ? [referenceImage] : undefined
+      });
+
+      apiLogger.info("T-Button: GPT-4 Vision prompt generated", {
+        clientId,
+        promptLength: generatedPrompt.length,
+      });
+    } catch (gptError) {
+      // Fallback to static prompt generator if GPT-4 fails
+      apiLogger.warn("T-Button: GPT-4 Vision failed, using static generator", {
+        clientId,
+        error: gptError instanceof Error ? gptError.message : String(gptError),
+      });
+
+      generatedPrompt = generateFurnishEmptyPrompt(
+        settings as FurnishEmptySettingsType,
+        userPrompt || undefined
+      );
+    }
 
     // Store in cache
     promptCache.set(cacheKey, generatedPrompt);
