@@ -15,6 +15,7 @@ export interface Generation {
   sourceType?: "original" | "from_render" | "from_video";
   mediaType?: 'image' | 'video';
   settings?: any;
+  sourceImageUrl?: string; // Source/input image URL
 }
 
 export interface UseRecentGenerations {
@@ -65,6 +66,7 @@ export function useRecentGenerations(
         sourceType: gen.source_type || gen.sourceType,
         mediaType: gen.media_type || gen.mediaType || 'image',
         settings: gen.settings,
+        sourceImageUrl: gen.source_image || gen.sourceImage || gen.source_image_url || gen.sourceImageUrl,
       }));
 
       setRecentGenerations(formattedGenerations);

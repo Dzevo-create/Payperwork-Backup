@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Video, Sparkles, Loader2, Send, Edit2, Camera, Crop } from "lucide-react";
+import { Download, Video, Sparkles, Loader2, Send, Edit2, Camera, Crop, Clock, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 interface ResultPanelProps {
@@ -8,7 +8,7 @@ interface ResultPanelProps {
   mediaType?: "image" | "video";
   isGenerating: boolean;
   generatingType?: "render" | "video" | "upscale" | "edit";
-  onCreateVideo?: (videoPrompt: string) => void;
+  onCreateVideo?: (videoPrompt: string, duration?: 5 | 10) => void;
   onUpscale?: () => void;
   onDownload?: () => void;
   onCrop?: () => void;
@@ -40,6 +40,11 @@ const CAMERA_MOVEMENTS = [
   { label: "Static", value: "static camera" },
 ];
 
+const VIDEO_DURATIONS = [
+  { label: "5 Sekunden", value: 5 },
+  { label: "10 Sekunden", value: 10 },
+];
+
 /**
  * ResultPanel Component
  *
@@ -65,9 +70,13 @@ export function ResultPanel({
   const [mode, setMode] = useState<Mode>("idle");
   const [editPrompt, setEditPrompt] = useState("");
   const [videoPrompt, setVideoPrompt] = useState("");
+  const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
   const [showCameraMenu, setShowCameraMenu] = useState(false);
+  const [showDurationMenu, setShowDurationMenu] = useState(false);
   const cameraMenuRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const cameraDropdownRef = useRef<HTMLDivElement>(null);
+  const durationMenuRef = useRef<HTMLButtonElement>(null);
+  const durationDropdownRef = useRef<HTMLDivElement>(null);
 
   const handleEdit = () => {
     if (editPrompt.trim() && onEdit) {
@@ -77,8 +86,8 @@ export function ResultPanel({
   };
 
   const handleVideoCreate = () => {
-    if (videoPrompt.trim() && onCreateVideo) {
-      onCreateVideo(videoPrompt);
+    if (onCreateVideo) {
+      onCreateVideo(videoPrompt, videoDuration);
       setVideoPrompt("");
     }
   };
@@ -93,24 +102,35 @@ export function ResultPanel({
     setShowCameraMenu(false);
   };
 
-  // Handle click outside to close dropdown
+  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Close camera menu
       if (
         cameraMenuRef.current &&
         !cameraMenuRef.current.contains(event.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        cameraDropdownRef.current &&
+        !cameraDropdownRef.current.contains(event.target as Node)
       ) {
         setShowCameraMenu(false);
       }
+
+      // Close duration menu
+      if (
+        durationMenuRef.current &&
+        !durationMenuRef.current.contains(event.target as Node) &&
+        durationDropdownRef.current &&
+        !durationDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDurationMenu(false);
+      }
     };
 
-    if (showCameraMenu) {
+    if (showCameraMenu || showDurationMenu) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [showCameraMenu]);
+  }, [showCameraMenu, showDurationMenu]);
 
   return (
     <div className="flex flex-col gap-0.5 h-full">
@@ -203,61 +223,96 @@ export function ResultPanel({
               {/* Video Prompt Field - Slides down directly under Video Button */}
               <div
                 className={`transition-all duration-300 ease-in-out ${
-                  mode === "video" ? "max-h-[140px] opacity-100 overflow-visible" : "max-h-0 opacity-0 overflow-hidden"
+                  mode === "video" ? "max-h-[180px] opacity-100 overflow-visible" : "max-h-0 opacity-0 overflow-hidden"
                 }`}
               >
-                <div className="flex flex-col gap-1 px-0.5">
-                  <label className="text-[9px] font-medium text-pw-black/50 uppercase tracking-wide">
-                    Video Prompt
-                  </label>
-                  <div className="relative overflow-visible">
-                    <textarea
-                      value={videoPrompt}
-                      onChange={(e) => setVideoPrompt(e.target.value)}
-                      placeholder="Beschreibe die Video-Animation..."
-                      className="w-full px-2 py-1.5 pr-20 text-xs bg-white/80 border border-pw-black/10 rounded-lg outline-none focus:ring-2 focus:ring-pw-accent/50 transition-all resize-none h-[100px]"
-                    />
-                    {/* Camera Button with Dropdown */}
-                    <div className="absolute bottom-2 right-12">
+                <div className="flex flex-col gap-2 px-0.5">
+                  {/* Settings Row - Both on the right */}
+                  <div className="flex items-center justify-end gap-2">
+                    {/* Duration Dropdown */}
+                    <div className="relative" ref={el => el && (durationMenuRef.current = el)}>
                       <button
-                        ref={cameraMenuRef}
-                        onClick={() => setShowCameraMenu(!showCameraMenu)}
-                        className="p-1.5 bg-pw-black/10 hover:bg-pw-black/20 text-pw-black rounded-md transition-all relative z-10"
-                        aria-label="Kamera-Bewegung wählen"
+                        onClick={() => setShowDurationMenu(!showDurationMenu)}
+                        className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
+                          showDurationMenu ? "border-pw-accent/20 shadow-sm" : "border-pw-black/10"
+                        }`}
                       >
-                        <Camera className="w-3.5 h-3.5" />
+                        <Clock className={`w-3.5 h-3.5 transition-colors ${showDurationMenu ? "text-pw-accent" : "text-pw-black/40"}`} />
+                        <span className="text-xs font-medium text-pw-black/70">{videoDuration}s</span>
+                        <ChevronDown className={`w-3 h-3 text-pw-black/40 transition-transform duration-200 ${showDurationMenu ? "rotate-180" : ""}`} />
                       </button>
 
-                      {/* Dropdown directly under button */}
-                      {showCameraMenu && (
+                      {showDurationMenu && (
                         <div
-                          ref={dropdownRef}
-                          className="absolute top-full right-0 mt-1 w-36 max-h-64 overflow-y-auto bg-white border border-pw-black/10 rounded-lg shadow-2xl z-50"
+                          ref={durationDropdownRef}
+                          className="absolute top-full left-0 mt-1 w-36 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-pw-black/10 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
                         >
-                          <div className="p-1">
-                            {CAMERA_MOVEMENTS.map((movement) => (
-                              <button
-                                key={movement.value}
-                                onClick={() => handleCameraMovementSelect(movement.value)}
-                                className="w-full text-left px-2 py-1.5 text-xs text-pw-black hover:bg-pw-accent/10 rounded-md transition-colors whitespace-nowrap"
-                              >
-                                {movement.label}
-                              </button>
-                            ))}
-                          </div>
+                          {VIDEO_DURATIONS.map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                setVideoDuration(option.value as 5 | 10);
+                                setShowDurationMenu(false);
+                              }}
+                              className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+                                videoDuration === option.value
+                                  ? "bg-pw-accent text-white font-medium"
+                                  : "text-pw-black/70 hover:bg-pw-black/5"
+                              }`}
+                            >
+                              <span className="flex items-center gap-2">
+                                {videoDuration === option.value && <span className="text-xs">✓</span>}
+                                {option.label}
+                              </span>
+                            </button>
+                          ))}
                         </div>
                       )}
                     </div>
 
-                    {/* Send Button inside textarea - black when has text */}
+                    {/* Camera Movement Dropdown - Icon only */}
+                    <div className="relative" ref={el => el && (cameraMenuRef.current = el)}>
+                      <button
+                        onClick={() => setShowCameraMenu(!showCameraMenu)}
+                        className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
+                          showCameraMenu ? "border-pw-accent/20 shadow-sm" : "border-pw-black/10"
+                        }`}
+                      >
+                        <Camera className={`w-3.5 h-3.5 transition-colors ${showCameraMenu ? "text-pw-accent" : "text-pw-black/40"}`} />
+                        <ChevronDown className={`w-3 h-3 text-pw-black/40 transition-transform duration-200 ${showCameraMenu ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {showCameraMenu && (
+                        <div
+                          ref={cameraDropdownRef}
+                          className="absolute top-full right-0 mt-1 w-40 max-h-64 overflow-y-auto bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-pw-black/10 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                        >
+                          {CAMERA_MOVEMENTS.map((movement) => (
+                            <button
+                              key={movement.value}
+                              onClick={() => handleCameraMovementSelect(movement.value)}
+                              className="w-full text-left px-3 py-2 text-xs text-pw-black/70 hover:bg-pw-accent/10 transition-colors"
+                            >
+                              {movement.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Video Prompt Textarea */}
+                  <div className="relative">
+                    <textarea
+                      value={videoPrompt}
+                      onChange={(e) => setVideoPrompt(e.target.value)}
+                      placeholder="Beschreibe die Video-Animation..."
+                      className="w-full px-2 py-1.5 pr-10 text-xs bg-white/80 border border-pw-black/10 rounded-lg outline-none focus:ring-2 focus:ring-pw-accent/50 transition-all resize-none h-[80px]"
+                    />
+                    {/* Send Button inside textarea */}
                     <button
                       onClick={handleVideoCreate}
-                      disabled={!videoPrompt.trim()}
-                      className={`absolute bottom-2 right-2 p-1.5 rounded-md transition-all ${
-                        videoPrompt.trim()
-                          ? "bg-pw-black hover:bg-pw-black/90 text-white"
-                          : "bg-pw-black/10 cursor-not-allowed text-pw-black/40"
-                      }`}
+                      className="absolute bottom-2 right-2 p-1.5 bg-pw-black hover:bg-pw-black/90 text-white rounded-md transition-all"
                       aria-label="Video erstellen"
                     >
                       <Send className="w-3.5 h-3.5" />

@@ -136,7 +136,8 @@ export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSet
     setCurrentSourceImage,
     renderName,
     setRenderName,
-    setIsGeneratingVideo
+    setIsGeneratingVideo,
+    config.defaultSettings
   );
 
   // Chat Store
@@ -410,13 +411,41 @@ export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSet
                             lightbox.openLightbox(gen, index);
                           }}
                           onDownload={(gen) => {
-                            const extension = gen.type === "video" ? ".mp4" : ".jpg";
-                            const filename = gen.name
-                              ? gen.name.includes(".")
-                                ? gen.name
-                                : `${gen.name}${extension}`
-                              : `render-${gen.id}${extension}`;
-                            handlers.handleDownload(gen.imageUrl, filename, gen.type === "video" ? "video" : "image");
+                            // Determine if this is a video based on type field
+                            const isVideo = gen.type === "video";
+                            const mediaType = isVideo ? "video" : "image";
+                            const extension = isVideo ? ".mp4" : ".jpg";
+
+                            console.log('[WorkflowPage] Download Debug:', {
+                              genType: gen.type,
+                              genMediaType: gen.mediaType,
+                              isVideo,
+                              mediaType,
+                              extension,
+                              url: gen.imageUrl
+                            });
+
+                            // Generate descriptive filename based on type
+                            let filename: string;
+                            const timestamp = gen.timestamp ? new Date(gen.timestamp).toISOString().slice(0, 19).replace(/[T:]/g, '-') : 'unknown';
+
+                            if (gen.type === "video") {
+                              filename = `video-${timestamp}${extension}`;
+                            } else if (gen.type === "upscale") {
+                              filename = `upscaled-${timestamp}${extension}`;
+                            } else if (gen.type === "render") {
+                              filename = `render-${timestamp}${extension}`;
+                            } else if (gen.name) {
+                              // Fallback: use DB name
+                              const nameWithoutExt = gen.name.includes(".")
+                                ? gen.name.substring(0, gen.name.lastIndexOf("."))
+                                : gen.name;
+                              filename = `${nameWithoutExt}${extension}`;
+                            } else {
+                              filename = `generation-${timestamp}${extension}`;
+                            }
+
+                            handlers.handleDownload(gen.imageUrl, filename, mediaType);
                           }}
                           onDelete={generations.deleteGeneration}
                           onEdit={handlers.handleLoadForEdit}

@@ -33,7 +33,7 @@ export interface UseWorkflowHandlers {
 
   // Action handlers
   handleDownload: (imageUrl?: string, filename?: string, mediaType?: "image" | "video") => Promise<void>;
-  handleCreateVideo: (videoPrompt: string) => Promise<void>;
+  handleCreateVideo: (videoPrompt: string, duration?: 5 | 10) => Promise<void>;
 
   // Loading handlers
   handleLoadForEdit: (gen: Generation) => void;
@@ -52,7 +52,8 @@ export function useWorkflowHandlers<TSettings>(
   setCurrentSourceImage: (image: string | null) => void,
   renderName: string,
   setRenderName: (name: string) => void,
-  setIsGeneratingVideo: (generating: boolean) => void
+  setIsGeneratingVideo: (generating: boolean) => void,
+  defaultSettings: TSettings
 ): UseWorkflowHandlers {
 
   // Save generation to database
@@ -169,10 +170,21 @@ export function useWorkflowHandlers<TSettings>(
       sourceImage: storageSourceUrl || undefined,
     });
 
-    // Clear prompt and reset settings
+    // Clear prompt and reset settings to default
+    workflowLogger.info('[GenerateSuccess] Resetting prompt and settings', {
+      currentSettings: workflowState.settings,
+      defaultSettings,
+    });
     workflowState.setPrompt("");
-    workflowState.setSettings(workflowState.settings); // Reset to defaults would be better but we don't have access here
-  }, [config, workflowState, saveGenerationToDb, setRecentGenerations, setCurrentSourceImage, setRenderName]);
+    workflowState.setSettings(defaultSettings);
+
+    // Log after a short delay to verify the state update
+    setTimeout(() => {
+      workflowLogger.info('[GenerateSuccess] Settings after reset', {
+        settings: workflowState.settings,
+      });
+    }, 100);
+  }, [config, workflowState, saveGenerationToDb, setRecentGenerations, setCurrentSourceImage, setRenderName, defaultSettings]);
 
   // Handle edit success
   const handleEditSuccess = useCallback(async (editedImageUrl: string) => {
@@ -352,6 +364,14 @@ export function useWorkflowHandlers<TSettings>(
       return;
     }
 
+    workflowLogger.debug('[Download] Starting download:', {
+      type,
+      mediaType,
+      resultMediaType: workflowState.resultMediaType,
+      urlContainsMp4: urlToDownload.includes(".mp4"),
+      url: urlToDownload.substring(0, 100)
+    });
+
     try {
       let extension = ".jpg";
       if (type === "video" || urlToDownload.includes(".mp4")) {
@@ -399,7 +419,7 @@ export function useWorkflowHandlers<TSettings>(
   }, [workflowState, renderName]);
 
   // Handle create video
-  const handleCreateVideo = useCallback(async (videoPrompt: string) => {
+  const handleCreateVideo = useCallback(async (videoPrompt: string, duration: 5 | 10 = 5) => {
     if (!workflowState.resultImage) {
       alert("Kein Bild zum Verarbeiten vorhanden");
       return;
@@ -428,7 +448,7 @@ export function useWorkflowHandlers<TSettings>(
         }
       }
 
-      workflowLogger.debug(`[${config.workflowName}] Starting Runway video generation...`);
+      workflowLogger.debug(`[${config.workflowName}] Starting Runway video generation...`, { duration });
 
       const response = await fetch("/api/generate-runway-video", {
         method: "POST",
@@ -437,6 +457,7 @@ export function useWorkflowHandlers<TSettings>(
           imageUrl: workflowState.resultImage,
           prompt: videoPrompt,
           cameraMovement,
+          duration,
         }),
       });
 
