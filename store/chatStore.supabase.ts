@@ -120,7 +120,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         chatLogger.info('Restored conversation: ${restoredConvId}');
       }
     } catch (error) {
-      chatLogger.error('Failed to hydrate from Supabase:', error);
+      chatLogger.error('Failed to hydrate from Supabase:', error instanceof Error ? error : undefined);
       set({
         error: {
           message: 'Failed to load conversations',
@@ -190,7 +190,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         chatLogger.info(`Background message notification dispatched for conversation ${conversationId}`);
       }
     } catch (error) {
-      chatLogger.error('Failed to sync message to Supabase:', error);
+      chatLogger.error('Failed to sync message to Supabase:', error instanceof Error ? error : undefined);
       // ROLLBACK: Restore previous state
       set(rollbackState);
       // Set error for UI to display
@@ -223,7 +223,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     const existingMessage = targetConversation?.messages?.find(msg => msg.id === id);
 
     if (!existingMessage) {
-      chatLogger.error('updateMessageInConversation called for non-existent message:', {
+      chatLogger.error('updateMessageInConversation called for non-existent message', undefined, {
         messageId: id,
         conversationId,
       });
@@ -295,7 +295,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         await updateMessageSupabase(id, updatePayload);
         chatLogger.info('Message updated in Supabase');
       } catch (error) {
-        chatLogger.error('Failed to update message in Supabase:', error);
+        chatLogger.error('Failed to update message in Supabase:', error instanceof Error ? error : undefined);
       }
     }
   },
@@ -346,7 +346,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       });
       chatLogger.info('Message with attachments updated in Supabase');
     } catch (error) {
-      chatLogger.error('Failed to update message with attachments in Supabase:', error);
+      chatLogger.error('Failed to update message with attachments in Supabase:', error instanceof Error ? error : undefined);
     }
   },
 
@@ -361,7 +361,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       await deleteMessageSupabase(id);
       chatLogger.info('Message deleted from Supabase');
     } catch (error) {
-      chatLogger.error('Failed to delete message from Supabase:', error);
+      chatLogger.error('Failed to delete message from Supabase:', error instanceof Error ? error : undefined);
     }
   },
 
@@ -379,7 +379,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       await createConvSupabase(conversation);
       chatLogger.info('Conversation created in Supabase');
     } catch (error) {
-      chatLogger.error('Failed to create conversation in Supabase:', error);
+      chatLogger.error('Failed to create conversation in Supabase:', error instanceof Error ? error : undefined);
     }
   },
 
@@ -396,7 +396,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       await updateConvSupabase(id, updates);
       chatLogger.info('Conversation updated in Supabase');
     } catch (error) {
-      chatLogger.error('Failed to update conversation in Supabase:', error);
+      chatLogger.error('Failed to update conversation in Supabase:', error instanceof Error ? error : undefined);
     }
   },
 
@@ -411,7 +411,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       await deleteConvSupabase(id);
       chatLogger.info('Conversation deleted from Supabase');
     } catch (error) {
-      chatLogger.error('Failed to delete conversation from Supabase:', error);
+      chatLogger.error('Failed to delete conversation from Supabase:', error instanceof Error ? error : undefined);
     }
   },
 

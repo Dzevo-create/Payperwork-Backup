@@ -62,8 +62,14 @@ export function usePromptEnhancer(options: UsePromptEnhancerOptions = {}) {
 
       try {
         // Convert source image to base64 data
-        const sourceBase64 = sourceImage.preview.split(",")[1];
-        const sourceMimeType = sourceImage.preview.split(";")[0].split(":")[1];
+        const sourcePreviewParts = sourceImage.preview?.split(",");
+        const sourceBase64 = sourcePreviewParts?.[1];
+        const sourceMimeParts = sourceImage.preview?.split(";")[0]?.split(":");
+        const sourceMimeType = sourceMimeParts?.[1];
+
+        if (!sourceBase64 || !sourceMimeType) {
+          throw new Error("Ungültiges Bildformat");
+        }
 
         // Prepare request payload
         const payload: {
@@ -82,12 +88,17 @@ export function usePromptEnhancer(options: UsePromptEnhancerOptions = {}) {
 
         // Add reference image if provided
         if (referenceImage?.file && referenceImage.preview) {
-          const refBase64 = referenceImage.preview.split(",")[1];
-          const refMimeType = referenceImage.preview.split(";")[0].split(":")[1];
-          payload.referenceImage = {
-            data: refBase64,
-            mimeType: refMimeType,
-          };
+          const refPreviewParts = referenceImage.preview.split(",");
+          const refBase64 = refPreviewParts[1];
+          const refMimeParts = referenceImage.preview.split(";")[0]?.split(":");
+          const refMimeType = refMimeParts?.[1];
+
+          if (refBase64 && refMimeType) {
+            payload.referenceImage = {
+              data: refBase64,
+              mimeType: refMimeType,
+            };
+          }
         }
 
         // Call T-Button API

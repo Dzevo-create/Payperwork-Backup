@@ -128,38 +128,45 @@ export function buildArchitecturalPrompt(
   const enhancements: string[] = [];
 
   // Add space type context (if selected)
-  if (settings.spaceType && SPACE_TYPE_DESCRIPTIONS[settings.spaceType]) {
-    enhancements.push(SPACE_TYPE_DESCRIPTIONS[settings.spaceType]);
+  const spaceTypeDesc = settings.spaceType ? SPACE_TYPE_DESCRIPTIONS[settings.spaceType] : undefined;
+  if (spaceTypeDesc) {
+    enhancements.push(spaceTypeDesc);
   }
 
   // Add design style (if selected)
-  if (settings.designStyle && DESIGN_STYLE_DESCRIPTIONS[settings.designStyle]) {
-    enhancements.push(DESIGN_STYLE_DESCRIPTIONS[settings.designStyle]);
+  const designStyleDesc = settings.designStyle ? DESIGN_STYLE_DESCRIPTIONS[settings.designStyle] : undefined;
+  if (designStyleDesc) {
+    enhancements.push(designStyleDesc);
   }
 
   // Add render style (if selected)
-  if (settings.renderStyle && RENDER_STYLE_DESCRIPTIONS[settings.renderStyle]) {
-    enhancements.push(RENDER_STYLE_DESCRIPTIONS[settings.renderStyle]);
+  const renderStyleDesc = settings.renderStyle ? RENDER_STYLE_DESCRIPTIONS[settings.renderStyle] : undefined;
+  if (renderStyleDesc) {
+    enhancements.push(renderStyleDesc);
   }
 
   // Add time of day (if selected)
-  if (settings.timeOfDay && TIME_OF_DAY_DESCRIPTIONS[settings.timeOfDay]) {
-    enhancements.push(TIME_OF_DAY_DESCRIPTIONS[settings.timeOfDay]);
+  const timeDesc = settings.timeOfDay ? TIME_OF_DAY_DESCRIPTIONS[settings.timeOfDay] : undefined;
+  if (timeDesc) {
+    enhancements.push(timeDesc);
   }
 
   // Add season (if selected)
-  if (settings.season && SEASON_DESCRIPTIONS[settings.season]) {
-    enhancements.push(SEASON_DESCRIPTIONS[settings.season]);
+  const seasonDesc = settings.season ? SEASON_DESCRIPTIONS[settings.season] : undefined;
+  if (seasonDesc) {
+    enhancements.push(seasonDesc);
   }
 
   // Add weather (if selected)
-  if (settings.weather && WEATHER_DESCRIPTIONS[settings.weather]) {
-    enhancements.push(WEATHER_DESCRIPTIONS[settings.weather]);
+  const weatherDesc = settings.weather ? WEATHER_DESCRIPTIONS[settings.weather] : undefined;
+  if (weatherDesc) {
+    enhancements.push(weatherDesc);
   }
 
   // Add quality level (if selected)
-  if (settings.quality && QUALITY_DESCRIPTIONS[settings.quality]) {
-    enhancements.push(QUALITY_DESCRIPTIONS[settings.quality]);
+  const qualityDesc = settings.quality ? QUALITY_DESCRIPTIONS[settings.quality] : undefined;
+  if (qualityDesc) {
+    enhancements.push(qualityDesc);
   }
 
   // Combine prompt with enhancements

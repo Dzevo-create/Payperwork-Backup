@@ -59,33 +59,45 @@ export function buildEnhancedImagePrompt(prompt: string, settings: any): string 
   const enhancements: string[] = [];
 
   // Add style description
-  if (settings.style && IMAGE_STYLE_DESCRIPTIONS[settings.style]) {
-    enhancements.push(IMAGE_STYLE_DESCRIPTIONS[settings.style]);
+  if (settings.style) {
+    const styleDesc = IMAGE_STYLE_DESCRIPTIONS[settings.style];
+    if (styleDesc) {
+      enhancements.push(styleDesc);
+    }
   }
 
   // Add lighting description
-  if (settings.lighting && IMAGE_LIGHTING_DESCRIPTIONS[settings.lighting]) {
-    enhancements.push(IMAGE_LIGHTING_DESCRIPTIONS[settings.lighting]);
+  if (settings.lighting) {
+    const lightingDesc = IMAGE_LIGHTING_DESCRIPTIONS[settings.lighting];
+    if (lightingDesc) {
+      enhancements.push(lightingDesc);
+    }
   }
 
   // Add quality description
-  if (settings.quality && IMAGE_QUALITY_DESCRIPTIONS[settings.quality]) {
-    enhancements.push(IMAGE_QUALITY_DESCRIPTIONS[settings.quality]);
+  if (settings.quality) {
+    const qualityDesc = IMAGE_QUALITY_DESCRIPTIONS[settings.quality];
+    if (qualityDesc) {
+      enhancements.push(qualityDesc);
+    }
   }
 
   // Add aspect ratio description with special handling for 21:9
-  if (settings.aspectRatio && IMAGE_ASPECT_RATIO_DESCRIPTIONS[settings.aspectRatio]) {
-    enhancements.push(IMAGE_ASPECT_RATIO_DESCRIPTIONS[settings.aspectRatio]);
+  if (settings.aspectRatio) {
+    const aspectRatioDesc = IMAGE_ASPECT_RATIO_DESCRIPTIONS[settings.aspectRatio];
+    if (aspectRatioDesc) {
+      enhancements.push(aspectRatioDesc);
 
-    // For 21:9, add explicit instructions to fill the entire frame
-    if (settings.aspectRatio === "21:9") {
-      enhancements.push(
-        "IMPORTANT: Fill the entire ultra-wide frame completely from edge to edge"
-      );
-      enhancements.push(
-        "the composition must extend to all edges with no black bars, letterboxing, or empty borders"
-      );
-      enhancements.push("compose the scene to naturally fit the 21:9 ultra-wide format");
+      // For 21:9, add explicit instructions to fill the entire frame
+      if (settings.aspectRatio === "21:9") {
+        enhancements.push(
+          "IMPORTANT: Fill the entire ultra-wide frame completely from edge to edge"
+        );
+        enhancements.push(
+          "the composition must extend to all edges with no black bars, letterboxing, or empty borders"
+        );
+        enhancements.push("compose the scene to naturally fit the 21:9 ultra-wide format");
+      }
     }
   }
 

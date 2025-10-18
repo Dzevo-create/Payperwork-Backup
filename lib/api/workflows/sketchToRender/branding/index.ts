@@ -54,8 +54,8 @@ export async function enhanceBrandingPrompt(
     // Step 2: Build brand context
     const brandContext = formatBrandContext(
       guidelines,
-      settings?.brandingText,
-      settings?.venueType
+      settings?.brandingText ?? undefined,
+      settings?.venueType ?? undefined
     );
 
     // Step 3: Build user message
@@ -75,7 +75,7 @@ export async function enhanceBrandingPrompt(
     // Step 5: Call API
     const enhancedPrompt = await callBrandingEnhancement(
       messages,
-      settings?.brandingText
+      settings?.brandingText ?? undefined
     );
 
     const duration = Date.now() - startTime;
@@ -178,8 +178,8 @@ Output ONLY the prompt text as flowing prose, no formatting, no explanations.`;
     // Add brand guidelines
     const brandContext = formatBrandContext(
       guidelines,
-      settings?.brandingText,
-      settings?.venueType
+      settings?.brandingText ?? undefined,
+      settings?.venueType ?? undefined
     );
 
     if (brandContext) {
@@ -244,7 +244,7 @@ Output ONLY the prompt text as flowing prose, no formatting, no explanations.`;
     // Step 5: Call API (still uses GPT-4o but with the correct system prompt now!)
     const generatedPrompt = await callBrandingEnhancement(
       messages,
-      settings?.brandingText
+      settings?.brandingText ?? undefined
     );
 
     const duration = Date.now() - startTime;

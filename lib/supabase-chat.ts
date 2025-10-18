@@ -2,7 +2,6 @@ import { supabase } from './supabase';
 import { Message, Conversation } from '@/types/chat';
 import { getUserIdSync } from './supabase/insert-helper';
 import { logger } from '@/lib/logger';
-import { buildUpdateObject } from './utils/supabaseHelpers';
 
 // Conversations
 export async function fetchConversations(): Promise<Conversation[]> {
@@ -76,12 +75,14 @@ export async function createConversation(conversation: Conversation): Promise<Co
 }
 
 export async function updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
-  const userId = getUserIdSync();
+  // getUserIdSync() is called for future use (e.g., RLS policies)
+  void getUserIdSync();
 
-  const updateData = buildUpdateObject(updates, {
-    title: 'title',
-    isPinned: 'is_pinned',
-  });
+  const updateData: Record<string, any> = {};
+
+  if (updates.title !== undefined) updateData.title = updates.title;
+  if (updates.isPinned !== undefined) updateData.is_pinned = updates.isPinned;
+  if (updates.isSuperChatEnabled !== undefined) updateData.is_superchat_enabled = updates.isSuperChatEnabled;
 
   const { error } = await supabase
     .from('conversations')
@@ -94,7 +95,8 @@ export async function updateConversation(id: string, updates: Partial<Conversati
 }
 
 export async function deleteConversation(id: string): Promise<void> {
-  const userId = getUserIdSync();
+  // getUserIdSync() is called for future use (e.g., RLS policies)
+  void getUserIdSync();
 
   const { error } = await supabase
     .from('conversations')
@@ -108,7 +110,8 @@ export async function deleteConversation(id: string): Promise<void> {
 
 // Messages
 export async function fetchMessages(conversationId: string): Promise<Message[]> {
-  const userId = getUserIdSync();
+  // getUserIdSync() is called for future use (e.g., RLS policies)
+  void getUserIdSync();
 
   const { data, error } = await supabase
     .from('messages')
@@ -152,7 +155,7 @@ export async function fetchMessages(conversationId: string): Promise<Message[]> 
 }
 
 export async function createMessage(conversationId: string, message: Message): Promise<Message | null> {
-  const userId = getUserIdSync();
+  void getUserIdSync();
 
   // Debug log for C1 message creation
   if (message.wasGeneratedWithC1 && message.role === 'assistant') {
@@ -207,19 +210,21 @@ export async function createMessage(conversationId: string, message: Message): P
 }
 
 export async function updateMessage(id: string, updates: Partial<Message>): Promise<void> {
-  const userId = getUserIdSync();
+  // getUserIdSync() is called for future use (e.g., RLS policies)
+  void getUserIdSync();
 
-  const updateData = buildUpdateObject(updates, {
-    content: 'content',
-    attachments: 'attachments',
-    videoTask: 'video_task',
-    wasGeneratedWithC1: 'was_generated_with_c1',
-    generationType: 'generation_type',
-    generationAttempt: 'generation_attempt',
-    generationMaxAttempts: 'generation_max_attempts',
-    isC1Streaming: 'is_c1_streaming',
-    replyTo: 'reply_to',
-  });
+  const updateData: Record<string, any> = {};
+
+  if (updates.content !== undefined) updateData.content = updates.content;
+  if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
+  if (updates.videoTask !== undefined) updateData.video_task = updates.videoTask;
+  if (updates.wasGeneratedWithC1 !== undefined) updateData.was_generated_with_c1 = updates.wasGeneratedWithC1;
+  if (updates.generationType !== undefined) updateData.generation_type = updates.generationType;
+  if (updates.generationAttempt !== undefined) updateData.generation_attempt = updates.generationAttempt;
+  if (updates.generationMaxAttempts !== undefined) updateData.generation_max_attempts = updates.generationMaxAttempts;
+  if (updates.isC1Streaming !== undefined) updateData.is_c1_streaming = updates.isC1Streaming;
+  if (updates.replyTo !== undefined) updateData.reply_to = updates.replyTo;
+  if (updates.timestamp !== undefined) updateData.timestamp = updates.timestamp;
 
   // Debug log for C1 message updates (only if content is being updated with <content> tags)
   if (updateData.content && updateData.content.includes('<content>')) {
@@ -242,7 +247,8 @@ export async function updateMessage(id: string, updates: Partial<Message>): Prom
 }
 
 export async function deleteMessage(id: string): Promise<void> {
-  const userId = getUserIdSync();
+  // getUserIdSync() is called for future use (e.g., RLS policies)
+  void getUserIdSync();
 
   const { error } = await supabase
     .from('messages')
