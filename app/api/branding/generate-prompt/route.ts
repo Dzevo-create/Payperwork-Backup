@@ -5,6 +5,11 @@ import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
+import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
+import { perfMonitor } from "@/lib/performance/monitor";
+
+// Cache for generated branding prompts - 10 minute TTL, max 50 entries
+const brandingPromptCache = new LRUCache<string>(50, 10 * 60 * 1000);
 
 /**
  * POST /api/branding/generate-prompt
@@ -18,16 +23,19 @@ import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
  */
 export async function POST(req: NextRequest) {
   const clientId = getClientId(req);
+  const startTime = perfMonitor.startTimer('branding-generate-prompt');
 
   try {
     // API Key validation
     const keyValidation = validateApiKeys(["openai"]);
     if (!keyValidation.valid) {
+      perfMonitor.recordMetric('branding-generate-prompt', startTime, false, { reason: 'invalid-api-key' });
       return keyValidation.errorResponse!;
     }
 
     // Content-Type validation
     if (!validateContentType(req)) {
+      perfMonitor.recordMetric('branding-generate-prompt', startTime, false, { reason: 'invalid-content-type' });
       return handleApiError(
         new Error("Content-Type must be application/json"),
         "generate-prompt-api"
@@ -39,10 +47,47 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields
     if (!sourceImage || !sourceImage.data || !sourceImage.mimeType) {
+      perfMonitor.recordMetric('branding-generate-prompt', startTime, false, { reason: 'missing-source-image' });
       return NextResponse.json(
         { error: "Source image is required for T-Button" },
         { status: 400 }
       );
+    }
+
+    // Create cache key from request parameters
+    const cacheKey = createObjectCacheKey({
+      userPrompt: userPrompt || '',
+      sourceImageHash: sourceImage.data.substring(0, 100),
+      referenceImageHash: referenceImage?.data?.substring(0, 100) || '',
+      settings: JSON.stringify(settings || {}),
+      type: 'branding'
+    });
+
+    // Check cache
+    const cachedPrompt = brandingPromptCache.get(cacheKey);
+    if (cachedPrompt) {
+      apiLogger.info("Branding T-Button: Using cached prompt", {
+        clientId,
+        cacheHit: true,
+        promptLength: cachedPrompt.length,
+        brand: settings?.brandingText,
+      });
+
+      perfMonitor.recordMetric('branding-generate-prompt', startTime, true, {
+        cached: true,
+        brand: settings?.brandingText
+      });
+
+      return NextResponse.json({
+        enhancedPrompt: cachedPrompt,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          hadUserInput: !!userPrompt,
+          usedReference: !!referenceImage,
+          usedSettings: !!settings,
+          cached: true
+        }
+      });
     }
 
     apiLogger.info("Branding T-Button: Generating prompt", {
@@ -52,6 +97,7 @@ export async function POST(req: NextRequest) {
       hasSettings: !!settings,
       brand: settings?.brandingText || null,
       venueType: settings?.venueType || null,
+      cacheHit: false,
     });
 
     // Generate prompt using dedicated Branding T-Button function with Brand Intelligence
@@ -62,10 +108,20 @@ export async function POST(req: NextRequest) {
       referenceImage
     );
 
+    // Store in cache
+    brandingPromptCache.set(cacheKey, generatedPrompt);
+
     apiLogger.info("Branding T-Button: Prompt generated successfully", {
       clientId,
       promptLength: generatedPrompt.length,
       brand: settings?.brandingText,
+      cached: false,
+    });
+
+    perfMonitor.recordMetric('branding-generate-prompt', startTime, true, {
+      cached: false,
+      brand: settings?.brandingText,
+      promptLength: generatedPrompt.length
     });
 
     return NextResponse.json({
@@ -75,12 +131,16 @@ export async function POST(req: NextRequest) {
         hadUserInput: !!userPrompt,
         usedReference: !!referenceImage,
         usedSettings: !!settings,
+        cached: false
       }
     });
 
   } catch (error) {
-    apiLogger.error("T-Button: Failed to generate prompt", error instanceof Error ? error : undefined, {
+    apiLogger.error("Branding T-Button: Failed to generate prompt", error instanceof Error ? error : undefined, {
       clientId,
+    });
+    perfMonitor.recordMetric('branding-generate-prompt', startTime, false, {
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
     return handleApiError(error, "generate-prompt-api");
   }

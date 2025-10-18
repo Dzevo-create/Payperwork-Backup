@@ -15,6 +15,7 @@
 
 import { openaiClient, retryWithBackoff } from "@/lib/api/providers/openai";
 import { apiLogger } from "@/lib/logger";
+import { LRUCache, createCacheKey } from "@/lib/cache/lruCache";
 
 /**
  * Brand Guidelines extracted by the Brand Intelligence Agent
@@ -290,20 +291,18 @@ function mapVenueTypeToDescription(venueType: string): string {
 
 /**
  * Cache for brand guidelines to avoid repeated API calls
- * Key: brandName, Value: { guidelines, timestamp }
+ * Using LRU Cache with 24 hour TTL and max 100 brands
  */
-const brandGuidelinesCache = new Map<string, {
-  guidelines: BrandGuidelines;
-  timestamp: number;
-}>();
-
-const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
+const brandGuidelinesCache = new LRUCache<BrandGuidelines>(
+  100, // Max 100 brands in cache
+  1000 * 60 * 60 * 24 // 24 hour TTL
+);
 
 /**
  * Analyzes a brand with caching to improve performance
  *
  * Caches brand guidelines for 24 hours to avoid redundant API calls
- * for the same brand.
+ * for the same brand. Uses LRU eviction when cache is full.
  *
  * @param brandName - Name of the brand to analyze
  * @param venueType - Optional venue type for context
@@ -313,26 +312,30 @@ export async function analyzeBrandCached(
   brandName: string,
   venueType?: string
 ): Promise<BrandGuidelines> {
-  const cacheKey = `${brandName.toLowerCase()}-${venueType || "default"}`;
+  const cacheKey = createCacheKey("brand", brandName.toLowerCase(), venueType || "default");
   const cached = brandGuidelinesCache.get(cacheKey);
 
   // Check cache validity
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  if (cached) {
     apiLogger.debug("Brand Intelligence: Using cached guidelines", {
       brandName,
-      cacheAge: Date.now() - cached.timestamp,
+      venueType,
+      cacheHit: true,
     });
-    return cached.guidelines;
+    return cached;
   }
 
   // Fetch fresh guidelines
+  apiLogger.debug("Brand Intelligence: Cache miss, fetching fresh guidelines", {
+    brandName,
+    venueType,
+    cacheHit: false,
+  });
+
   const guidelines = await analyzeBrand(brandName, venueType);
 
   // Update cache
-  brandGuidelinesCache.set(cacheKey, {
-    guidelines,
-    timestamp: Date.now(),
-  });
+  brandGuidelinesCache.set(cacheKey, guidelines);
 
   return guidelines;
 }
