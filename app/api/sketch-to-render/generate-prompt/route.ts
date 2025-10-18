@@ -38,6 +38,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { userPrompt, sourceImage, referenceImage, settings } = body;
 
+    // DEBUG: Log received settings
+    apiLogger.info("DEBUG: Received settings in route", {
+      clientId,
+      settings,
+      hasBrandingText: settings && 'brandingText' in settings,
+      hasVenueType: settings && 'venueType' in settings,
+      brandingTextValue: settings?.brandingText,
+      venueTypeValue: settings?.venueType,
+    });
+
     // Validate required fields
     if (!sourceImage || !sourceImage.data || !sourceImage.mimeType) {
       return NextResponse.json(

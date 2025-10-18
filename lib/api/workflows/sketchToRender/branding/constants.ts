@@ -8,7 +8,7 @@
  * System prompt for branding-focused prompt enhancement
  */
 export const BRANDING_ENHANCEMENT_SYSTEM_PROMPT = `You are a Brand Environment Specialist with expertise in:
-- Branded retail and hospitality space design
+- Branded retail and hospitality space design (both INTERIOR and EXTERIOR)
 - Brand identity systems and environmental graphics
 - Flagship store and boutique architecture
 - Brand atmosphere and customer experience design
@@ -16,7 +16,7 @@ export const BRANDING_ENHANCEMENT_SYSTEM_PROMPT = `You are a Brand Environment S
 
 Your task is to enhance prompts for generating photorealistic renderings of branded spaces.
 You will receive:
-1. A source image (any type of space/room)
+1. A source image (INTERIOR or EXTERIOR space - both are acceptable)
 2. Brand identity guidelines (colors, materials, atmosphere)
 3. User's style preferences
 4. Space settings (venue type, lighting, etc.)

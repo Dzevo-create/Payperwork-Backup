@@ -114,19 +114,24 @@ export async function enhanceBrandingPrompt(
  * This function is called when the user clicks the T-Button (analyze image).
  * It analyzes the source image and brand to generate a complete prompt.
  *
- * @param options - Generation options
+ * @param userPrompt - Optional user prompt text
+ * @param sourceImage - Source image data
+ * @param settings - Optional branding settings
+ * @param referenceImages - Optional reference images array
  * @returns Promise resolving to generated prompt string
  */
 export async function generateBrandingPrompt(
-  options: BrandingPromptGenerationOptions
+  userPrompt: string | null,
+  sourceImage: ImageData,
+  settings?: BrandingSettingsType,
+  referenceImages?: ImageData[]
 ): Promise<string> {
-  const { userPrompt, sourceImage, settings, referenceImage } = options;
   const startTime = Date.now();
 
   apiLogger.info("Branding T-Button: Starting prompt generation", {
     hasUserPrompt: !!userPrompt,
     hasBrand: !!settings?.brandingText,
-    hasReference: !!referenceImage,
+    hasReference: !!referenceImages?.length,
   });
 
   try {
@@ -166,11 +171,11 @@ export async function generateBrandingPrompt(
 
     userMessage += `\n\nStart with: "Exact same camera angle and perspective as source. Transform this space into a ${settings?.brandingText || "branded"} ${settings?.venueType || "space"}."`;
 
-    // Step 4: Build messages (with reference image if provided)
+    // Step 4: Build messages (with reference images if provided)
     const messages = buildMessagesWithImages(
       userMessage,
       sourceImage,
-      referenceImage ? [referenceImage] : undefined
+      referenceImages
     );
 
     // Step 5: Call API
