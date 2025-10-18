@@ -130,6 +130,8 @@ export function ResultPanel({
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
+
+    return undefined;
   }, [showCameraMenu, showDurationMenu]);
 
   return (
@@ -230,7 +232,7 @@ export function ResultPanel({
                   {/* Settings Row - Both on the right */}
                   <div className="flex items-center justify-end gap-2">
                     {/* Duration Dropdown */}
-                    <div className="relative" ref={el => el && (durationMenuRef.current = el)}>
+                    <div className="relative" ref={durationMenuRef}>
                       <button
                         onClick={() => setShowDurationMenu(!showDurationMenu)}
                         className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -271,7 +273,7 @@ export function ResultPanel({
                     </div>
 
                     {/* Camera Movement Dropdown - Icon only */}
-                    <div className="relative" ref={el => el && (cameraMenuRef.current = el)}>
+                    <div className="relative" ref={cameraMenuRef}>
                       <button
                         onClick={() => setShowCameraMenu(!showCameraMenu)}
                         className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
