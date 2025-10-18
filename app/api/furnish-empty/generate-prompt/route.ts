@@ -4,7 +4,7 @@ import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateFurnishEmptyPrompt } from "@/lib/api/workflows/furnishEmpty/promptGenerator";
-import { enhanceFurnishEmptyPromptWithGPT } from "@/lib/api/workflows/furnishEmpty/gptEnhancer";
+import { enhanceFurnishEmptyPrompt } from "@/lib/api/workflows/common/universalGptEnhancer";
 import { FurnishEmptySettingsType } from "@/types/workflows/furnishEmptySettings";
 import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
 import { perfMonitor } from "@/lib/performance/monitor";
@@ -103,22 +103,24 @@ export async function POST(req: NextRequest) {
     let generatedPrompt: string;
 
     try {
-      // Try GPT-4 Vision first for intelligent, context-aware prompt generation
-      generatedPrompt = await enhanceFurnishEmptyPromptWithGPT({
+      // Try universal GPT-4 Vision enhancer for intelligent, context-aware prompt generation
+      generatedPrompt = await enhanceFurnishEmptyPrompt({
         userPrompt: userPrompt || "",
         sourceImage,
         settings: settings as FurnishEmptySettingsType,
         referenceImages: referenceImage ? [referenceImage] : undefined
       });
 
-      apiLogger.info("T-Button: GPT-4 Vision prompt generated", {
+      apiLogger.info("T-Button: Universal GPT-4 Vision prompt generated", {
         clientId,
+        workflow: 'furnish-empty',
         promptLength: generatedPrompt.length,
       });
     } catch (gptError) {
       // Fallback to static prompt generator if GPT-4 fails
-      apiLogger.warn("T-Button: GPT-4 Vision failed, using static generator", {
+      apiLogger.warn("T-Button: Universal GPT-4 Vision failed, using static generator", {
         clientId,
+        workflow: 'furnish-empty',
         error: gptError instanceof Error ? gptError.message : String(gptError),
       });
 

@@ -4,6 +4,7 @@ import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateSketchToRenderPrompt, generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender";
+import { enhanceSketchToRenderPrompt, enhanceBrandingPrompt } from "@/lib/api/workflows/common/universalGptEnhancer";
 import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
@@ -103,25 +104,62 @@ export async function POST(req: NextRequest) {
       cacheHit: false,
     });
 
-    // Generate prompt using appropriate function
+    // Generate prompt using universal GPT-4 Vision enhancer
     let generatedPrompt: string;
 
-    if (isBrandingRequest) {
-      // Use branding-specific prompt generator
-      generatedPrompt = await generateBrandingPrompt(
-        userPrompt || null,
-        sourceImage,
-        settings as BrandingSettingsType | undefined,
-        referenceImage ? [referenceImage] : undefined
-      );
-    } else {
-      // Use standard sketch-to-render prompt generator
-      generatedPrompt = await generateSketchToRenderPrompt(
-        userPrompt || null,
-        sourceImage,
-        settings as SketchToRenderSettingsType | undefined,
-        referenceImage
-      );
+    try {
+      if (isBrandingRequest) {
+        // Use universal branding prompt enhancer
+        generatedPrompt = await enhanceBrandingPrompt({
+          userPrompt: userPrompt || "",
+          sourceImage,
+          settings: settings as BrandingSettingsType || {},
+          referenceImages: referenceImage ? [referenceImage] : undefined
+        });
+
+        apiLogger.info("T-Button: Universal GPT-4 Vision prompt generated", {
+          clientId,
+          workflow: 'branding',
+          promptLength: generatedPrompt.length,
+        });
+      } else {
+        // Use universal sketch-to-render prompt enhancer
+        generatedPrompt = await enhanceSketchToRenderPrompt({
+          userPrompt: userPrompt || "",
+          sourceImage,
+          settings: settings as SketchToRenderSettingsType || {},
+          referenceImages: referenceImage ? [referenceImage] : undefined
+        });
+
+        apiLogger.info("T-Button: Universal GPT-4 Vision prompt generated", {
+          clientId,
+          workflow: 'sketch-to-render',
+          promptLength: generatedPrompt.length,
+        });
+      }
+    } catch (gptError) {
+      // Fallback to static prompt generators if GPT-4 fails
+      apiLogger.warn("T-Button: Universal GPT-4 Vision failed, using static generator", {
+        clientId,
+        workflow: isBrandingRequest ? 'branding' : 'sketch-to-render',
+        error: gptError instanceof Error ? gptError.message : String(gptError),
+      });
+
+      if (isBrandingRequest) {
+        generatedPrompt = await generateBrandingPrompt(
+          userPrompt || null,
+          sourceImage,
+          settings as BrandingSettingsType | undefined,
+          referenceImage ? [referenceImage] : undefined
+        );
+      } else {
+        generatedPrompt = await generateSketchToRenderPrompt(
+          userPrompt || null,
+          sourceImage,
+          settings as SketchToRenderSettingsType | undefined,
+          referenceImage
+        );
+      }
     }
 
     // Store in cache
@@ -129,6 +167,7 @@ export async function POST(req: NextRequest) {
 
     apiLogger.info("T-Button: Prompt generated successfully", {
       clientId,
+      workflow: isBrandingRequest ? 'branding' : 'sketch-to-render',
       promptLength: generatedPrompt.length,
       cached: false,
     });
