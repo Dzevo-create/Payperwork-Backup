@@ -7,6 +7,7 @@ import { ChatSidebar } from "./Sidebar/ChatSidebar";
 import { SearchModal } from "./shared/SearchModal";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { ToastContainer } from "@/components/shared/Toast";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { useChatStore } from "@/store/chatStore.supabase";
 import { useToastStore } from "@/hooks/useToast";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
@@ -295,10 +296,11 @@ export function ChatLayout() {
   };
 
   return (
-    <div className="h-screen bg-pw-dark overflow-hidden px-0 sm:px-1 md:px-2 py-0 sm:py-1">
-      <div className="h-full flex gap-0 sm:gap-1 max-w-none mx-auto">
-        {/* Sidebar Container */}
-        <ChatSidebar
+    <ErrorBoundary>
+      <div className="h-screen bg-pw-dark overflow-hidden px-0 sm:px-1 md:px-2 py-0 sm:py-1">
+        <div className="h-full flex gap-0 sm:gap-1 max-w-none mx-auto">
+          {/* Sidebar Container */}
+          <ChatSidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           isCollapsed={isCollapsed}
@@ -341,6 +343,7 @@ export function ChatLayout() {
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

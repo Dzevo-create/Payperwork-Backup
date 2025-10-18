@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatLayout } from "@/components/chat/ChatLayout";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 /**
  * Chat Page
@@ -13,5 +14,9 @@ import { ChatLayout } from "@/components/chat/ChatLayout";
  */
 
 export default function ChatPage() {
-  return <ChatLayout />;
+  return (
+    <ErrorBoundary>
+      <ChatLayout />
+    </ErrorBoundary>
+  );
 }

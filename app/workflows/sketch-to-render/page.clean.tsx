@@ -10,6 +10,7 @@
 import { WorkflowPage, type WorkflowPageConfig } from '@/components/workflows/WorkflowPage';
 import { RenderPromptInput } from '@/components/workflows/RenderPromptInput';
 import { DEFAULT_RENDER_SETTINGS, type RenderSettingsType } from '@/types/workflows/renderSettings';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {
   useSketchToRenderAdapter,
   usePromptEnhancerAdapter,
@@ -55,5 +56,9 @@ const sketchToRenderConfig: WorkflowPageConfig<RenderSettingsType> = {
  * Everything else is handled by the generic WorkflowPage component.
  */
 export default function SketchToRenderPage() {
-  return <WorkflowPage config={sketchToRenderConfig} />;
+  return (
+    <ErrorBoundary>
+      <WorkflowPage config={sketchToRenderConfig} />
+    </ErrorBoundary>
+  );
 }

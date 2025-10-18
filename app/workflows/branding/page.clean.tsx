@@ -10,6 +10,7 @@
 import { WorkflowPage, type WorkflowPageConfig } from '@/components/workflows/WorkflowPage';
 import { BrandingPromptInput } from '@/components/workflows/BrandingPromptInput';
 import { DEFAULT_BRANDING_SETTINGS, type BrandingSettingsType } from '@/types/workflows/brandingSettings';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {
   useBrandingAdapter,
   usePromptEnhancerAdapter,
@@ -55,5 +56,9 @@ const brandingConfig: WorkflowPageConfig<BrandingSettingsType> = {
  * Everything else is handled by the generic WorkflowPage component.
  */
 export default function BrandingPage() {
-  return <WorkflowPage config={brandingConfig} />;
+  return (
+    <ErrorBoundary>
+      <WorkflowPage config={brandingConfig} />
+    </ErrorBoundary>
+  );
 }

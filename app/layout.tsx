@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "./error-suppression"; // Suppress known third-party warnings
 import "@/lib/env-startup"; // Validate environment variables at startup
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 const inter = Inter({
   subsets: ["latin"],

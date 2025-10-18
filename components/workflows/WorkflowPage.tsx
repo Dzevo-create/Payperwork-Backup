@@ -21,6 +21,7 @@ import { ResultPanel } from "@/components/workflows/ResultPanel";
 import { RecentGenerations } from "@/components/workflows/RecentGenerations";
 import { RenderLightbox } from "@/components/workflows/RenderLightbox";
 import ImageCropModal from "@/components/chat/ImageCrop/ImageCropModal";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { useChatStore } from "@/store/chatStore.supabase";
 import { useRouter } from "next/navigation";
 import { workflowLogger } from '@/lib/logger';
@@ -327,10 +328,11 @@ export function WorkflowPage<TSettings = Record<string, unknown>>({ config }: Wo
   const { PromptInputComponent } = config;
 
   return (
-    <div className="h-screen bg-pw-dark overflow-hidden px-0 sm:px-1 md:px-2 py-0 sm:py-1">
-      <div className="h-full flex gap-0 sm:gap-1 max-w-none mx-auto">
-        {/* Sidebar */}
-        <ChatSidebar
+    <ErrorBoundary>
+      <div className="h-screen bg-pw-dark overflow-hidden px-0 sm:px-1 md:px-2 py-0 sm:py-1">
+        <div className="h-full flex gap-0 sm:gap-1 max-w-none mx-auto">
+          {/* Sidebar */}
+          <ChatSidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           isCollapsed={isCollapsed}
@@ -519,6 +521,7 @@ export function WorkflowPage<TSettings = Record<string, unknown>>({ config }: Wo
           onCropComplete={handleCropComplete}
         />
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

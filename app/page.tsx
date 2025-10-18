@@ -9,10 +9,11 @@ import { Pricing } from "@/components/landing/Pricing";
 import { SwissMade } from "@/components/landing/SwissMade";
 import { CTA } from "@/components/landing/CTA";
 import { Footer } from "@/components/landing/Footer";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 export default function Home() {
   return (
-    <>
+    <ErrorBoundary>
       <main>
         <Hero />
         <ProblemSolution />
@@ -26,6 +27,6 @@ export default function Home() {
         <CTA />
       </main>
       <Footer />
-    </>
+    </ErrorBoundary>
   );
 }

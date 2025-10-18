@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {
   migrateLocalStorageToSupabase,
   getMigrationStatus,
@@ -44,8 +45,9 @@ export default function MigratePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
-      <div className="max-w-4xl mx-auto">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
+        <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           🚀 Migrate to Supabase
         </h1>
@@ -200,6 +202,7 @@ export default function MigratePage() {
           </ol>
         </div>
       </div>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
