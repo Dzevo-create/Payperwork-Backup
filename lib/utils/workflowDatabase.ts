@@ -108,6 +108,8 @@ export async function getRecentWorkflowGenerations(
 
 /**
  * Delete a generation from a workflow table
+ *
+ * Supports both UUID (modern tables) and numeric IDs (legacy tables)
  */
 export async function deleteWorkflowGeneration(
   tableName: string,
@@ -115,18 +117,52 @@ export async function deleteWorkflowGeneration(
   generationId: string | number
 ): Promise<boolean> {
   try {
-    // Convert to number if string (database ID is BIGINT)
-    const numericId = typeof generationId === 'string' ? parseInt(generationId, 10) : generationId;
-
-    if (isNaN(numericId)) {
-      logger.error(`[${tableName} DB] Invalid generation ID:`, { generationId, type: typeof generationId });
+    // Validate generation ID exists
+    if (!generationId) {
+      logger.error(`[${tableName} DB] Missing generation ID`);
       return false;
     }
 
+    // UUID regex: 8-4-4-4-12 hex characters
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // For string IDs, determine if UUID or numeric
+    if (typeof generationId === 'string') {
+      // If it's a pure numeric string, convert to number (legacy BIGINT support)
+      if (/^\d+$/.test(generationId)) {
+        const numericId = parseInt(generationId, 10);
+        if (!isNaN(numericId)) {
+          const { error } = await supabaseAdmin
+            .from(tableName)
+            .delete()
+            .eq("id", numericId)
+            .eq("user_id", userId);
+
+          if (error) {
+            logger.error(`[${tableName} DB] Error deleting generation (numeric):`, error);
+            return false;
+          }
+          logger.info(`[${tableName} DB] Successfully deleted generation (numeric):`, numericId);
+          return true;
+        }
+      }
+
+      // Validate UUID format
+      if (!uuidRegex.test(generationId)) {
+        logger.error(`[${tableName} DB] Invalid ID format:`, {
+          generationId,
+          type: typeof generationId,
+          expected: 'UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) or numeric'
+        });
+        return false;
+      }
+    }
+
+    // Delete with ID as-is (UUID string or number)
     const { error } = await supabaseAdmin
       .from(tableName)
       .delete()
-      .eq("id", numericId)
+      .eq("id", generationId)
       .eq("user_id", userId);
 
     if (error) {
@@ -134,6 +170,7 @@ export async function deleteWorkflowGeneration(
       return false;
     }
 
+    logger.info(`[${tableName} DB] Successfully deleted generation:`, { generationId });
     return true;
   } catch (error) {
     logger.error(`[${tableName} DB] Unexpected error:`, error);
@@ -143,6 +180,8 @@ export async function deleteWorkflowGeneration(
 
 /**
  * Get generation by ID from a workflow table
+ *
+ * Supports both UUID (modern tables) and numeric IDs (legacy tables)
  */
 export async function getWorkflowGenerationById(
   tableName: string,
@@ -150,18 +189,52 @@ export async function getWorkflowGenerationById(
   generationId: string | number
 ): Promise<WorkflowGeneration | null> {
   try {
-    // Convert to number if string (database ID is BIGINT)
-    const numericId = typeof generationId === 'string' ? parseInt(generationId, 10) : generationId;
-
-    if (isNaN(numericId)) {
-      logger.error(`[${tableName} DB] Invalid generation ID:`, { generationId, type: typeof generationId });
+    // Validate generation ID exists
+    if (!generationId) {
+      logger.error(`[${tableName} DB] Missing generation ID`);
       return null;
     }
 
+    // UUID regex
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // For string IDs, determine if UUID or numeric
+    if (typeof generationId === 'string') {
+      // If it's a pure numeric string, convert to number (legacy BIGINT support)
+      if (/^\d+$/.test(generationId)) {
+        const numericId = parseInt(generationId, 10);
+        if (!isNaN(numericId)) {
+          const { data: generation, error } = await supabaseAdmin
+            .from(tableName)
+            .select("*")
+            .eq("id", numericId)
+            .eq("user_id", userId)
+            .single();
+
+          if (error) {
+            logger.error(`[${tableName} DB] Error fetching generation (numeric):`, error);
+            return null;
+          }
+          return generation;
+        }
+      }
+
+      // Validate UUID format
+      if (!uuidRegex.test(generationId)) {
+        logger.error(`[${tableName} DB] Invalid ID format:`, {
+          generationId,
+          type: typeof generationId,
+          expected: 'UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) or numeric'
+        });
+        return null;
+      }
+    }
+
+    // Fetch with ID as-is (UUID string or number)
     const { data: generation, error } = await supabaseAdmin
       .from(tableName)
       .select("*")
-      .eq("id", numericId)
+      .eq("id", generationId)
       .eq("user_id", userId)
       .single();
 
