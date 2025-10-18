@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Pencil, Palette, Sofa, LucideProps } from "lucide-react";
+import { Pencil, Palette, Sofa, Shuffle, LucideProps } from "lucide-react";
 
 export interface Workflow {
   id: string;
@@ -32,6 +32,13 @@ const workflows: Workflow[] = [
     icon: Sofa,
     route: "/workflows/furnish-empty",
     description: "Leere Räume → Eingerichtete Räume",
+  },
+  {
+    id: "style-transfer",
+    name: "Style Transfer",
+    icon: Shuffle,
+    route: "/workflows/style-transfer",
+    description: "Design + Referenz → Neuer Stil",
   },
 ];
 

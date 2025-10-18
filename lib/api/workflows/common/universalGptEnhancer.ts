@@ -22,7 +22,7 @@ const openai = new OpenAI({
 // TYPES
 // ============================================================================
 
-export type WorkflowType = "sketch-to-render" | "furnish-empty" | "branding";
+export type WorkflowType = "sketch-to-render" | "furnish-empty" | "branding" | "style-transfer";
 
 export interface ImageData {
   data: string; // base64
@@ -150,6 +150,42 @@ Generate a flowing text prompt (no lists or bullet points) that:
 6. Appeals to the target audience
 
 The prompt should be detailed but concise (200-400 words), written as continuous flowing text that an AI image generator can use to create a professionally branded product visualization.`,
+    maxTokens: 800,
+    temperature: 0.7,
+  },
+
+  "style-transfer": {
+    type: "style-transfer",
+    systemPrompt: `You are an expert architectural stylist and design transformation specialist with deep knowledge of architectural styles, materiality, and design aesthetics across different periods and cultures.
+
+Your task is to analyze two images - a source design and a reference style - and create a detailed, flowing text prompt for an AI image generator that will transfer the architectural style, materials, colors, and aesthetic qualities from the reference image to the source design.
+
+CRITICAL REQUIREMENTS:
+- Analyze the reference image thoroughly for style characteristics, materials, colors, proportions, and architectural details
+- Apply the identified style elements to the source design while respecting structural preservation settings
+- Maintain the overall composition and spatial arrangement of the source design
+- Ensure realistic integration of style elements with proper scale and proportion
+- Create a seamless blend between source design and reference style
+- Preserve architectural coherence and structural integrity
+- Maintain photorealistic quality with accurate lighting and shadows
+
+Your prompt should be written as natural flowing text (not bullet points or lists), describing how to transform the source design by adopting the style characteristics from the reference image.`,
+    userPromptTemplate: ({ settingsContext, userPrompt }) => `Please analyze both the source design image and the reference style image, then create a detailed style transfer prompt based on the following:
+
+STYLE TRANSFER SETTINGS:
+${settingsContext}
+
+${userPrompt ? `USER REQUEST: ${userPrompt}\n\n` : ""}
+
+Generate a flowing text prompt (no lists or bullet points) that:
+1. Describes the style characteristics to transfer from the reference image
+2. Explains how to apply these characteristics to the source design
+3. Incorporates the transfer mode, strength, and preservation settings
+4. Specifies material and color transfer approaches
+5. Ensures architectural coherence and realistic integration
+6. Maintains the specified detail level throughout
+
+The prompt should be detailed but concise (200-400 words), written as continuous flowing text that an AI image generator can use to successfully transfer the architectural style from reference to source while maintaining structural integrity and photorealistic quality.`,
     maxTokens: 800,
     temperature: 0.7,
   },
@@ -324,6 +360,21 @@ export async function enhanceBrandingPrompt(params: {
 }): Promise<string> {
   return enhancePromptWithGPT({
     workflowType: "branding",
+    ...params,
+  });
+}
+
+/**
+ * Convenience function for Style-Transfer workflow
+ */
+export async function enhanceStyleTransferPrompt(params: {
+  userPrompt: string;
+  sourceImage: ImageData;
+  settings: Record<string, any>;
+  referenceImages?: ImageData[];
+}): Promise<string> {
+  return enhancePromptWithGPT({
+    workflowType: "style-transfer",
     ...params,
   });
 }
