@@ -7,8 +7,6 @@ import {
   Palette,
   Type,
   Sun,
-  Calendar,
-  Cloud,
   Sparkles,
   Zap,
   ChevronDown,

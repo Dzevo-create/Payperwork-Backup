@@ -14,8 +14,6 @@ interface InputsPanelProps {
   onCropReference?: (index: number) => void;
 }
 
-const MAX_REFERENCE_IMAGES = 1;
-
 /**
  * InputsPanel Component
  *

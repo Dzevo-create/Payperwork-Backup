@@ -73,9 +73,9 @@ export function ResultPanel({
   const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
   const [showCameraMenu, setShowCameraMenu] = useState(false);
   const [showDurationMenu, setShowDurationMenu] = useState(false);
-  const cameraMenuRef = useRef<HTMLButtonElement>(null);
+  const cameraMenuRef = useRef<HTMLDivElement>(null);
   const cameraDropdownRef = useRef<HTMLDivElement>(null);
-  const durationMenuRef = useRef<HTMLButtonElement>(null);
+  const durationMenuRef = useRef<HTMLDivElement>(null);
   const durationDropdownRef = useRef<HTMLDivElement>(null);
 
   const handleEdit = () => {

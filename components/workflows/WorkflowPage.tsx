@@ -23,7 +23,6 @@ import { RenderLightbox } from "@/components/workflows/RenderLightbox";
 import ImageCropModal from "@/components/chat/ImageCrop/ImageCropModal";
 import { useChatStore } from "@/store/chatStore.supabase";
 import { useRouter } from "next/navigation";
-import { getUserIdSync } from "@/lib/supabase/insert-helper";
 import { workflowLogger } from '@/lib/logger';
 
 // Hooks
@@ -118,7 +117,7 @@ export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSet
   const crop = useImageCrop();
 
   // Get hooks from config
-  const { generate, isGenerating, error: generateError, progress } = config.hooks.useGenerate();
+  const { generate, isGenerating } = config.hooks.useGenerate();
   const enhanceHook = config.hooks.useEnhance?.(workflowState.inputData.sourceImage.preview, workflowState.settings);
   const editHook = config.hooks.useEdit?.();
   const upscaleHook = config.hooks.useUpscale?.();
@@ -265,7 +264,7 @@ export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSet
 
   const handleCropResult = useCallback(() => {
     if (workflowState.resultImage) {
-      crop.openCropModal(workflowState.resultImage, null);
+      crop.openCropModal(workflowState.resultImage, 'source');
     }
   }, [workflowState.resultImage, crop]);
 

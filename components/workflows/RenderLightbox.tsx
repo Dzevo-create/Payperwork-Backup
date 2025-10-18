@@ -107,12 +107,12 @@ export function RenderLightbox({ isOpen, item, onClose, onNavigate, hasNext, has
         window.URL.revokeObjectURL(url);
 
         downloadAbortControllerRef.current = null;
-      } catch (error) {
+      } catch (error: unknown) {
         if (error instanceof Error && error.name === 'AbortError') {
           workflowLogger.debug('Download aborted');
           return;
         }
-        workflowLogger.error('Download failed:', error);
+        workflowLogger.error('Download failed:', error instanceof Error ? error : new Error(String(error)));
       }
     }
   };

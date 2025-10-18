@@ -58,7 +58,7 @@ export function PresetsBar({ selectedPreset, onPresetChange }: PresetsBarProps) 
   }, [isOpen]);
 
   const currentPreset = PRESETS.find((p) => p.value === selectedPreset) || PRESETS[0];
-  const CurrentIcon = currentPreset.icon;
+  const CurrentIcon = currentPreset?.icon || Building2;
 
   return (
     <div className="flex items-center justify-end gap-1.5 flex-wrap">

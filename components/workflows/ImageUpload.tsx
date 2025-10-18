@@ -6,7 +6,7 @@ import { useState, useRef, DragEvent } from "react";
 interface ImageUploadProps {
   label: string;
   value?: string | null;
-  onChange: (file: File | null, preview: string | null) => void;
+  onChange: (file: File | null | undefined, preview: string | null) => void;
   maxSizeMB?: number;
   className?: string;
   showExample?: boolean; // Show before/after example

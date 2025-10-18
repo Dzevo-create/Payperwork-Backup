@@ -1,7 +1,7 @@
 "use client";
 
 import { Mic, Sparkles, Send } from "lucide-react";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 
 interface PromptSectionProps {
   prompt: string;
