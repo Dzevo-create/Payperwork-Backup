@@ -161,13 +161,14 @@ export class KlingProvider extends VideoProvider {
 
       if (!createResponse.ok || createData.code !== 0) {
         const errorMessage = createData.message || `HTTP ${createResponse.status}: ${createResponse.statusText}`;
-        videoLogger.error('Kling AI task creation failed:', {
+        const error = new Error(`Kling API Error: ${errorMessage} (HTTP ${createResponse.status}, Code: ${createData.code})`);
+        videoLogger.error('Kling AI task creation failed:', error, {
           status: createResponse.status,
           code: createData.code,
           message: createData.message,
-          data: createData,
+          data: JSON.stringify(createData),
         });
-        throw new Error(`Kling API Error: ${errorMessage} (HTTP ${createResponse.status}, Code: ${createData.code})`);
+        throw error;
       }
 
       const taskId = createData.data.task_id;
@@ -183,10 +184,9 @@ export class KlingProvider extends VideoProvider {
         type,
       };
     } catch (error) {
-      videoLogger.error('Kling task creation failed:', {
+      videoLogger.error('Kling task creation failed:', error instanceof Error ? error : undefined, {
         type,
         endpoint,
-        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -226,13 +226,14 @@ export class KlingProvider extends VideoProvider {
 
       if (!statusResponse.ok || statusData.code !== 0) {
         const errorMessage = statusData.message || `HTTP ${statusResponse.status}: ${statusResponse.statusText}`;
-        videoLogger.error('Kling API Error:', {
+        const error = new Error(`Kling API Error: ${errorMessage} (HTTP ${statusResponse.status}, Code: ${statusData.code})`);
+        videoLogger.error('Kling API Error:', error, {
           status: statusResponse.status,
           code: statusData.code,
           message: statusData.message,
-          data: statusData,
+          data: JSON.stringify(statusData),
         });
-        throw new Error(`Kling API Error: ${errorMessage} (HTTP ${statusResponse.status}, Code: ${statusData.code})`);
+        throw error;
       }
 
       return {
@@ -245,11 +246,10 @@ export class KlingProvider extends VideoProvider {
         type,
       };
     } catch (error) {
-      videoLogger.error('Kling status check failed:', {
+      videoLogger.error('Kling status check failed:', error instanceof Error ? error : undefined, {
         taskId,
         type,
         endpoint,
-        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }

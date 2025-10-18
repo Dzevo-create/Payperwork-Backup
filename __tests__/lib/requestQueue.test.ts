@@ -4,7 +4,7 @@
  * Tests the multi-conversation request queue functionality
  */
 
-import { requestQueue, RequestStatus } from '@/lib/requestQueue';
+import { requestQueue } from '@/lib/requestQueue';
 
 describe('RequestQueueManager', () => {
   beforeEach(() => {

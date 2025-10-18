@@ -91,8 +91,7 @@ export async function enhanceBrandingPrompt(
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    apiLogger.error("Branding Enhancement: Failed", {
-      error,
+    apiLogger.error("Branding Enhancement: Failed", error instanceof Error ? error : undefined, {
       duration,
       brand: settings?.brandingText,
     });
@@ -261,8 +260,7 @@ Output ONLY the prompt text as flowing prose, no formatting, no explanations.`;
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    apiLogger.error("Branding T-Button: Failed", {
-      error,
+    apiLogger.error("Branding T-Button: Failed", error instanceof Error ? error : undefined, {
       duration,
       brand: settings?.brandingText,
     });

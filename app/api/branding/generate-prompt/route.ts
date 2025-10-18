@@ -79,8 +79,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    apiLogger.error("T-Button: Failed to generate prompt", {
-      error,
+    apiLogger.error("T-Button: Failed to generate prompt", error instanceof Error ? error : undefined, {
       clientId,
     });
     return handleApiError(error, "generate-prompt-api");

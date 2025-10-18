@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
         }
 
         const candidate = response.candidates[0];
-        if (!candidate.content || !candidate.content.parts) {
+        if (!candidate || !candidate.content || !candidate.content.parts) {
           throw new Error("Ungültiges Bearbeitungs-Format");
         }
 
@@ -192,10 +192,9 @@ export async function POST(req: NextRequest) {
 
     // If still no image after all retries, throw error
     if (!editedImageData) {
-      apiLogger.error("Edit failed after all retries", {
+      apiLogger.error("Edit failed after all retries", lastError || undefined, {
         clientId,
         attempts: MAX_RETRIES,
-        lastError: lastError?.message,
       });
       throw new Error(
         `Bearbeitung nach ${MAX_RETRIES} Versuchen fehlgeschlagen. Bitte versuche es erneut.`

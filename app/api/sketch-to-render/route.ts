@@ -200,8 +200,7 @@ REMINDER: Fully photorealistic output with ZERO visible sketch lines.`;
     });
 
   } catch (error) {
-    apiLogger.error("Sketch-to-Render: Generation failed", {
-      error,
+    apiLogger.error("Sketch-to-Render: Generation failed", error instanceof Error ? error : undefined, {
       clientId,
     });
     return handleApiError(error, "sketch-to-render-api");

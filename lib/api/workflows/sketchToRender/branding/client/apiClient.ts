@@ -54,11 +54,11 @@ export async function callBrandingEnhancement(
     // Check if there was a refusal
     const refusal = response.choices[0]?.message?.refusal;
     if (refusal) {
-      apiLogger.error("GPT-4o refused the request", {
+      const error = new Error(`GPT-4o refused: ${refusal}`);
+      apiLogger.error("GPT-4o refused the request", error, {
         brand: brandName,
-        refusal,
       });
-      throw new Error(`GPT-4o refused: ${refusal}`);
+      throw error;
     }
     throw new Error("Empty response from GPT-4o");
   }

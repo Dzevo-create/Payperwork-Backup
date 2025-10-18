@@ -153,11 +153,11 @@ Be specific about colors, materials, textures, and spatial design.`;
       // Check if there was a refusal
       const refusal = completion.choices[0]?.message?.refusal;
       if (refusal) {
-        apiLogger.error("Brand Intelligence: GPT-5 refused the request", {
+        const error = new Error(`GPT-5 refused: ${refusal}`);
+        apiLogger.error("Brand Intelligence: GPT-5 refused the request", error, {
           brandName,
-          refusal,
         });
-        throw new Error(`GPT-5 refused: ${refusal}`);
+        throw error;
       }
       throw new Error("Empty response from Brand Intelligence Agent");
     }
@@ -167,11 +167,11 @@ Be specific about colors, materials, textures, and spatial design.`;
     try {
       guidelines = JSON.parse(responseText);
     } catch (parseError) {
-      apiLogger.error("Brand Intelligence: Failed to parse JSON response", {
-        error: parseError,
+      const error = new Error("Invalid JSON response from Brand Intelligence Agent");
+      apiLogger.error("Brand Intelligence: Failed to parse JSON response", parseError instanceof Error ? parseError : error, {
         responseText: responseText.substring(0, 500),
       });
-      throw new Error("Invalid JSON response from Brand Intelligence Agent");
+      throw error;
     }
 
     // Validate required fields
@@ -194,8 +194,7 @@ Be specific about colors, materials, textures, and spatial design.`;
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    apiLogger.error("Brand Intelligence: Analysis failed", {
-      error,
+    apiLogger.error("Brand Intelligence: Analysis failed", error instanceof Error ? error : undefined, {
       brandName,
       venueType,
       duration,

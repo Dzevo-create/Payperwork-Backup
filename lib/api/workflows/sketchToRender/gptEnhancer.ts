@@ -311,7 +311,7 @@ Keep prompts under 80 words. Output ONLY the prompt.`;
 
     return enhancedPrompt;
   } catch (error) {
-    apiLogger.error("Failed to enhance prompt", { error });
+    apiLogger.error("Failed to enhance prompt", error instanceof Error ? error : undefined);
     return `Exact same camera angle and perspective as source. Fully photorealistic, no sketch lines. ${settings?.designStyle || "architectural"} rendering with realistic materials and textures. Must look like a real photograph, not a drawing.`;
   }
 }

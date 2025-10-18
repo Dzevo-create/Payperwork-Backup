@@ -36,6 +36,9 @@ export interface Message {
   gptModel?: "gpt-4o" | "gpt-5";
   // SuperChat (C1) mode indicator - tracks which mode created this message
   isSuperChatMode?: boolean; // If true, render with C1Component instead of ReactMarkdown
+  // C1 generation flags - for tracking messages generated with Claude C1
+  wasGeneratedWithC1?: boolean; // True if this message was generated using C1
+  isC1Streaming?: boolean; // True if C1 is currently streaming this message
   // Video generation metadata
   videoTask?: {
     taskId: string;

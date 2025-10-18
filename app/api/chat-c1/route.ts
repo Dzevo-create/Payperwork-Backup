@@ -5,7 +5,6 @@ import { textValidation } from "@/lib/validation";
 import { apiLogger } from "@/lib/logger";
 import { validateContentType } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
-import { transformStream } from "@crayonai/stream";
 
 /**
  * C1 Chat API Route with Claude Sonnet 4 (SIMPLIFIED - WORKING VERSION ✅)

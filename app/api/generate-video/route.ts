@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import ProviderFactory from "@/lib/video/providers/ProviderFactory";
-import { ENV } from "@/lib/video/config/videoConfig";
 import type { VideoModel, VideoType, VideoGenerationRequest } from "@/types/video";
 import { videoGenerationRateLimiter, getClientId } from "@/lib/rate-limit";
 import { apiLogger } from "@/lib/logger";
 import { textValidation, ValidationError } from "@/lib/validation";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
-import { validateVideoGenerationRequest, validateVideoStatusRequest } from "@/lib/video/validation/videoValidation";
 
 // ============================================================================
 // VIDEO GENERATION API ROUTES
@@ -47,7 +45,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Dynamic API Key validation based on model
-    const requiredKeys = model === "payperwork-v1" ? ['kling'] : ['fal'];
+    const requiredKeys: ('openai' | 'kling' | 'fal' | 'supabase' | 'google-gemini')[] =
+      model === "payperwork-v1" ? ['kling'] : ['fal'];
     const keyValidation = validateApiKeys(requiredKeys);
     if (!keyValidation.valid) {
       return keyValidation.errorResponse!;
@@ -114,11 +113,13 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const clientId = getClientId(req);
 
+  // Extract params outside try block so they're available in catch
+  const { searchParams } = new URL(req.url);
+  const taskId = searchParams.get("task_id");
+  const model = searchParams.get("model") as VideoModel;
+  const type = searchParams.get("type") as VideoType;
+
   try {
-    const { searchParams } = new URL(req.url);
-    const taskId = searchParams.get("task_id");
-    const model = searchParams.get("model") as VideoModel;
-    const type = searchParams.get("type") as VideoType;
 
     if (!taskId) {
       return NextResponse.json(
@@ -150,7 +151,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Dynamic API Key validation based on model
-    const requiredKeys = model === "payperwork-v1" ? ['kling'] : ['fal'];
+    const requiredKeys: ('openai' | 'kling' | 'fal' | 'supabase' | 'google-gemini')[] =
+      model === "payperwork-v1" ? ['kling'] : ['fal'];
     const keyValidation = validateApiKeys(requiredKeys);
     if (!keyValidation.valid) {
       return keyValidation.errorResponse!;

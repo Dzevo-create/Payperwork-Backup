@@ -177,7 +177,7 @@ CRITICAL RULES - STRUCTURE PRESERVATION:
     return generatedPrompt;
 
   } catch (error) {
-    apiLogger.error("T-Button: Failed to generate prompt", { error });
+    apiLogger.error("T-Button: Failed to generate prompt", error instanceof Error ? error : undefined);
 
     // Fallback: return user prompt or basic architectural prompt
     return userPrompt || "Transform this architectural sketch into a photorealistic rendering with professional quality, realistic materials, and natural lighting";

@@ -93,7 +93,10 @@ class VideoPollingManager {
             this.removeTask(taskId);
           } else if (data.status === "failed") {
             // Task failed
-            videoLogger.error('Video generation failed', { taskId, message: data.message });
+            const error = new Error(data.message || 'Video generation failed');
+            videoLogger.error('Video generation failed', error, {
+              taskId,
+            });
             this.removeTask(taskId);
           }
           // Otherwise keep polling (status is "processing" or "submitted")

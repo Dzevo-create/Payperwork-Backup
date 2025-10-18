@@ -220,8 +220,12 @@ export function validateEnvironment(): void {
       ...REQUIRED_ENV_VARS.map(v => `   - ${v}`),
     ].join('\n');
 
-    apiLogger.error('Environment validation failed', { missing, invalid });
-    throw new EnvironmentValidationError(message, missing, invalid);
+    const error = new EnvironmentValidationError(message, missing, invalid);
+    apiLogger.error('Environment validation failed', error, {
+      missingCount: missing.length,
+      invalidCount: invalid.length,
+    });
+    throw error;
   }
 
   apiLogger.info('✅ Environment validation passed - all required API keys present');

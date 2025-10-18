@@ -217,17 +217,18 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
       if (!videoResponse.ok) {
         const errorData = await videoResponse.json().catch(() => ({}));
         const errorMessage = getErrorMessage(errorData.error || { status: videoResponse.status });
+        const error = new Error(errorMessage);
 
         // CRITICAL: Remove from queue if initial API call fails
-        chatLogger.error('Video API call failed:', {
+        chatLogger.error('Video API call failed:', error, {
           status: videoResponse.status,
-          error: errorData,
+          errorData: JSON.stringify(errorData),
           messageId: assistantMessageId,
           tempTaskId,
         });
         removeFromQueue(assistantMessageId);
 
-        throw new Error(errorMessage);
+        throw error;
       }
 
       const videoData = await videoResponse.json();
@@ -316,14 +317,15 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
         }
       } else {
         // CRITICAL: Remove from queue if API response doesn't contain task_id
-        chatLogger.error('Unexpected API response format:', {
-          response: videoData,
+        const error = new Error("Unexpected API response format - missing task_id");
+        chatLogger.error('Unexpected API response format:', error, {
+          response: JSON.stringify(videoData),
           messageId: assistantMessageId,
           tempTaskId,
         });
         removeFromQueue(assistantMessageId);
 
-        throw new Error("Unexpected API response format - missing task_id");
+        throw error;
       }
 
       setIsGenerating(false);

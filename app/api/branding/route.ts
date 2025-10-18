@@ -86,12 +86,12 @@ export async function POST(req: NextRequest) {
     let enhancedPrompt: string;
 
     try {
-      enhancedPrompt = await enhanceBrandingPrompt(
-        prompt || "Transform this space into a branded environment",
+      enhancedPrompt = await enhanceBrandingPrompt({
+        userPrompt: prompt || "Transform this space into a branded environment",
         sourceImage,
-        settings as BrandingSettingsType | undefined,
-        referenceImage ? [referenceImage] : undefined
-      );
+        settings: settings as BrandingSettingsType | undefined,
+        referenceImages: referenceImage ? [referenceImage] : undefined
+      });
 
       apiLogger.debug("Branding: Prompt enhanced with Brand Intelligence", {
         clientId,
@@ -100,8 +100,7 @@ export async function POST(req: NextRequest) {
         brand: settings?.brandingText,
       });
     } catch (error) {
-      apiLogger.error("Branding: Prompt enhancement failed completely", {
-        error,
+      apiLogger.error("Branding: Prompt enhancement failed completely", error instanceof Error ? error : undefined, {
         clientId,
       });
       // Fallback: use comprehensive branded prompt with furniture
@@ -279,8 +278,7 @@ REMINDER: Fully photorealistic branded space with ZERO visible sketch lines.`;
     });
 
   } catch (error) {
-    apiLogger.error("Branding: Generation failed", {
-      error,
+    apiLogger.error("Branding: Generation failed", error instanceof Error ? error : undefined, {
       clientId,
     });
     return handleApiError(error, "branding-api");

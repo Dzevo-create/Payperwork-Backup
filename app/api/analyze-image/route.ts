@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     apiLogger.debug('Analyzing image with detected format', {
-      formatPreview: detectedFormat.substring(0, 50) + "..."
+      formatPreview: imageUrl.substring(0, 50) + "..."
     });
 
     // Use OpenAI Vision API to analyze the image

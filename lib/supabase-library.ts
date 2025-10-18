@@ -128,8 +128,8 @@ export async function addLibraryItem(item: Omit<LibraryItem, 'id' | 'createdAt' 
       .single();
 
     if (error) {
-      libraryLogger.error('Failed to add library item to database', {
-        error: error.message,
+      const errorObj = new Error(error.message);
+      libraryLogger.error('Failed to add library item to database', errorObj, {
         code: error.code,
         details: error.details,
         hint: error.hint,
@@ -141,7 +141,10 @@ export async function addLibraryItem(item: Omit<LibraryItem, 'id' | 'createdAt' 
     }
 
     if (!data) {
-      libraryLogger.error('No data returned from Supabase insert', { itemName: item.name });
+      const error = new Error('No data returned from Supabase insert');
+      libraryLogger.error('No data returned from Supabase insert', error, {
+        itemName: item.name,
+      });
       return null;
     }
 

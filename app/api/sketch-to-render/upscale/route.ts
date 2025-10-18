@@ -110,11 +110,11 @@ export async function POST(req: NextRequest) {
 
     if (!freepikResponse.ok) {
       const errorText = await freepikResponse.text();
-      apiLogger.error("Freepik API error", {
+      const error = new Error(`Freepik API Error: ${freepikResponse.status} - ${errorText}`);
+      apiLogger.error("Freepik API error", error, {
         status: freepikResponse.status,
-        error: errorText,
       });
-      throw new Error(`Freepik API Error: ${freepikResponse.status}`);
+      throw error;
     }
 
     const data = await freepikResponse.json();
@@ -128,8 +128,11 @@ export async function POST(req: NextRequest) {
 
     // Validate response structure
     if (!data.data?.task_id) {
-      apiLogger.error("Freepik API returned invalid response", { data });
-      throw new Error("Freepik API returned invalid response - no task_id");
+      const error = new Error("Freepik API returned invalid response - no task_id");
+      apiLogger.error("Freepik API returned invalid response", error, {
+        responseData: JSON.stringify(data),
+      });
+      throw error;
     }
 
     // Return task info for client-side polling
@@ -175,19 +178,19 @@ export async function GET(req: NextRequest) {
       {
         method: "GET",
         headers: {
-          "x-freepik-api-key": FREEPIK_API_KEY,
+          "x-freepik-api-key": FREEPIK_API_KEY || "",
         },
       }
     );
 
     if (!freepikResponse.ok) {
       const errorText = await freepikResponse.text();
-      apiLogger.error("Freepik API error during polling", {
+      const error = new Error(`Freepik API Error: ${freepikResponse.status} - ${errorText}`);
+      apiLogger.error("Freepik API error during polling", error, {
         status: freepikResponse.status,
-        error: errorText,
         task_id,
       });
-      throw new Error(`Freepik API Error: ${freepikResponse.status}`);
+      throw error;
     }
 
     const data = await freepikResponse.json();
