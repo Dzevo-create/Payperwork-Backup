@@ -15,7 +15,7 @@ export interface ContextDetectionInput {
   hasImage: boolean;
   imageContext: string;
   replyContext: string;
-  imageSettings?: any;
+  imageSettings?: Record<string, unknown>;
   videoContext?: string;
 }
 

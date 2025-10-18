@@ -116,8 +116,8 @@ export function safeSetItem(key: string, value: string): boolean {
 
     localStorage.setItem(fullKey, value);
     return true;
-  } catch (error: any) {
-    if (error.name === "QuotaExceededError") {
+  } catch (error) {
+    if (error instanceof Error && error.name === "QuotaExceededError") {
       apiLogger.error("QuotaExceededError: Attempting emergency cleanup", error);
 
       // Emergency cleanup: remove more aggressively

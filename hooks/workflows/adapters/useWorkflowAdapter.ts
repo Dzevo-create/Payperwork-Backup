@@ -20,10 +20,10 @@ import type { RenderSettingsType } from '@/types/workflows/renderSettings';
 export interface StandardGenerateHook {
   generate: (params: {
     prompt: string;
-    settings: any;
+    settings: Record<string, unknown>;
     sourceImage: string | null;
     referenceImages: string[];
-  }) => Promise<any>;
+  }) => Promise<unknown>;
   isGenerating: boolean;
   error: string | null;
   progress: number;
@@ -141,7 +141,7 @@ export function useBrandingAdapter(): StandardGenerateHook {
  */
 export function usePromptEnhancerAdapter(
   sourceImage: string | null,
-  settings: any
+  settings: Record<string, unknown>
 ): StandardEnhanceHook {
   const hook = usePromptEnhancer();
 

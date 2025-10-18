@@ -314,9 +314,9 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
           }, 5000);
           timeoutRefsRef.current.set(video.messageId, timeoutId);
         }
-      } catch (error: any) {
+      } catch (error) {
         // Ignore AbortError (happens on cleanup)
-        if (error.name === 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
           logger.debug('Polling aborted for ${video.messageId}');
           return;
         }
@@ -348,7 +348,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
                   ? {
                       ...item,
                       status: "failed",
-                      error: `Video generation failed after ${MAX_CONSECUTIVE_ERRORS} attempts: ${error.message}`
+                      error: `Video generation failed after ${MAX_CONSECUTIVE_ERRORS} attempts: ${error instanceof Error ? error.message : String(error)}`
                     }
                   : item
               )
@@ -359,7 +359,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
           if (isMountedRef.current) {
             onVideoFailed(
               video.messageId,
-              `Video generation failed after ${MAX_CONSECUTIVE_ERRORS} attempts: ${error.message}`
+              `Video generation failed after ${MAX_CONSECUTIVE_ERRORS} attempts: ${error instanceof Error ? error.message : String(error)}`
             );
           }
 
@@ -376,7 +376,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
             setQueue((prev) =>
               prev.map((item) =>
                 item.messageId === video.messageId
-                  ? { ...item, consecutiveErrors, error: error.message }
+                  ? { ...item, consecutiveErrors, error: error instanceof Error ? error.message : String(error) }
                   : item
               )
             );

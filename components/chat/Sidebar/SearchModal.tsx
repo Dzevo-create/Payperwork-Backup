@@ -4,13 +4,14 @@ import { useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { useChatSearch } from "@/hooks/chat/useChatSearch";
 import { SearchResultItem } from "./SearchResultItem";
+import type { Attachment } from "@/types/chat";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  attachments?: any[];
+  attachments?: Attachment[];
 }
 
 interface Conversation {

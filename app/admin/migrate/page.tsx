@@ -31,10 +31,10 @@ export default function MigratePage() {
     try {
       const migrationResult = await migrateLocalStorageToSupabase();
       setResult(migrationResult);
-    } catch (error: any) {
+    } catch (error) {
       setResult({
         success: false,
-        errors: [error.message],
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
         conversationsMigrated: 0,
         messagesMigrated: 0,
       });

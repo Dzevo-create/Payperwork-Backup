@@ -33,7 +33,7 @@ export interface GenerationResult {
   timestamp: Date;
   prompt?: string;
   enhancedPrompt?: string;
-  settings?: any;
+  settings?: Record<string, unknown>;
 }
 
 /**

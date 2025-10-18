@@ -14,7 +14,7 @@ export interface Generation {
   type?: "image" | "video" | "render" | "upscale";
   sourceType?: "original" | "from_render" | "from_video";
   mediaType?: 'image' | 'video';
-  settings?: any;
+  settings?: Record<string, unknown>;
   sourceImageUrl?: string; // Source/input image URL
 }
 
@@ -54,9 +54,9 @@ export function useRecentGenerations(
 
       const data = await response.json();
 
-      const formattedGenerations = (data.generations || []).map((gen: any) => ({
-        id: gen.id,
-        imageUrl: gen.url || gen.image_url || gen.imageUrl,
+      const formattedGenerations = (data.generations || []).map((gen: Record<string, unknown>) => ({
+        id: gen.id as string,
+        imageUrl: (gen.url || gen.image_url || gen.imageUrl) as string,
         thumbnailUrl: gen.thumbnail_url || gen.thumbnailUrl,
         timestamp: new Date(gen.created_at || gen.timestamp),
         prompt: gen.prompt,

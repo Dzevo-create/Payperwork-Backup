@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
       .filter((img): img is { mimeType: string; data: string } => img !== null);
 
     if (images.length === 0) {
-      const error: any = new Error("No images generated");
+      const error = new Error("No images generated") as Error & { status?: number };
       error.status = 500;
       throw error;
     }

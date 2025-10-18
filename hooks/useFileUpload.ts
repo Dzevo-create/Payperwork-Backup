@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { compressAndConvertToBase64 } from "@/lib/imageCompression";
 import { useToast } from "@/hooks/useToast";
 import { logger } from '@/lib/logger';
+import type { Attachment } from '@/types/chat';
 
 export function useFileUpload() {
-  const [attachments, setAttachments] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -132,7 +133,7 @@ export function useFileUpload() {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateAttachment = (index: number, updatedData: any) => {
+  const updateAttachment = (index: number, updatedData: Partial<Attachment>) => {
     setAttachments((prev) =>
       prev.map((att, i) => (i === index ? { ...att, ...updatedData } : att))
     );

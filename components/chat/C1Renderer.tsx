@@ -47,10 +47,10 @@ export function C1Renderer(props: C1RendererProps) {
           setThemeProvider(() => c1Module.ThemeProvider);
           setIsLoading(false);
         }
-      } catch (err: any) {
+      } catch (err) {
         chatLogger.error('Failed to load C1 components:', err);
         if (mounted) {
-          setError(err?.message || "Failed to load Super Chat");
+          setError(err instanceof Error ? err.message : "Failed to load Super Chat");
           setIsLoading(false);
         }
       }

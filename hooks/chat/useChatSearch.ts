@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { chatLogger } from '@/lib/logger';
+import type { Attachment } from '@/types/chat';
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  attachments?: any[];
+  attachments?: Attachment[];
 }
 
 interface Conversation {
