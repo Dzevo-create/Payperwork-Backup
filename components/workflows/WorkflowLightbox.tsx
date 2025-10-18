@@ -17,7 +17,7 @@ interface RenderItem {
   sourceImageUrl?: string; // Original input image
 }
 
-interface SketchToRenderLightboxProps {
+interface WorkflowLightboxProps {
   isOpen: boolean;
   item: RenderItem;
   onClose: () => void;
@@ -27,7 +27,7 @@ interface SketchToRenderLightboxProps {
   onDownload?: (item: RenderItem) => void;
 }
 
-export function SketchToRenderLightbox({ isOpen, item, onClose, onNavigate, hasNext, hasPrev, onDownload }: SketchToRenderLightboxProps) {
+export function WorkflowLightbox({ isOpen, item, onClose, onNavigate, hasNext, hasPrev, onDownload }: WorkflowLightboxProps) {
   const downloadAbortControllerRef = useRef<AbortController | null>(null);
 
   // Guard: Return early if item is undefined
