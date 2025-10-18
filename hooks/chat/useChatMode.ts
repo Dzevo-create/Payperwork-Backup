@@ -36,7 +36,7 @@ export function useChatMode() {
     const validDurations = VIDEO_DURATIONS[selectedVideoModel];
     const defaultDuration = VIDEO_DEFAULT_DURATIONS[selectedVideoModel];
 
-    if (!validDurations.includes(videoSettings.duration as any)) {
+    if (!(validDurations as readonly string[]).includes(videoSettings.duration)) {
       setVideoSettings(prev => ({ ...prev, duration: defaultDuration }));
     }
   }, [selectedVideoModel, videoSettings.duration]);
@@ -45,7 +45,7 @@ export function useChatMode() {
   useEffect(() => {
     if (mode === 'video' && typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'default') {
-        Notification.requestPermission().then((permission) => {
+        Notification.requestPermission().then((_permission) => {
           chatLogger.debug('Notification permission:');
         });
       }

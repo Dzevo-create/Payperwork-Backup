@@ -52,11 +52,11 @@ export const ChatMessages = memo(function ChatMessages({
 
   // Detect conversation change (to reset scroll state)
   useEffect(() => {
-    const currentConvId = messages.length > 0 ? messages[0]?.id?.split('-')[0] : null;
+    const currentConvId = messages.length > 0 ? messages[0]?.id?.split('-')[0] ?? null : null;
 
     if (currentConvId !== lastConversationIdRef.current) {
       chatLogger.info('[ChatMessages] Conversation changed, resetting scroll state');
-      lastConversationIdRef.current = currentConvId;
+      lastConversationIdRef.current = currentConvId ?? null;
       hasInitialScrolledRef.current = false;
       previousMessagesLengthRef.current = 0;
     }
@@ -122,7 +122,7 @@ export const ChatMessages = memo(function ChatMessages({
               key={message.id}
               message={message}
               isLastMessage={isLastMessage}
-              isGenerating={isStreamingMessage}
+              isGenerating={isStreamingMessage ?? false}
               editingId={editingId}
               editContent={editContent}
               copiedId={copiedId}

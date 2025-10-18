@@ -25,7 +25,6 @@ export const MessageContent = memo(function MessageContent({
   onEditChange,
   onSaveEdit,
   onCancelEdit,
-  onEditMessage,
 }: MessageContentProps) {
   // Edit Mode - Full width like chat input
   if (isEditing) {

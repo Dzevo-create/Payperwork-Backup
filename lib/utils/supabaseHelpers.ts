@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase';
 import { getUserIdSync } from '@/lib/supabase/insert-helper';
 import { logger } from '@/lib/logger';
 
@@ -110,5 +109,5 @@ export function buildUpdateObject<T extends Record<string, any>>(
  */
 export function extractStorageFilePath(url: string, bucket: string): string | null {
   const urlParts = url.split(`/storage/v1/object/public/${bucket}/`);
-  return urlParts.length > 1 ? urlParts[1] : null;
+  return urlParts.length > 1 ? (urlParts[1] ?? null) : null;
 }

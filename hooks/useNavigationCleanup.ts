@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useChatStore } from "@/store/chatStore.supabase";
-import { useVideoQueueStore } from "@/store/videoQueueStore";
 import { logger } from '@/lib/logger';
 
 /**

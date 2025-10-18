@@ -42,7 +42,7 @@ export default function ImageCropModal({
       onCropComplete(croppedImage);
       onClose();
     } catch (error) {
-      chatLogger.error('Error cropping image:', error);
+      chatLogger.error('Error cropping image:', error instanceof Error ? error : undefined);
       alert('Fehler beim Zuschneiden des Bildes');
     }
   };
@@ -63,7 +63,7 @@ export default function ImageCropModal({
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       } catch (error) {
-        chatLogger.error('Error downloading original image:', error);
+        chatLogger.error('Error downloading original image:', error instanceof Error ? error : undefined);
         alert('Download fehlgeschlagen. Bitte versuche es erneut.');
       }
       return;
@@ -78,7 +78,7 @@ export default function ImageCropModal({
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      chatLogger.error('Error downloading cropped image:', error);
+      chatLogger.error('Error downloading cropped image:', error instanceof Error ? error : undefined);
 
       // Fallback: Try to download via fetch if canvas.toBlob fails (CORS issue)
       try {
@@ -96,7 +96,7 @@ export default function ImageCropModal({
 
         alert('Hinweis: Original-Bild wurde heruntergeladen (Crop konnte nicht angewendet werden).');
       } catch (fallbackError) {
-        chatLogger.error('Fallback download also failed:', fallbackError);
+        chatLogger.error('Fallback download also failed:', fallbackError instanceof Error ? fallbackError : undefined);
         alert('Download fehlgeschlagen. Bitte versuche es erneut.');
       }
     }
@@ -122,8 +122,8 @@ export default function ImageCropModal({
         <div className="flex-1 flex items-center justify-center bg-black/90 px-8 py-6 min-h-0 overflow-auto">
           <ReactCrop
             crop={crop}
-            onChange={(c, percentCrop) => setCrop(percentCrop)}
-            onComplete={(c) => setCompletedCrop(c)}
+            onChange={(_c, percentCrop) => setCrop(percentCrop)}
+            onComplete={(_c) => setCompletedCrop(_c)}
             aspect={undefined}
             style={{ maxWidth: '100%', maxHeight: '100%' }}
           >

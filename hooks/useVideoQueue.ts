@@ -395,7 +395,7 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
   const sendNotification = (
     prompt: string,
     message: string,
-    videoUrl?: string,
+    _videoUrl?: string,
     isError: boolean = false
   ) => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -462,8 +462,8 @@ export function useVideoQueue({ onVideoReady, onVideoFailed, onProgressUpdate }:
       }
 
       // Clear all pending timeouts
-      timeoutRefsRef.current.forEach((timeoutId, messageId) => {
-        logger.debug('Clearing timeout for ${messageId}');
+      timeoutRefsRef.current.forEach((timeoutId, _messageId) => {
+        logger.debug('Clearing timeout for ${_messageId}');
         clearTimeout(timeoutId);
       });
       timeoutRefsRef.current.clear();

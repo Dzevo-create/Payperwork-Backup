@@ -11,7 +11,7 @@
 
 import { useCallback, useState } from 'react';
 import { useChatStore } from '@/store/chatStore.supabase';
-import { Conversation, Message } from '@/types/chat';
+import { Conversation } from '@/types/chat';
 import { logger } from '@/lib/logger';
 
 export interface UseConversationActionsReturn {

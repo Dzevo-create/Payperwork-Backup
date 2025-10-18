@@ -57,8 +57,8 @@ export function PresetsBar({ selectedPreset, onPresetChange }: PresetsBarProps) 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  const currentPreset = PRESETS.find((p) => p.value === selectedPreset) || PRESETS[0];
-  const CurrentIcon = currentPreset?.icon || Building2;
+  const currentPreset = PRESETS.find((p) => p.value === selectedPreset) || PRESETS[0]!;
+  const CurrentIcon = currentPreset.icon;
 
   return (
     <div className="flex items-center justify-end gap-1.5 flex-wrap">
@@ -95,7 +95,9 @@ export function PresetsBar({ selectedPreset, onPresetChange }: PresetsBarProps) 
                   onClick={() => {
                     // Apply preset defaults from PRESET_CONFIGURATIONS
                     const presetSettings = PRESET_CONFIGURATIONS[preset.value];
-                    onPresetChange(preset.value, presetSettings);
+                    if (presetSettings) {
+                      onPresetChange(preset.value, presetSettings);
+                    }
                     setIsOpen(false);
                   }}
                   className={`w-full px-3 py-2 text-left text-sm transition-colors ${

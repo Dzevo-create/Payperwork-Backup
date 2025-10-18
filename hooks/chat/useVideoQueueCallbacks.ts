@@ -67,7 +67,7 @@ export function useVideoQueueCallbacks({
       {
         status: "succeed",
         taskId: videoTask?.taskId || "",
-        model: videoTask?.model || VIDEO_METADATA.defaultModel,
+        model: (videoTask?.model || VIDEO_METADATA.defaultModel) as "payperwork-v1" | "payperwork-v2",
         type: videoTask?.type || VIDEO_METADATA.defaultType,
         duration: videoTask?.duration || "5",
         aspectRatio: videoTask?.aspectRatio || "16:9",
@@ -83,8 +83,8 @@ export function useVideoQueueCallbacks({
 
       // Use model name from videoTask if available
       const modelName = videoTask?.model === "payperwork-v2"
-        ? VIDEO_MODEL_NAMES["sora2"]
-        : VIDEO_MODEL_NAMES["move"];
+        ? VIDEO_MODEL_NAMES["sora2"] as string
+        : VIDEO_MODEL_NAMES["kling"] as string;
 
       await addToLibrary({
         type: "video",
@@ -101,7 +101,7 @@ export function useVideoQueueCallbacks({
       });
       chatLogger.info('Video successfully added to library');
     } catch (error) {
-      chatLogger.error('Failed to add video to library:', error);
+      chatLogger.error('Failed to add video to library:', error instanceof Error ? error : undefined);
     }
   };
 

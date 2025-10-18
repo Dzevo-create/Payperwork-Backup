@@ -22,8 +22,8 @@ interface MessageBubbleProps {
   onEditMessage?: (messageId: string, newContent: string) => void;
   onReplyMessage?: (message: Message, specificAttachment?: Attachment) => void;
   setEditContent: (content: string) => void;
-  setLightboxImage: (data: { url: string; name: string } | null) => void;
-  setLightboxVideo: (data: { url: string; name: string } | null) => void;
+  setLightboxImage: (data: { url: string; name: string }) => void;
+  setLightboxVideo: (data: { url: string; name: string }) => void;
   onC1Action?: (data: { llmFriendlyMessage: string }) => void;
 }
 

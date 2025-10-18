@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, RefreshCw, X } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { useChatStore } from "@/store/chatStore.supabase";
 
 export function ErrorDisplay() {

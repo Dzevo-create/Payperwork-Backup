@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Settings, User, ChevronDown, LogOut, Moon, Bell, Key, Home } from "lucide-react";
+import { Settings, User, LogOut, Moon, Bell, Home } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 interface SidebarFooterProps {

@@ -72,6 +72,7 @@ export function ROI() {
 
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [currentTestimonial, isHovering]);
 
   // Keyboard navigation
@@ -175,36 +176,36 @@ export function ROI() {
           <div className="relative rounded-3xl border border-pw-black/5 p-12 lg:p-16 overflow-hidden transition-all duration-500">
             {/* Background Image */}
             <div className="absolute inset-0 transition-opacity duration-500" style={{
-              backgroundImage: `url(${testimonials[currentTestimonial].image})`,
+              backgroundImage: `url(${testimonials[currentTestimonial]?.image || ''})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }} />
 
             {/* Color Overlay */}
             <div className="absolute inset-0 transition-all duration-500" style={{
-              backgroundColor: testimonials[currentTestimonial].color,
+              backgroundColor: testimonials[currentTestimonial]?.color || '#000',
               opacity: 0.95
             }} />
 
             {/* Content with fade animation */}
             <div className={`relative max-w-4xl mx-auto text-center transition-opacity duration-300 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
               <h3 className="text-2xl lg:text-3xl font-light text-white mb-6">
-                "{testimonials[currentTestimonial].quote.split(' ').slice(0, -1).join(' ')}{" "}
+                "{testimonials[currentTestimonial]?.quote?.split(' ').slice(0, -1).join(' ') || ''}{" "}
                 <span className="bg-gradient-to-r from-white to-pw-accent bg-clip-text text-transparent">
-                  {testimonials[currentTestimonial].quote.split(' ').slice(-1)}
+                  {testimonials[currentTestimonial]?.quote?.split(' ').slice(-1) || ''}
                 </span>
                 "
               </h3>
               <p className="text-base text-white/90 mb-8 leading-relaxed">
-                {testimonials[currentTestimonial].text}
+                {testimonials[currentTestimonial]?.text || ''}
               </p>
               <div className="flex items-center justify-center gap-3">
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-lg font-semibold text-white">
-                  {testimonials[currentTestimonial].initials}
+                  {testimonials[currentTestimonial]?.initials || ''}
                 </div>
                 <div className="text-left">
-                  <div className="text-sm font-medium text-white">{testimonials[currentTestimonial].name}</div>
-                  <div className="text-xs text-white/70">{testimonials[currentTestimonial].role}</div>
+                  <div className="text-sm font-medium text-white">{testimonials[currentTestimonial]?.name || ''}</div>
+                  <div className="text-xs text-white/70">{testimonials[currentTestimonial]?.role || ''}</div>
                 </div>
               </div>
             </div>

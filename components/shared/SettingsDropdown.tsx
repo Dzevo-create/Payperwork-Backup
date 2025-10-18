@@ -81,7 +81,10 @@ export function SettingsDropdown<T extends string>({
         case "Enter":
           e.preventDefault();
           if (focusedIndex >= 0 && focusedIndex < options.length) {
-            handleSelect(options[focusedIndex].value);
+            const selectedOption = options[focusedIndex];
+            if (selectedOption) {
+              handleSelect(selectedOption.value);
+            }
           }
           break;
 

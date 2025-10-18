@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { LibraryItem, LibraryFilters, LibraryStore } from '@/types/library';
+import { LibraryStore } from '@/types/library';
 import * as supabaseLibrary from '@/lib/supabase-library';
 import { chatLogger } from '@/lib/logger';
 

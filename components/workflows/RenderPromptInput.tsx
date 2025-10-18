@@ -2,7 +2,8 @@
 
 import { Mic, Type, Send, Loader2 } from "lucide-react";
 import { useRef, useEffect } from "react";
-import { RenderSettings, RenderSettingsType } from "./RenderSettings";
+import { RenderSettings } from "./RenderSettings";
+import { RenderSettingsType } from "@/types/workflows/renderSettings";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 interface RenderPromptInputProps {

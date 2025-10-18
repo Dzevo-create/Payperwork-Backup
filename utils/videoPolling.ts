@@ -26,7 +26,7 @@ class VideoPollingManager {
           this.pendingTasks = new Map(tasks);
           this.startPolling();
         } catch (e) {
-          videoLogger.error('Failed to load pending tasks', e);
+          videoLogger.error('Failed to load pending tasks', e instanceof Error ? e : undefined);
         }
       }
     }
@@ -101,7 +101,7 @@ class VideoPollingManager {
           }
           // Otherwise keep polling (status is "processing" or "submitted")
         } catch (error) {
-          videoLogger.error('Polling error for task', error, { taskId });
+          videoLogger.error('Polling error for task', error instanceof Error ? error : undefined, { taskId });
         }
       }
     }, 5000); // Poll every 5 seconds

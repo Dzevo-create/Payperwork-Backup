@@ -109,9 +109,9 @@ export function middleware(request: NextRequest) {
   if (request.method === 'OPTIONS') {
     // Check if origin is allowed
     if (origin && allowedOrigins.includes(origin)) {
-      let response = NextResponse.json({ success: true }, { status: 200 });
-      response = addCorsHeaders(response, origin);
-      response = addSecurityHeaders(response);
+      let response: NextResponse<{ success: boolean }> = NextResponse.json({ success: true }, { status: 200 });
+      response = addCorsHeaders(response, origin) as NextResponse<{ success: boolean }>;
+      response = addSecurityHeaders(response) as NextResponse<{ success: boolean }>;
       return response;
     }
 

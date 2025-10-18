@@ -72,7 +72,7 @@ export function useChatSearch(conversations: Conversation[], limit: number = 50)
       const titleIndex = conv.title.toLowerCase().indexOf(query);
       if (titleIndex !== -1 && conv.messages.length > 0) {
         chatLogger.info('[Search] Match found in title: "${conv.title}');
-        const firstMessage = conv.messages[0];
+        const firstMessage = conv.messages[0]!;
         results.push({
           conversationId: conv.id,
           conversationTitle: conv.title,

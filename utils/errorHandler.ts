@@ -50,7 +50,7 @@ export function getErrorMessage(error: any): string {
   if (typeof error === 'string') {
     // Check for quota exceeded message
     if (error.toLowerCase().includes('quota') && error.toLowerCase().includes('exceeded')) {
-      return ERROR_MESSAGES['QUOTA_EXCEEDED'];
+      return ERROR_MESSAGES['QUOTA_EXCEEDED'] ?? 'Quota exceeded';
     }
     return ERROR_MESSAGES[error] || error;
   }
@@ -62,7 +62,7 @@ export function getErrorMessage(error: any): string {
 
     // Check for quota exceeded message
     if (message.toLowerCase().includes('quota') && message.toLowerCase().includes('exceeded')) {
-      return ERROR_MESSAGES['QUOTA_EXCEEDED'];
+      return ERROR_MESSAGES['QUOTA_EXCEEDED'] ?? 'Quota exceeded';
     }
 
     for (const [code, friendlyMessage] of Object.entries(ERROR_MESSAGES)) {

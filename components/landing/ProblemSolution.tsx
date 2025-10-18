@@ -81,7 +81,7 @@ export function ProblemSolution() {
                     pattern: { size: '25px 25px', type: 'linear-gradient(45deg, currentColor 1px, transparent 1px), linear-gradient(-45deg, currentColor 1px, transparent 1px)' }
                   }
                 ];
-                const cardStyle = cardStyles[index];
+                const cardStyle = cardStyles[index % cardStyles.length]!;
 
                 return (
                   <div key={index} className="relative group">
@@ -145,7 +145,7 @@ export function ProblemSolution() {
                     pattern: { size: '32px 16px', type: 'repeating-linear-gradient(0deg, currentColor 0, currentColor 0.5px, transparent 0.5px, transparent 16px)' }
                   }
                 ];
-                const cardStyle = cardStyles[index];
+                const cardStyle = cardStyles[index % cardStyles.length]!;
 
                 return (
                   <div key={index} className="relative group">

@@ -108,15 +108,15 @@ export function groupConversationsByDate(
     const convDate = conv.updatedAt;
 
     if (convDate >= today) {
-      groups[0].conversations.push(conv);
+      groups[0]!.conversations.push(conv);
     } else if (convDate >= yesterday) {
-      groups[1].conversations.push(conv);
+      groups[1]!.conversations.push(conv);
     } else if (convDate >= lastWeek) {
-      groups[2].conversations.push(conv);
+      groups[2]!.conversations.push(conv);
     } else if (convDate >= lastMonth) {
-      groups[3].conversations.push(conv);
+      groups[3]!.conversations.push(conv);
     } else {
-      groups[4].conversations.push(conv);
+      groups[4]!.conversations.push(conv);
     }
   });
 

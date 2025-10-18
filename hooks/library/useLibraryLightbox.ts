@@ -44,8 +44,10 @@ export function useLibraryLightbox(
       }
 
       const newItem = filteredItems[newIndex];
-      setSelectedItem(newItem);
-      markAsSeen(newItem.id);
+      setSelectedItem(newItem ?? null);
+      if (newItem) {
+        markAsSeen(newItem.id);
+      }
     },
     [selectedItem, filteredItems, markAsSeen]
   );

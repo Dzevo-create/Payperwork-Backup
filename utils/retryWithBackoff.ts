@@ -118,7 +118,7 @@ export const imageGenerationRetryConfig: RetryOptions = {
   initialDelay: 2000, // 2 seconds initial delay
   maxDelay: 15000, // 15 seconds max delay
   backoffMultiplier: 2,
-  shouldRetry: (error: any, attempt: number) => {
+  shouldRetry: (error: any, _attempt: number) => {
     // Don't retry user cancellations
     if (error.name === 'AbortError') return false;
 

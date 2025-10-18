@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef, useEffect } from "react";
 import { Plus, FileText, MessageSquare, Image as ImageIcon, Video } from "lucide-react";
 
 interface InputToolbarProps {
@@ -22,7 +21,6 @@ export function InputToolbar({
   onModeChange,
   onFileClick,
   dropdownRef,
-  isSuperChatEnabled = false,
 }: InputToolbarProps) {
   return (
     <div className="relative" ref={dropdownRef}>

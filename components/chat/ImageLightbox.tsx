@@ -2,7 +2,7 @@
 
 import { X, Download } from "lucide-react";
 import { useEffect, useRef } from "react";
-import Image from "next/image";
+
 import { chatLogger } from '@/lib/logger';
 
 interface ImageLightboxProps {
@@ -61,7 +61,7 @@ export function ImageLightbox({ imageUrl, imageName, onClose }: ImageLightboxPro
         chatLogger.debug('Download aborted');
         return;
       }
-      chatLogger.error('Download failed:', error);
+      chatLogger.error('Download failed:', error instanceof Error ? error : undefined);
     }
   };
 

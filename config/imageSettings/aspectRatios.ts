@@ -50,7 +50,7 @@ export const getAspectRatioLabel = (value: AspectRatioValue): string => {
 // Helper to get aspect ratio dimensions (for calculations)
 export const getAspectRatioDimensions = (value: AspectRatioValue): { width: number; height: number } => {
   const [width, height] = value.split(':').map(Number);
-  return { width, height };
+  return { width: width ?? 16, height: height ?? 9 };
 };
 
 // Helper to check if aspect ratio is portrait orientation

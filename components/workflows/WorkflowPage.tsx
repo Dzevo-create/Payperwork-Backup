@@ -417,7 +417,7 @@ export function WorkflowPage<TSettings = any>({ config }: WorkflowPageProps<TSet
 
                             console.log('[WorkflowPage] Download Debug:', {
                               genType: gen.type,
-                              genMediaType: gen.mediaType,
+                              genMediaType: (gen as any).mediaType ?? 'unknown',
                               isVideo,
                               mediaType,
                               extension,

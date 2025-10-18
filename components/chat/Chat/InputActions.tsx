@@ -28,8 +28,6 @@ export function InputActions({
   onEnhancePrompt,
   onSend,
   onStopGeneration,
-  isSuperChatEnabled = false,
-  mode = "chat",
 }: InputActionsProps) {
   return (
     <>

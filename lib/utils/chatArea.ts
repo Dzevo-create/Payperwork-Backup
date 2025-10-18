@@ -66,7 +66,7 @@ export async function getLastAssistantImages(
     return [];
   }
 
-  const lastMessage = messages[messages.length - 1];
+  const lastMessage = messages[messages.length - 1]!;
 
   // Only if last message is from assistant and has image attachments
   if (lastMessage.role !== "assistant" || !lastMessage.attachments?.length) {
@@ -118,8 +118,8 @@ export function generateMessageId(): string {
  */
 export function generateVideoFilename(): string {
   const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+  const dateStr = now.toISOString().split('T')[0] ?? 'unknown';
+  const timeStr = now.toTimeString().split(' ')[0]?.replace(/:/g, '-') ?? '00-00-00';
   return `payperwork-${dateStr}-${timeStr}.mp4`;
 }
 

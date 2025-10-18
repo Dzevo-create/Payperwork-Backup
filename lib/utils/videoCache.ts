@@ -1,4 +1,4 @@
-import { logger, videoLogger } from '@/lib/logger';
+import { videoLogger } from '@/lib/logger';
 
 /**
  * Video Cache Utility

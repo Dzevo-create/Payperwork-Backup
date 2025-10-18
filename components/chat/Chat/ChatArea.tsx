@@ -28,11 +28,6 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
   // Toast notifications
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const addToast = useCallback((toast: Omit<ToastMessage, "id">) => {
-    const id = `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-  }, []);
-
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
@@ -111,7 +106,7 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
   });
 
   // Video Queue Management
-  const { queue, addToQueue, removeFromQueue, updateQueueTaskId, markVideoCompleted } = useVideoQueue({
+  const { addToQueue, removeFromQueue, updateQueueTaskId, markVideoCompleted } = useVideoQueue({
     onVideoReady,
     onVideoFailed,
     onProgressUpdate,
@@ -143,7 +138,7 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
     let cleanedText = data.llmFriendlyMessage;
     const contentMatch = cleanedText.match(/<content>(.*?)<\/content>/);
     if (contentMatch) {
-      cleanedText = contentMatch[1];
+      cleanedText = contentMatch[1] ?? cleanedText;
     }
 
     // Unescape HTML entities
@@ -191,7 +186,7 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
         onStopGeneration={handleStopGeneration}
         mode={mode}
         onModeChange={setMode}
-        replyTo={replyTo}
+        replyTo={replyTo ?? undefined}
         onCancelReply={clearReply}
         showImageSettings={mode === "image"}
         imageSettingsSlot={

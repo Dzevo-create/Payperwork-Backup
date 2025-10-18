@@ -202,7 +202,7 @@ export async function markItemAsSeen(id: string): Promise<void> {
 
 // Delete library item
 export async function deleteLibraryItem(id: string): Promise<void> {
-  const userId = getUserIdSync();
+  getUserIdSync(); // Validate user is authenticated
 
   // First get the item to find the file URL
   const { data: item } = await supabase

@@ -17,7 +17,7 @@ interface MessageContentProps {
 export const MessageContent = memo(function MessageContent({
   message,
   isStreamingMessage,
-  onEditMessage,
+  onEditMessage: _onEditMessage,
   onC1Action,
 }: MessageContentProps) {
   // Image generation placeholder

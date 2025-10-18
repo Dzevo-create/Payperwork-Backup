@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     apiLogger.debug('🧪 Testing Supabase connection...');
 
     // Test 1: Check tables exist
-    const { data: conversations, error: convError } = await supabase
+    const { error: convError } = await supabase
       .from('conversations')
       .select('count')
       .limit(1);
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       }, { status: 500 });
     }
 
-    const { data: messages, error: msgError } = await supabase
+    const { error: msgError } = await supabase
       .from('messages')
       .select('count')
       .limit(1);
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       }, { status: 500 });
     }
 
-    const { data: library, error: libError } = await supabase
+    const { error: libError } = await supabase
       .from('library_items')
       .select('count')
       .limit(1);

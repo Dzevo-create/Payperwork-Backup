@@ -47,19 +47,19 @@ export function SettingsCard({
 
   // Measure content height for smooth animation
   useEffect(() => {
-    if (contentRef.current) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setContentHeight(entry.contentRect.height);
-        }
-      });
+    if (!contentRef.current) return;
 
-      resizeObserver.observe(contentRef.current);
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContentHeight(entry.contentRect.height);
+      }
+    });
 
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }
+    resizeObserver.observe(contentRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
   return (

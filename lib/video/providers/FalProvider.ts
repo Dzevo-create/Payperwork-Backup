@@ -129,11 +129,11 @@ export class FalProvider extends VideoProvider {
       });
 
       // Log detailed status with timing info
-      const queuePosition = status.queue_position;
+      const queuePosition = 'queue_position' in status ? (status as any).queue_position : undefined;
       const statusMsg = status.status === "IN_QUEUE"
-        ? `IN_QUEUE (position: ${queuePosition || 'unknown'})`
+        ? `IN_QUEUE (position: ${queuePosition ?? 'unknown'})`
         : status.status;
-      videoLogger.info('fal.ai status check for ${taskId}:');
+      videoLogger.info(`fal.ai status check for ${taskId}: ${statusMsg}`);
 
       // Map fal.ai status to our VideoStatus
       if (status.status === "COMPLETED") {
@@ -156,17 +156,7 @@ export class FalProvider extends VideoProvider {
           model: "payperwork-v2",
           type,
         };
-      } else if (status.status === "FAILED") {
-        return {
-          task_id: taskId,
-          status: "failed",
-          videos: [],
-          message: "Video generation failed",
-          provider: "fal",
-          model: "payperwork-v2",
-          type,
-        };
-      } else {
+      } else if (status.status === "IN_QUEUE" || status.status === "IN_PROGRESS") {
         // IN_QUEUE or IN_PROGRESS
         // Provide more detailed status messages
         let detailedMessage = "Video generation in progress";
@@ -182,6 +172,17 @@ export class FalProvider extends VideoProvider {
           status: "processing",
           videos: [],
           message: detailedMessage,
+          provider: "fal",
+          model: "payperwork-v2",
+          type,
+        };
+      } else {
+        // Handle any other status (e.g., "FAILED")
+        return {
+          task_id: taskId,
+          status: "failed",
+          videos: [],
+          message: "Video generation failed",
           provider: "fal",
           model: "payperwork-v2",
           type,

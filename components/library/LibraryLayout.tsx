@@ -18,7 +18,7 @@ export function LibraryLayout() {
   const [mounted, setMounted] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const { items, filters, setFilters, getFilteredItems, getUnseenByType, markAsSeen, loadItems, loadMoreItems, removeItem, isLoading } = useLibraryStore();
+  const { items, filters: _filters, setFilters, getFilteredItems, getUnseenByType, markAsSeen, loadItems, loadMoreItems, removeItem, isLoading } = useLibraryStore();
 
   // Custom hooks
   const {

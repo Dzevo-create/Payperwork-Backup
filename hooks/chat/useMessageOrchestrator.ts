@@ -53,9 +53,19 @@ interface UseMessageOrchestratorParams {
     abortSignal: AbortSignal;
   }) => Promise<void>;
   handleVideoGeneration: (params: any) => Promise<void>;
-  addToQueue: (messageId: string, metadata?: any) => void;
+  addToQueue: (
+    messageId: string,
+    taskId: string,
+    model: any,
+    type: any,
+    prompt: string,
+    thumbnailUrl?: string,
+    estimatedDuration?: number,
+    duration?: string,
+    aspectRatio?: string
+  ) => void;
   updateQueueTaskId: (messageId: string, taskId: string) => void;
-  markVideoCompleted: (messageId: string) => void;
+  markVideoCompleted: (messageId: string, videoUrl: string) => void;
   removeFromQueue: (messageId: string) => void;
 }
 
@@ -148,7 +158,7 @@ export function useMessageOrchestrator({
     let targetConversationId = currentConversationId;
 
     // Get context images from reply or last assistant message
-    const contextImages = await getContextImages(replyTo, messages, mode, attachments);
+    const contextImages = await getContextImages(replyTo ?? undefined, messages, mode, attachments);
 
     // IMPORTANT: Create conversation FIRST if this is the first message
     if (!targetConversationId && messages.length === 0) {
@@ -170,7 +180,7 @@ export function useMessageOrchestrator({
     const userMessage = buildUserMessage({
       content,
       attachments,
-      replyTo,
+      replyTo: replyTo ?? undefined,
       replyAttachments: replyTo?.attachments || [],
     });
     await addMessageToConversation(targetConversationId, userMessage);
@@ -339,7 +349,7 @@ export function useMessageOrchestrator({
       abortControllerRef.current = null;
       currentRequestIdRef.current = null;
 
-      chatLogger.error('Error calling API:', error);
+      chatLogger.error('Error calling API:', error instanceof Error ? error : undefined);
       const errorMessage = error instanceof Error ? error.message : String(error);
 
       setError({
@@ -392,7 +402,7 @@ export function useMessageOrchestrator({
     setMessages(newMessages);
 
     // Resend the edited message
-    handleSendMessage(newContent, editedMessage.attachments);
+    handleSendMessage(newContent, editedMessage?.attachments);
   }, [messages, setMessages, handleSendMessage]);
 
   return {

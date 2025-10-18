@@ -160,7 +160,7 @@ export function ChatLayout() {
 
           if (response.ok) {
             const { title } = await response.json();
-            chatLogger.debug('Updating conversation with title:', currentConversationId);
+            chatLogger.debug('Updating conversation with title:', { conversationId: currentConversationId });
             updateConversation(currentConversationId, { title });
             chatLogger.info('Chat title generated:');
           } else {
@@ -175,7 +175,7 @@ export function ChatLayout() {
             return;
           }
 
-          chatLogger.error('Failed to generate chat title:', error);
+          chatLogger.error('Failed to generate chat title:', error instanceof Error ? error : undefined);
           const fallbackTitle = firstUserMessage.content.slice(0, 50) || "Neuer Chat";
           updateConversation(currentConversationId, { title: fallbackTitle });
         }
@@ -201,21 +201,6 @@ export function ChatLayout() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  // Save current conversation (update only - creation happens automatically)
-  const saveCurrentConversation = () => {
-    if (messages.length === 0 || !currentConversationId) return;
-
-    const existingConv = conversations.find((c) => c.id === currentConversationId);
-
-    if (existingConv) {
-      // Update existing conversation
-      updateConversation(currentConversationId, {
-        messages: [...messages],
-        updatedAt: new Date(),
-      });
-    }
-  };
 
   // Handle new chat (ChatGPT/Claude behavior)
   const handleNewChat = () => {
@@ -345,7 +330,7 @@ export function ChatLayout() {
       <SearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
-        onSearch={(query) => {
+        onSearch={(_query) => {
           chatLogger.debug('Search:');
           // Future: implement search logic
         }}

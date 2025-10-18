@@ -89,7 +89,7 @@ async function fixOldVideos() {
     console.log(`   ✅ Found video in library: ${libraryVideo.url.substring(0, 50)}...`);
 
     // 3. Update the message with the correct video URL
-    const updatedAttachments = (message.attachments || []).map((att) => {
+    const updatedAttachments = (message.attachments || []).map((att: any) => {
       if (att.type === 'video') {
         return {
           ...att,

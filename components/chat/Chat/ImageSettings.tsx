@@ -44,7 +44,10 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
     onSettingsChange({
       ...settings,
       preset: presetId,
-      ...presetDefaults,
+      style: presetDefaults.style ?? settings.style,
+      lighting: presetDefaults.lighting ?? settings.lighting,
+      quality: presetDefaults.quality ?? settings.quality,
+      aspectRatio: presetDefaults.aspectRatio ?? settings.aspectRatio,
     });
     setOpenDropdown(null);
   };
@@ -76,7 +79,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
   return (
     <div className="flex items-center justify-end gap-1.5 flex-wrap">
       {/* Preset Card */}
-      <div className="relative" ref={el => dropdownRefs.current["preset"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["preset"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "preset" ? null : "preset")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -112,7 +115,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
       </div>
 
       {/* Style Card */}
-      <div className="relative" ref={el => dropdownRefs.current["style"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["style"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "style" ? null : "style")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -150,7 +153,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
       </div>
 
       {/* Lighting Card */}
-      <div className="relative" ref={el => dropdownRefs.current["lighting"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["lighting"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "lighting" ? null : "lighting")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -188,7 +191,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
       </div>
 
       {/* Quality Card */}
-      <div className="relative" ref={el => dropdownRefs.current["quality"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["quality"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "quality" ? null : "quality")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -226,7 +229,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
       </div>
 
       {/* Aspect Ratio Card */}
-      <div className="relative" ref={el => dropdownRefs.current["aspect"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["aspect"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "aspect" ? null : "aspect")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -264,7 +267,7 @@ export default function ImageSettings({ settings, onSettingsChange }: ImageSetti
       </div>
 
       {/* Number of Images Card */}
-      <div className="relative" ref={el => dropdownRefs.current["numImages"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["numImages"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "numImages" ? null : "numImages")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${

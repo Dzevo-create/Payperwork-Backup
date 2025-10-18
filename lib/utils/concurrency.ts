@@ -24,6 +24,7 @@ export async function promiseAllWithLimit<T>(
 
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
+    if (!task) continue;
 
     // Execute task and store result at correct index
     const promise = task().then((result) => {

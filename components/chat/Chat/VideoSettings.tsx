@@ -73,7 +73,7 @@ export default function VideoSettings({ settings, onSettingsChange, hasImageAtta
   return (
     <div className="flex items-center justify-end gap-1.5 flex-wrap">
       {/* Duration Card */}
-      <div className="relative" ref={el => dropdownRefs.current["duration"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["duration"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "duration" ? null : "duration")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -111,7 +111,7 @@ export default function VideoSettings({ settings, onSettingsChange, hasImageAtta
       </div>
 
       {/* Aspect Ratio Card */}
-      <div className="relative" ref={el => dropdownRefs.current["aspect"] = el}>
+      <div className="relative" ref={el => { dropdownRefs.current["aspect"] = el; }}>
         <button
           onClick={() => setOpenDropdown(openDropdown === "aspect" ? null : "aspect")}
           className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -150,7 +150,7 @@ export default function VideoSettings({ settings, onSettingsChange, hasImageAtta
 
       {/* Quality Mode Card - Only for Kling */}
       {showModeSelector && (
-        <div className="relative" ref={el => dropdownRefs.current["mode"] = el}>
+        <div className="relative" ref={el => { dropdownRefs.current["mode"] = el; }}>
           <button
             onClick={() => setOpenDropdown(openDropdown === "mode" ? null : "mode")}
             className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${
@@ -190,7 +190,7 @@ export default function VideoSettings({ settings, onSettingsChange, hasImageAtta
 
       {/* Camera Control Card - Only for Kling Image2Video */}
       {showCameraMovement && (
-        <div className="relative" ref={el => dropdownRefs.current["camera"] = el}>
+        <div className="relative" ref={el => { dropdownRefs.current["camera"] = el; }}>
           <button
             onClick={() => setOpenDropdown(openDropdown === "camera" ? null : "camera")}
             className={`group flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border hover:shadow transition-all cursor-pointer ${

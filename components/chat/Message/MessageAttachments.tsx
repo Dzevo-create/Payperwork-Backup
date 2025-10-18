@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { Loader2, X, FileText } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 import { Message, Attachment } from "@/types/chat";
 import { ImageAttachment } from "../Chat/ImageAttachment";
 import { VideoAttachment } from "../Chat/VideoAttachment";
@@ -13,8 +13,8 @@ import { chatLogger } from '@/lib/logger';
 interface MessageAttachmentsProps {
   message: Message;
   isStreamingMessage: boolean;
-  setLightboxImage: (data: { url: string; name: string } | null) => void;
-  setLightboxVideo: (data: { url: string; name: string } | null) => void;
+  setLightboxImage: (data: { url: string; name: string }) => void;
+  setLightboxVideo: (data: { url: string; name: string }) => void;
   onReplyMessage?: (message: Message, specificAttachment?: Attachment) => void;
 }
 
@@ -136,7 +136,7 @@ export const MessageAttachments = memo(function MessageAttachments({
                 <VideoAttachment
                   attachment={att}
                   message={message}
-                  onVideoClick={setLightboxVideo}
+                  onVideoClick={(url, name) => setLightboxVideo({ url, name })}
                 />
               ) : (
                 <VideoGenerationPlaceholder

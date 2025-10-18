@@ -80,8 +80,8 @@ class Logger {
 
     if (this.isDevelopment) {
       // Development: Pretty console output with colors
-      // Note: style variable kept for future color support
-      const _style = this.getStyle(level);
+      // Note: getStyle kept for future color support
+      this.getStyle(level);
       if (context && Object.keys(context).length > 0) {
         // eslint-disable-next-line no-console
         console.log(`${prefix} ${message}`, context);

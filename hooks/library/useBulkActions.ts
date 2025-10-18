@@ -45,7 +45,7 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
       toast.success(`${deletedCount} Items gelöscht`);
       onComplete?.();
     } catch (error) {
-      libraryLogger.error('Bulk delete failed:', error);
+      libraryLogger.error('Bulk delete failed:', error instanceof Error ? error : undefined);
       toast.error("Fehler beim Löschen");
     } finally {
       setIsProcessing(false);
@@ -66,7 +66,6 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
 
     try {
       // Load JSZip from CDN if not already loaded
-      let scriptElement: HTMLScriptElement | null = null;
       if (!(window as any).JSZip) {
         await new Promise((resolve, reject) => {
           const script = document.createElement("script");
@@ -74,7 +73,6 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
           script.onload = resolve;
           script.onerror = reject;
           document.head.appendChild(script);
-          scriptElement = script;
         });
       }
 
@@ -94,7 +92,7 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
           zip.file(item.name, blob);
           successCount++;
         } catch (error) {
-          libraryLogger.error('Failed to add ${item.name} to ZIP:', error);
+          libraryLogger.error('Failed to add ${item.name} to ZIP:', error instanceof Error ? error : undefined);
         }
 
         processedCount++;
@@ -137,7 +135,7 @@ export function useBulkActions({ items, removeItem, onComplete }: UseBulkActions
         `ZIP mit ${successCount} ${successCount === 1 ? "Datei" : "Dateien"} heruntergeladen`
       );
     } catch (error) {
-      libraryLogger.error('ZIP creation failed:', error);
+      libraryLogger.error('ZIP creation failed:', error instanceof Error ? error : undefined);
       toast.error("ZIP-Erstellung fehlgeschlagen");
     } finally {
       setIsProcessing(false);

@@ -31,7 +31,7 @@ export function ImageAttachment({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      chatLogger.error('Download failed:', error);
+      chatLogger.error('Download failed:', error instanceof Error ? error : undefined);
       window.open(attachment.url, "_blank");
     }
   };

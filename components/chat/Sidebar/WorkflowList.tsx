@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Pencil, Palette } from "lucide-react";
+import { Pencil, Palette, LucideProps } from "lucide-react";
 
 export interface Workflow {
   id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: React.ComponentType<LucideProps>;
   route: string;
   description?: string;
 }

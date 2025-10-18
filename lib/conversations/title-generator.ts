@@ -18,7 +18,7 @@ export function generateLocalTitle(message: string): string {
   }
 
   // Extract first sentence or up to 50 characters
-  const firstSentence = cleaned.split(/[.!?]\s/)[0];
+  const firstSentence = cleaned.split(/[.!?]\s/)[0] ?? cleaned;
   const title = firstSentence.length > 50
     ? firstSentence.slice(0, 50).trim() + '...'
     : firstSentence;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, AlertCircle, XCircle, RotateCw } from "lucide-react";
+import { XCircle, RotateCw } from "lucide-react";
 
 interface VideoGenerationPlaceholderProps {
   model: "payperwork-v1" | "payperwork-v2";
@@ -9,7 +9,7 @@ interface VideoGenerationPlaceholderProps {
   progress?: number;
   estimatedTimeRemaining?: number; // in seconds
   thumbnailUrl?: string; // If image2video
-  status?: "processing" | "failed"; // Add status prop
+  status?: "processing" | "succeed" | "failed"; // Add status prop
   error?: string; // Add error message prop
   className?: string; // Accept Tailwind classes from parent
 }
@@ -18,7 +18,7 @@ export function VideoGenerationPlaceholder({
   model,
   duration,
   aspectRatio,
-  progress = 0,
+  progress: _progress = 0,
   estimatedTimeRemaining,
   thumbnailUrl,
   status = "processing",

@@ -140,7 +140,7 @@ export function MessageAttachments({
                         window.URL.revokeObjectURL(url);
                         document.body.removeChild(a);
                       } catch (error) {
-                        chatLogger.error('Download failed:', error);
+                        chatLogger.error('Download failed:', error instanceof Error ? error : undefined);
                         window.open(att.url, '_blank');
                       }
                     }}
@@ -225,7 +225,7 @@ export function MessageAttachments({
                         window.URL.revokeObjectURL(url);
                         document.body.removeChild(a);
                       } catch (error) {
-                        chatLogger.error('Download failed:', error);
+                        chatLogger.error('Download failed:', error instanceof Error ? error : undefined);
                         // Fallback: try direct download
                         window.open(att.url, '_blank');
                       }

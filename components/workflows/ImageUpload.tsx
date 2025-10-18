@@ -80,15 +80,17 @@ export function ImageUpload({
     setIsDragging(false);
 
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      validateAndProcessFile(files[0]);
+    const file = files[0];
+    if (file) {
+      validateAndProcessFile(file);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      validateAndProcessFile(files[0]);
+    const file = files?.[0];
+    if (file) {
+      validateAndProcessFile(file);
     }
   };
 

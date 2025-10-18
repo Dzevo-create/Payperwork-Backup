@@ -45,12 +45,6 @@ export function ChatHeader({
     { id: "gpt-5", name: "ChatGPT", version: "5", badge: "Neu", desc: "Leistungsstark" },
   ];
 
-  const chatModels: { id: AIModel; name: string; version: string }[] = [
-    { id: "chatgpt", name: "ChatGPT", version: selectedGPTModel === "gpt-4o" ? "4o" : "5" },
-    { id: "claude", name: "Claude", version: "3.5" },
-    { id: "gemini", name: "Gemini", version: "2.0" },
-  ];
-
   const videoModels: { id: VideoModel; name: string; version: string }[] = [
     { id: "kling", name: "Payperwork Move", version: "v.1" },
     { id: "sora2", name: "Payperwork Move", version: "v.2" },
@@ -60,8 +54,11 @@ export function ChatHeader({
     if (mode === "image") {
       return { name: "Payperwork Flash", version: "v.1" };
     } else if (mode === "video") {
-      const model = videoModels.find(m => m.id === selectedVideoModel) || videoModels[0];
-      return { name: model.name, version: model.version };
+      const model = videoModels.find(m => m.id === selectedVideoModel);
+      if (model) {
+        return { name: model.name, version: model.version };
+      }
+      return { name: videoModels[0]?.name || "Payperwork Move", version: videoModels[0]?.version || "v.1" };
     } else {
       // Chat mode - show model name with version
       if (selectedModel === "chatgpt") {

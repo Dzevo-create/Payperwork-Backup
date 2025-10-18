@@ -84,7 +84,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
       videoSettings,
       selectedVideoModel,
       assistantMessageId,
-      currentConversationId,
+      currentConversationId: _currentConversationId,
       updateMessageWithAttachments,
       addToQueue,
       updateQueueTaskId,
@@ -342,7 +342,7 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
         return;
       }
 
-      chatLogger.error('Error calling Video API:', error);
+      chatLogger.error('Error calling Video API:', error instanceof Error ? error : undefined);
 
       // Determine if error is retryable
       const isRetryable = !errorMessage.includes("API key") &&

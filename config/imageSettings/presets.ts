@@ -88,7 +88,7 @@ export const getPresetDefaults = (presetKey: ImagePresetKey) => {
   return {
     style: preset.style,
     lighting: preset.lighting,
-    quality: preset.quality,
-    aspectRatio: preset.aspectRatio,
+    quality: 'quality' in preset ? preset.quality : undefined,
+    aspectRatio: 'aspectRatio' in preset ? preset.aspectRatio : undefined,
   };
 };

@@ -75,8 +75,8 @@ export function useImageGeneration({
     let referenceImages = attachments
       ?.filter((att) => att.type === "image" && att.base64)
       .map((att) => ({
-        data: att.base64!.split(",")[1], // Remove data:image/...;base64, prefix
-        mimeType: att.base64!.split(";")[0].split(":")[1],
+        data: att.base64!.split(",")[1] ?? '', // Remove data:image/...;base64, prefix
+        mimeType: att.base64!.split(";")[0]?.split(":")[1] ?? 'image/jpeg',
       })) || [];
 
     // Also include context images from reply (if any)
@@ -84,8 +84,8 @@ export function useImageGeneration({
       const contextReferenceImages = contextImages
         .filter((att) => att.type === "image" && att.base64)
         .map((att) => ({
-          data: att.base64!.split(",")[1], // Remove data:image/...;base64, prefix
-          mimeType: att.base64!.split(";")[0].split(":")[1],
+          data: att.base64!.split(",")[1] ?? '', // Remove data:image/...;base64, prefix
+          mimeType: att.base64!.split(";")[0]?.split(":")[1] ?? 'image/jpeg',
         }));
       referenceImages = [...referenceImages, ...contextReferenceImages];
     }
@@ -167,8 +167,8 @@ export function useImageGeneration({
 
           // Generate filename with payperwork prefix and timestamp
           const now = new Date();
-          const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-          const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+          const dateStr = now.toISOString().split('T')[0] ?? 'unknown'; // YYYY-MM-DD
+          const timeStr = now.toTimeString().split(' ')[0]?.replace(/:/g, '-') ?? '00-00-00'; // HH-MM-SS
           const fileName = `payperwork-${dateStr}-${timeStr}-${i + 1}.png`;
 
           // Upload to Supabase to get permanent URL (instead of localStorage base64)
@@ -203,13 +203,17 @@ export function useImageGeneration({
         });
 
         // Update assistant message with generated images (multiple attachments)
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0] ?? 'unknown';
+        const timeStr = now.toTimeString().split(' ')[0]?.replace(/:/g, '-') ?? '00-00-00';
+
         updateMessageWithAttachments(
           assistantMessageId,
           "",
           imageUrls.map((url, index) => ({
             type: "image" as const,
             url: url,
-            name: `payperwork-${new Date().toISOString().split('T')[0]}-${new Date().toTimeString().split(' ')[0].replace(/:/g, '-')}-${index + 1}.png`,
+            name: `payperwork-${dateStr}-${timeStr}-${index + 1}.png`,
           }))
         );
 
@@ -217,7 +221,9 @@ export function useImageGeneration({
         for (let i = 0; i < imageUrls.length; i++) {
           try {
             const imgUrl = imageUrls[i];
-            const imgName = `payperwork-${new Date().toISOString().split('T')[0]}-${new Date().toTimeString().split(' ')[0].replace(/:/g, '-')}-${i + 1}.png`;
+            if (!imgUrl) continue;
+
+            const imgName = `payperwork-${dateStr}-${timeStr}-${i + 1}.png`;
 
             chatLogger.debug(`Adding image ${i + 1} to library`, {
               type: "image",
@@ -226,7 +232,7 @@ export function useImageGeneration({
               prompt: content,
               model: "Payperwork Image",
               messageId: assistantMessageId,
-              conversationId: currentConversationId,
+              conversationId: currentConversationId ?? undefined,
             });
 
             await addToLibrary({
@@ -236,11 +242,11 @@ export function useImageGeneration({
               prompt: content,
               model: "Payperwork Image",
               messageId: assistantMessageId,
-              conversationId: currentConversationId || undefined,
+              conversationId: currentConversationId ?? undefined,
             });
             chatLogger.info(`Image ${i + 1} successfully added to library`);
           } catch (error) {
-            chatLogger.error(`Failed to add image ${i + 1} to library`, error);
+            chatLogger.error(`Failed to add image ${i + 1} to library`, error instanceof Error ? error : undefined);
           }
         }
 

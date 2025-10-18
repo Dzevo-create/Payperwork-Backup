@@ -1,13 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { Sparkles } from "lucide-react";
 
 interface ChatWelcomeProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage?: (content: string) => void;
 }
 
-export function ChatWelcome({ onSendMessage }: ChatWelcomeProps) {
+export function ChatWelcome({ }: ChatWelcomeProps) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
       {/* Logo/Title */}

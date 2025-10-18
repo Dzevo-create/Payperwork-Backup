@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, MessageSquare } from "lucide-react";
 import { requestQueue } from "@/lib/requestQueue";
 import { useChatStore } from "@/store/chatStore.supabase";
@@ -37,7 +37,7 @@ export function BackgroundRequestIndicator({ onAddToast }: BackgroundRequestIndi
   useEffect(() => {
     const handleBackgroundMessage = (event: Event) => {
       const customEvent = event as CustomEvent<{ conversationId: string; message: Message }>;
-      const { conversationId, message } = customEvent.detail;
+      const { conversationId } = customEvent.detail;
 
       // Only show toast if this is truly a background conversation
       if (conversationId === currentConversationId) {
@@ -63,6 +63,7 @@ export function BackgroundRequestIndicator({ onAddToast }: BackgroundRequestIndi
         window.removeEventListener('backgroundMessageReceived', handleBackgroundMessage);
       };
     }
+    return undefined;
   }, [currentConversationId, conversations, onAddToast]);
 
   if (backgroundCount === 0) {
@@ -74,7 +75,9 @@ export function BackgroundRequestIndicator({ onAddToast }: BackgroundRequestIndi
     const bgRequests = requestQueue.getBackgroundRequests(currentConversationId);
     if (bgRequests.length > 0) {
       const firstRequest = bgRequests[0];
-      setCurrentConversationId(firstRequest.conversationId);
+      if (firstRequest) {
+        setCurrentConversationId(firstRequest.conversationId);
+      }
     }
   };
 

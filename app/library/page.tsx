@@ -65,7 +65,6 @@ export default function LibraryPage() {
           onClose={() => setIsSidebarOpen(false)}
           isCollapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-          onSearchClick={() => {}}
           onNewChat={handleNewChat}
           conversations={conversations}
           currentConversationId={currentConversationId}

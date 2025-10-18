@@ -79,7 +79,7 @@ export function MediaLightbox({ isOpen, item, onClose, onNavigate, hasNext, hasP
 
       toast.success("Download gestartet");
     } catch (error) {
-      libraryLogger.error('Download error:', error);
+      libraryLogger.error('Download error:', error instanceof Error ? error : undefined);
       toast.error("Download fehlgeschlagen");
     }
   };

@@ -13,7 +13,7 @@
  * - Signature design elements
  */
 
-import { openaiClient, OPENAI_MODELS, retryWithBackoff } from "@/lib/api/providers/openai";
+import { openaiClient, retryWithBackoff } from "@/lib/api/providers/openai";
 import { apiLogger } from "@/lib/logger";
 
 /**
@@ -128,8 +128,7 @@ Be specific about colors, materials, textures, and spatial design.`;
         });
       },
       3, // max retries
-      1000, // initial delay
-      "Brand Intelligence API (GPT-5)"
+      1000 // initial delay
     );
 
     // Debug: Log entire completion object to understand what's happening

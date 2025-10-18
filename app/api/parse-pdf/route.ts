@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    apiLogger.error('PDF parsing error:', error);
+    apiLogger.error('PDF parsing error:', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: "Failed to parse PDF" },
       { status: 500 }

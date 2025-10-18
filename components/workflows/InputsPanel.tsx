@@ -22,11 +22,11 @@ interface InputsPanelProps {
  * - Referenzbilder upload (optional, max 3)
  */
 export function InputsPanel({ data, onChange, onCropSource, onCropReference }: InputsPanelProps) {
-  const handleSourceImageChange = (file: File | null, preview: string | null) => {
+  const handleSourceImageChange = (file: File | null | undefined, preview: string | null) => {
     onChange({
       ...data,
       sourceImage: {
-        file,
+        file: file ?? null,
         preview,
         // Store as original when first uploaded, preserve existing original on subsequent changes
         originalPreview: preview || data?.sourceImage?.originalPreview || null
@@ -88,7 +88,7 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
           label="Referenzbilder"
           value={data?.referenceImages?.[0]?.preview || null}
           onChange={(file, preview) =>
-            handleReferenceImageChange(0, file, preview)
+            handleReferenceImageChange(0, file ?? null, preview)
           }
           maxSizeMB={10}
           onCrop={onCropReference ? () => onCropReference(0) : undefined}
