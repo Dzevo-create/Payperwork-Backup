@@ -58,4 +58,4 @@ export { generateSketchToRenderPrompt } from "./promptGenerator";
 export {
   enhanceBrandingPrompt,
   generateBrandingPrompt,
-} from "./brandingEnhancer";
+} from "./branding";

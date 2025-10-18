@@ -3,8 +3,7 @@ import { getClientId } from "@/lib/rate-limit";
 import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
-import { generateSketchToRenderPrompt } from "@/lib/api/workflows/sketchToRender";
-import { generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender/brandingEnhancer";
+import { generateSketchToRenderPrompt, generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender";
 import { RenderSettingsType } from "@/types/workflows/renderSettings";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 
