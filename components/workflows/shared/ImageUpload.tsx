@@ -23,7 +23,7 @@ export function ImageUpload({
   label,
   value,
   onChange,
-  maxSizeMB = 10,
+  maxSizeMB = 15,
   className = "",
   showExample = false,
   onCrop

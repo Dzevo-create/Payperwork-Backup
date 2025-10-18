@@ -23,11 +23,15 @@ export { useSketchToRender } from './sketch-to-render/useSketchToRender';
 // Branding
 export { useBranding } from './branding/useBranding';
 
+// Furnish-Empty
+export { useFurnishEmpty } from './furnish-empty/useFurnishEmpty';
+
 // ===== ADAPTERS =====
 // Standardized interface adapters for WorkflowPage
 export {
   useSketchToRenderAdapter,
   useBrandingAdapter,
+  useFurnishEmptyAdapter,
   usePromptEnhancerAdapter,
   useRenderEditAdapter,
   useUpscaleAdapter,

@@ -1,5 +1,5 @@
 /**
- * Sketch-to-Render: Edit/Refine Endpoint
+ * Furnish-Empty: Edit/Refine Endpoint
  *
  * Allows users to make changes to existing rendered images
  * Uses Nano Banana (Gemini 2.5 Flash Image) for image-to-image generation
@@ -18,7 +18,7 @@ export const maxDuration = 60; // 60 seconds timeout
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/sketch-to-render/edit
+ * POST /api/furnish-empty/edit
  *
  * Edit/refine an existing render with new instructions
  *
@@ -26,7 +26,6 @@ export const dynamic = "force-dynamic";
  * - editPrompt: string - User's edit instruction
  * - currentImage: { data: string, mimeType: string } - Current rendered image
  * - originalPrompt?: string - Original prompt (optional, for context)
- * - referenceImages?: Array<{ data: string, mimeType: string }> - Optional reference images
  *
  * Response:
  * - image: { data: string, mimeType: string } - Edited image
@@ -70,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     // Parse request body
     const body = await req.json();
-    const { editPrompt, currentImage, originalPrompt, referenceImages } = body;
+    const { editPrompt, currentImage, originalPrompt } = body;
 
     // Validate required fields
     if (!editPrompt || !editPrompt.trim()) {
@@ -91,7 +90,6 @@ export async function POST(req: NextRequest) {
       clientId,
       editPromptLength: editPrompt.length,
       hasOriginalPrompt: !!originalPrompt,
-      referenceImageCount: referenceImages?.length || 0,
     });
 
     // Step 1: Enhance edit prompt with GPT-4o Vision
@@ -120,7 +118,7 @@ export async function POST(req: NextRequest) {
       maxOutputTokens: 8192,
     };
 
-    // Step 4: Build content parts (prompt + current image + reference images)
+    // Step 4: Build content parts (prompt + current image)
     const parts: Part[] = [
       { text: enhancedPrompt },
       {
@@ -130,21 +128,6 @@ export async function POST(req: NextRequest) {
         },
       },
     ];
-
-    // Add reference images if provided
-    if (referenceImages && Array.isArray(referenceImages) && referenceImages.length > 0) {
-      referenceImages.forEach((refImg: { data: string; mimeType: string }, index: number) => {
-        if (refImg.data && refImg.mimeType) {
-          parts.push({
-            inlineData: {
-              data: refImg.data,
-              mimeType: refImg.mimeType,
-            },
-          });
-          apiLogger.info(`Added reference image ${index + 1}`, { clientId });
-        }
-      });
-    }
 
     apiLogger.info("Starting image edit with Nano Banana", { clientId });
 
@@ -241,6 +224,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    return handleApiError(error, "sketch-to-render-edit");
+    return handleApiError(error, "furnish-empty-edit");
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Pencil, Palette, LucideProps } from "lucide-react";
+import { Pencil, Palette, Sofa, LucideProps } from "lucide-react";
 
 export interface Workflow {
   id: string;
@@ -25,6 +25,13 @@ const workflows: Workflow[] = [
     icon: Palette,
     route: "/workflows/branding",
     description: "Flächen → Branding-Renderings",
+  },
+  {
+    id: "furnish-empty",
+    name: "Furnish Empty",
+    icon: Sofa,
+    route: "/workflows/furnish-empty",
+    description: "Leere Räume → Eingerichtete Räume",
   },
 ];
 

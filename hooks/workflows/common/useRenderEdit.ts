@@ -45,7 +45,8 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
     async (
       editPrompt: string,
       currentImageUrl: string,
-      originalPrompt?: string
+      originalPrompt?: string,
+      referenceImages?: string[]
     ): Promise<string | null> => {
       // Validation
       if (!editPrompt.trim()) {
@@ -104,6 +105,7 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
           editPrompt: string;
           currentImage: { data: string; mimeType: string };
           originalPrompt?: string;
+          referenceImages?: Array<{ data: string; mimeType: string }>;
         } = {
           editPrompt: editPrompt.trim(),
           currentImage: {
@@ -114,6 +116,25 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
 
         if (originalPrompt) {
           payload.originalPrompt = originalPrompt;
+        }
+
+        // Convert reference images from data URLs to API format
+        if (referenceImages && referenceImages.length > 0) {
+          payload.referenceImages = referenceImages.map((dataUrl) => {
+            // Extract data and mimeType from data URL (data:image/jpeg;base64,...)
+            const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (matches && matches[1] && matches[2]) {
+              return {
+                data: matches[2],
+                mimeType: matches[1],
+              };
+            }
+            // Fallback if format is unexpected
+            return {
+              data: dataUrl.split(',')[1] || dataUrl,
+              mimeType: 'image/jpeg',
+            };
+          });
         }
 
         // Call edit API

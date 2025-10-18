@@ -89,6 +89,7 @@ export interface WorkflowPageConfig<TSettings extends Record<string, unknown> = 
         editPrompt: string;
         currentImageUrl: string;
         originalPrompt: string;
+        referenceImages?: string[];
       }) => Promise<WorkflowGenerationResult | null>;
       isEditing: boolean;
       error: string | null;

@@ -23,7 +23,7 @@ export interface WorkflowActions {
   // Workflow Actions
   handleEnhancePrompt: () => Promise<void>;
   handleGenerate: () => Promise<void>;
-  handleEdit: (editPrompt: string) => Promise<void>;
+  handleEdit: (editPrompt: string, referenceImages?: string[]) => Promise<void>;
   handleUpscale: (gen?: { imageUrl: string }) => Promise<void>;
 
   // Lightbox Actions
@@ -78,13 +78,14 @@ export function useWorkflowActions<TSettings extends Record<string, unknown>>(
   }, [state]);
 
   // Edit
-  const handleEdit = useCallback(async (editPrompt: string) => {
+  const handleEdit = useCallback(async (editPrompt: string, referenceImages?: string[]) => {
     if (!state.workflowState.resultImage || !editPrompt.trim() || !state.editHook) return;
 
     const result = await state.editHook.edit({
       editPrompt,
       currentImageUrl: state.workflowState.resultImage,
       originalPrompt: state.workflowState.originalPrompt,
+      referenceImages,
     });
 
     if (result) {

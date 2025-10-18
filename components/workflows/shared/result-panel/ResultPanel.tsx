@@ -26,7 +26,7 @@ interface ResultPanelProps {
   onCrop?: () => void;
   renderName?: string;
   onRenderNameChange?: (name: string) => void;
-  onEdit?: (editPrompt: string) => void;
+  onEdit?: (editPrompt: string, referenceImages?: string[]) => void;
   onImageClick?: () => void;
 }
 
@@ -51,9 +51,9 @@ export function ResultPanel({
   const [videoPrompt, setVideoPrompt] = useState("");
   const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
 
-  const handleEdit = () => {
+  const handleEdit = (referenceImages?: string[]) => {
     if (editPrompt.trim() && onEdit) {
-      onEdit(editPrompt);
+      onEdit(editPrompt, referenceImages);
       setEditPrompt("");
     }
   };

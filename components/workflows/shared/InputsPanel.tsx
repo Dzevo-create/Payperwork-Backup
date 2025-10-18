@@ -69,7 +69,7 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
         label="Ausgangsbild"
         value={data?.sourceImage?.preview || null}
         onChange={handleSourceImageChange}
-        maxSizeMB={10}
+        maxSizeMB={15}
         onCrop={onCropSource}
       />
 
@@ -90,7 +90,7 @@ export function InputsPanel({ data, onChange, onCropSource, onCropReference }: I
           onChange={(file, preview) =>
             handleReferenceImageChange(0, file ?? null, preview)
           }
-          maxSizeMB={10}
+          maxSizeMB={15}
           onCrop={onCropReference ? () => onCropReference(0) : undefined}
         />
 

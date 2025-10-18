@@ -9,11 +9,13 @@
 
 import { useSketchToRender } from '../sketch-to-render/useSketchToRender';
 import { useBranding } from '../branding/useBranding';
+import { useFurnishEmpty } from '../furnish-empty/useFurnishEmpty';
 import { usePromptEnhancer } from '../common/usePromptEnhancer';
 import { useRenderEdit } from '../common/useRenderEdit';
 import { useUpscale } from '../common/useUpscale';
 import type { SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
 import type { BrandingSettingsType } from '@/types/workflows/brandingSettings';
+import type { FurnishEmptySettingsType } from '@/types/workflows/furnishEmptySettings';
 
 /**
  * Workflow Generation Result Interface
@@ -58,6 +60,7 @@ export interface StandardEditHook {
     editPrompt: string;
     currentImageUrl: string;
     originalPrompt?: string;
+    referenceImages?: string[];
   }) => Promise<WorkflowGenerationResult | null>;
   isEditing: boolean;
   error: string | null;
@@ -149,6 +152,44 @@ export function useBrandingAdapter(): StandardGenerateHook<BrandingSettingsType>
 }
 
 /**
+ * Adapter for Furnish-Empty Hook (without context)
+ * Note: Use useFurnishEmptyAdapterWithContext for furniture images support
+ */
+export function useFurnishEmptyAdapter(): StandardGenerateHook<FurnishEmptySettingsType> {
+  const hook = useFurnishEmpty();
+
+  return {
+    generate: async (params) => {
+      const { prompt, settings, sourceImage, referenceImages } = params;
+
+      // Convert base64 preview string to ImageData format expected by useFurnishEmpty
+      // useFurnishEmpty expects: { file: File | null, preview: string | null }
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
+        file: null, // File object not needed for generation, only preview
+        preview: sourceImage, // Base64 data URL
+      } : {file: null, preview: null};
+
+      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
+        file: null,
+        preview: referenceImages[0] || null,
+      } : undefined;
+
+      const result = await hook.generate(
+        prompt,
+        sourceImageData as any,
+        settings as FurnishEmptySettingsType,
+        referenceImageData as any
+      );
+
+      return result;
+    },
+    isGenerating: hook.isGenerating,
+    error: hook.error,
+    progress: hook.progress,
+  };
+}
+
+/**
  * Adapter for Prompt Enhancer Hook
  */
 export function usePromptEnhancerAdapter(
@@ -195,8 +236,8 @@ export function useRenderEditAdapter(): StandardEditHook {
 
   return {
     edit: async (params) => {
-      const { editPrompt, currentImageUrl, originalPrompt } = params;
-      const imageUrl = await hook.editRender(editPrompt, currentImageUrl, originalPrompt);
+      const { editPrompt, currentImageUrl, originalPrompt, referenceImages } = params;
+      const imageUrl = await hook.editRender(editPrompt, currentImageUrl, originalPrompt, referenceImages);
 
       if (!imageUrl) {
         return null;
