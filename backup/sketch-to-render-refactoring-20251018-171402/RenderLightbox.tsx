@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { X, Download, ChevronLeft, ChevronRight, Calendar, Sparkles, ImageIcon } from "lucide-react";
-import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
+import { RenderSettingsType } from "@/types/workflows/renderSettings";
 import { workflowLogger } from '@/lib/logger';
 
 interface RenderItem {
@@ -12,7 +12,7 @@ interface RenderItem {
   name?: string;
   prompt?: string;
   enhancedPrompt?: string;
-  settings?: SketchToRenderSettingsType;
+  settings?: RenderSettingsType;
   type?: "image" | "video" | "render" | "upscale";
   sourceImageUrl?: string; // Original input image
 }

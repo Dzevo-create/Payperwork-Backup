@@ -2,7 +2,7 @@
 
 import { Building2, Home, TreePine, Sparkles, Shapes, Minimize2, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { RenderSettingsType, PRESET_CONFIGURATIONS } from "@/types/workflows/renderSettings";
+import { SketchToRenderSettingsType, PRESET_CONFIGURATIONS } from "@/types/workflows/sketchToRenderSettings";
 
 export type RenderPreset =
   | "architektur"
@@ -30,7 +30,7 @@ const PRESETS: Preset[] = [
 
 interface PresetsBarProps {
   selectedPreset: RenderPreset;
-  onPresetChange: (preset: RenderPreset, settings: RenderSettingsType) => void;
+  onPresetChange: (preset: RenderPreset, settings: SketchToRenderSettingsType) => void;
 }
 
 /**

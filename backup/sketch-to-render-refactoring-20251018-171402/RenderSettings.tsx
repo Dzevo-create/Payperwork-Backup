@@ -13,7 +13,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
+import { RenderSettingsType } from "@/types/workflows/renderSettings";
 
 // Options Definitions
 const SPACE_TYPES = [
@@ -79,8 +79,8 @@ const QUALITY = [
 ] as const;
 
 interface RenderSettingsProps {
-  settings: SketchToRenderSettingsType;
-  onSettingsChange: (settings: SketchToRenderSettingsType) => void;
+  settings: RenderSettingsType;
+  onSettingsChange: (settings: RenderSettingsType) => void;
 }
 
 type DropdownType = "spaceType" | "aspect" | "designStyle" | "renderStyle" | "time" | "season" | "weather" | "quality" | null;

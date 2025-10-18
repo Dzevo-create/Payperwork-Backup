@@ -2,8 +2,8 @@
 
 import { Mic, Type, Send, Loader2 } from "lucide-react";
 import { useRef, useEffect } from "react";
-import { SketchToRenderSettings } from "./SketchToRenderSettings";
-import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
+import { RenderSettings } from "./RenderSettings";
+import { RenderSettingsType } from "@/types/workflows/renderSettings";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 interface RenderPromptInputProps {
@@ -14,8 +14,8 @@ interface RenderPromptInputProps {
   isGenerating?: boolean;
   isEnhancing?: boolean;
   disabled?: boolean;
-  settings: SketchToRenderSettingsType;
-  onSettingsChange: (settings: SketchToRenderSettingsType) => void;
+  settings: RenderSettingsType;
+  onSettingsChange: (settings: RenderSettingsType) => void;
 }
 
 /**
@@ -68,7 +68,7 @@ export function RenderPromptInput({
     <div className="flex flex-col gap-2.5 h-full">
       {/* Settings bar above - matches ImageSettings/VideoSettings pattern */}
       <div className="flex items-center justify-end">
-        <SketchToRenderSettings
+        <RenderSettings
           settings={settings}
           onSettingsChange={onSettingsChange}
         />

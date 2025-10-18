@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { SketchToSketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 
 /**
  * Shared types and utilities for workflow generation hooks
@@ -17,7 +17,7 @@ export interface GenerationResult {
   timestamp: Date;
   prompt?: string;
   enhancedPrompt?: string;
-  settings?: RenderSettingsType;
+  settings?: SketchToRenderSettingsType;
 }
 
 export interface UseGenerationOptions {
@@ -28,7 +28,7 @@ export interface UseGenerationOptions {
 export interface GenerationMetadata {
   prompt: string | null;
   enhancedPrompt: string;
-  settings: RenderSettingsType | null;
+  settings: SketchToRenderSettingsType | null;
   timestamp: string;
   model: string;
 }
@@ -148,13 +148,13 @@ export function extractBase64Data(preview: string): { base64: string; mimeType: 
 export function buildGenerationPayload(
   prompt: string,
   sourceImage: ImageData,
-  settings: RenderSettingsType,
+  settings: SketchToRenderSettingsType,
   referenceImage?: ImageData
 ): {
   prompt: string;
   sourceImage: { data: string; mimeType: string };
   referenceImage?: { data: string; mimeType: string };
-  settings: RenderSettingsType;
+  settings: SketchToRenderSettingsType;
 } {
   const { base64: sourceBase64, mimeType: sourceMimeType } = extractBase64Data(sourceImage.preview!);
 
@@ -162,7 +162,7 @@ export function buildGenerationPayload(
     prompt: string;
     sourceImage: { data: string; mimeType: string };
     referenceImage?: { data: string; mimeType: string };
-    settings: RenderSettingsType;
+    settings: SketchToRenderSettingsType;
   } = {
     prompt: prompt.trim(),
     sourceImage: {

@@ -32,7 +32,7 @@ import {
   generateSingleImage,
   parseImageFromResponse,
 } from "@/lib/api/providers/gemini";
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 
 /**
  * POST /api/sketch-to-render
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       enhancedPrompt = await enhanceSketchToRenderPrompt(
         prompt || "photorealistic architectural rendering",
         sourceImage,
-        settings as RenderSettingsType | undefined,
+        settings as SketchToRenderSettingsType | undefined,
         referenceImage ? [referenceImage] : undefined
       );
 
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       // Fallback: use basic prompt with settings
       enhancedPrompt = buildArchitecturalPrompt(
         prompt || "photorealistic architectural rendering",
-        settings as RenderSettingsType | undefined
+        settings as SketchToRenderSettingsType | undefined
       );
     }
 

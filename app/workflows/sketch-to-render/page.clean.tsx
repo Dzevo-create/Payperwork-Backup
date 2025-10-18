@@ -9,7 +9,7 @@
 
 import { WorkflowPage, type WorkflowPageConfig } from '@/components/workflows/WorkflowPage';
 import { RenderPromptInput } from '@/components/workflows/RenderPromptInput';
-import { DEFAULT_RENDER_SETTINGS, type RenderSettingsType } from '@/types/workflows/renderSettings';
+import { DEFAULT_SKETCH_TO_RENDER_SETTINGS, type SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {
   useSketchToRenderAdapter,
@@ -22,10 +22,10 @@ import {
  * Sketch-to-Render Workflow Configuration
  * Only workflow-specific settings and components are defined here
  */
-const sketchToRenderConfig: WorkflowPageConfig<RenderSettingsType> = {
+const sketchToRenderConfig: WorkflowPageConfig<SketchToRenderSettingsType> = {
   name: 'Sketch to Render',
   apiEndpoint: 'sketch-to-render',
-  defaultSettings: DEFAULT_RENDER_SETTINGS,
+  defaultSettings: DEFAULT_SKETCH_TO_RENDER_SETTINGS,
 
   // Workflow-specific components
   PromptInputComponent: RenderPromptInput,

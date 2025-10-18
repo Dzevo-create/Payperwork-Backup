@@ -4,7 +4,7 @@ import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateSketchToRenderPrompt, generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender";
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
 import { perfMonitor } from "@/lib/performance/monitor";
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
       generatedPrompt = await generateSketchToRenderPrompt(
         userPrompt || null,
         sourceImage,
-        settings as RenderSettingsType | undefined,
+        settings as SketchToRenderSettingsType | undefined,
         referenceImage
       );
     }

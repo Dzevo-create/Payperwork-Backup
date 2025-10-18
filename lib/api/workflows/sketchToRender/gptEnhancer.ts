@@ -6,7 +6,7 @@
  */
 
 import { openaiClient, OPENAI_ENHANCEMENT_CONFIG, retryWithBackoff } from "@/lib/api/providers/openai";
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { SketchToSketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import { apiLogger } from "@/lib/logger";
 
 /**
@@ -41,7 +41,7 @@ Output ONLY the enhanced prompt text. No explanations, no preamble, no quotation
  * @param settings - Render settings to include as context
  * @returns Context string for GPT-4o
  */
-function buildSettingsContext(settings?: RenderSettingsType): string {
+function buildSettingsContext(settings?: SketchToRenderSettingsType): string {
   if (!settings) {
     return "";
   }
@@ -110,7 +110,7 @@ function buildSettingsContext(settings?: RenderSettingsType): string {
  */
 export async function enhanceArchitecturalPrompt(
   userPrompt: string,
-  settings?: RenderSettingsType
+  settings?: SketchToRenderSettingsType
 ): Promise<string> {
   // Validate input
   if (!userPrompt || typeof userPrompt !== "string") {
@@ -208,7 +208,7 @@ export async function enhanceArchitecturalPrompt(
 export async function enhanceSketchToRenderPrompt(
   userPrompt: string,
   sourceImage: { data: string; mimeType: string },
-  settings?: RenderSettingsType,
+  settings?: SketchToRenderSettingsType,
   referenceImages?: Array<{ data: string; mimeType: string }>
 ): Promise<string> {
   // ULTRA-SIMPLIFIED: Direct instruction for 1:1 image-to-image rendering
@@ -349,7 +349,7 @@ Keep prompts under 80 words. Output ONLY the prompt.`;
  */
 export async function enhanceArchitecturalPromptBatch(
   prompts: string[],
-  settings?: RenderSettingsType
+  settings?: SketchToRenderSettingsType
 ): Promise<string[]> {
   if (!prompts || !Array.isArray(prompts) || prompts.length === 0) {
     throw new Error("Prompts array is required and cannot be empty");
@@ -404,7 +404,7 @@ export interface EnhancementOptions {
  */
 export async function enhanceArchitecturalPromptWithOptions(
   userPrompt: string,
-  settings?: RenderSettingsType,
+  settings?: SketchToRenderSettingsType,
   options?: EnhancementOptions
 ): Promise<string> {
   // Build custom system prompt based on options

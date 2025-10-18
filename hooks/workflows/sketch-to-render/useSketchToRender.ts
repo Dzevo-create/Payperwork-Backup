@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import type { ImageData, GenerationResult, WorkflowHookOptions } from "@/types/workflows/common";
 
 // Legacy alias for backwards compatibility
@@ -41,7 +41,7 @@ export function useSketchToRender(options: UseSketchToRenderOptions = {}) {
     async (
       prompt: string,
       sourceImage: ImageData,
-      settings: RenderSettingsType,
+      settings: SketchToRenderSettingsType,
       referenceImage?: ImageData
     ): Promise<GenerationResult | null> => {
       // Validation - only check preview (file is not needed for generation)

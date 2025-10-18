@@ -12,7 +12,7 @@ import { useBranding } from '../branding/useBranding';
 import { usePromptEnhancer } from '../common/usePromptEnhancer';
 import { useRenderEdit } from '../common/useRenderEdit';
 import { useUpscale } from '../common/useUpscale';
-import type { RenderSettingsType } from '@/types/workflows/renderSettings';
+import type { SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
 
 /**
  * Standard Generate Hook Interface

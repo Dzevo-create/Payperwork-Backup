@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import { apiLogger } from "@/lib/logger";
 import { ImageData } from "@/types/workflows/sketchToRender";
 
@@ -28,7 +28,7 @@ const openai = new OpenAI({
 export async function generateSketchToRenderPrompt(
   userPrompt: string | null,
   sourceImage: ImageData,
-  settings?: RenderSettingsType,
+  settings?: SketchToRenderSettingsType,
   referenceImage?: ImageData
 ): Promise<string> {
 

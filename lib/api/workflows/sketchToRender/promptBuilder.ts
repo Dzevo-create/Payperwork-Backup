@@ -5,7 +5,7 @@
  * Similar to buildEnhancedImagePrompt pattern in lib/api/providers/gemini.ts
  */
 
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 
 /**
  * Design style descriptions for architectural rendering
@@ -115,7 +115,7 @@ const SPACE_TYPE_DESCRIPTIONS: Record<string, string> = {
  */
 export function buildArchitecturalPrompt(
   userPrompt: string,
-  settings?: RenderSettingsType
+  settings?: SketchToRenderSettingsType
 ): string {
   // Start with user prompt (or default)
   let prompt = userPrompt?.trim() || "architectural rendering";
@@ -183,7 +183,7 @@ export function buildArchitecturalPrompt(
  * @param settings - Render settings to validate
  * @returns Validation result with any error messages
  */
-export function validateRenderSettings(settings: RenderSettingsType): {
+export function validateRenderSettings(settings: SketchToRenderSettingsType): {
   valid: boolean;
   errors: string[];
 } {
