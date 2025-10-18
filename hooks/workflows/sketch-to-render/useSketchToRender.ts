@@ -7,14 +7,6 @@ import type { ImageData, GenerationResult, WorkflowHookOptions } from "@/types/w
 // Legacy alias for backwards compatibility
 interface UseSketchToRenderOptions extends WorkflowHookOptions {}
 
-interface GenerationMetadata {
-  prompt: string | null;
-  enhancedPrompt: string;
-  settings: RenderSettingsType | null;
-  timestamp: string;
-  model: string;
-}
-
 /**
  * useSketchToRender Hook
  *

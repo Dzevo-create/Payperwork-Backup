@@ -42,7 +42,7 @@ export function useRecentGenerations(
       setIsLoadingGenerations(true);
       const userId = getUserIdSync();
 
-      workflowLogger.info(`[${workflowType}] Loading generations for user:`, userId);
+      workflowLogger.info(`[${workflowType}] Loading generations for user:`, { userId });
 
       const response = await fetch(
         `/api/${workflowType}/generations?userId=${encodeURIComponent(userId)}`
@@ -86,7 +86,7 @@ export function useRecentGenerations(
       try {
         const userId = getUserIdSync();
 
-        workflowLogger.info(`[${workflowType}] Deleting generation:`, id);
+        workflowLogger.info(`[${workflowType}] Deleting generation:`, { generationId: id });
 
         const response = await fetch(`/api/${workflowType}/delete-generation`, {
           method: "POST",

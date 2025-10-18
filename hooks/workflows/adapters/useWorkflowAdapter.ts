@@ -74,21 +74,21 @@ export function useSketchToRenderAdapter(): StandardGenerateHook {
 
       // Convert base64 preview string to ImageData format expected by useSketchToRender
       // useSketchToRender expects: { file: File | null, preview: string | null }
-      const sourceImageData = sourceImage ? {
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
         file: null, // File object not needed for generation, only preview
         preview: sourceImage, // Base64 data URL
       } : {file: null, preview: null};
 
-      const referenceImageData = referenceImages.length > 0 ? {
+      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
         file: null,
-        preview: referenceImages[0],
+        preview: referenceImages[0] || null,
       } : undefined;
 
       const result = await hook.generate(
         prompt,
-        sourceImageData,
+        sourceImageData as any,
         settings as RenderSettingsType,
-        referenceImageData
+        referenceImageData as any
       );
 
       return result;
@@ -111,21 +111,21 @@ export function useBrandingAdapter(): StandardGenerateHook {
 
       // Convert base64 preview string to ImageData format expected by useBranding
       // useBranding expects: { file: File | null, preview: string | null }
-      const sourceImageData = sourceImage ? {
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
         file: null, // File object not needed for generation, only preview
         preview: sourceImage, // Base64 data URL
       } : {file: null, preview: null};
 
-      const referenceImageData = referenceImages.length > 0 ? {
+      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
         file: null,
-        preview: referenceImages[0],
+        preview: referenceImages[0] || null,
       } : undefined;
 
       const result = await hook.generate(
         prompt,
-        sourceImageData,
+        sourceImageData as any,
         settings as RenderSettingsType,
-        referenceImageData
+        referenceImageData as any
       );
 
       return result;

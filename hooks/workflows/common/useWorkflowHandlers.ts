@@ -48,7 +48,7 @@ export function useWorkflowHandlers<TSettings>(
   config: WorkflowHandlersConfig,
   workflowState: WorkflowState<TSettings>,
   setRecentGenerations: (fn: (prev: Generation[]) => Generation[]) => void,
-  currentSourceImage: string | null,
+  _currentSourceImage: string | null,
   setCurrentSourceImage: (image: string | null) => void,
   renderName: string,
   setRenderName: (name: string) => void,

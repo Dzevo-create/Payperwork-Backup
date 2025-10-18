@@ -29,8 +29,7 @@ export async function callBrandingEnhancement(
         messages,
       }),
     DEFAULT_RETRY_ATTEMPTS,
-    DEFAULT_BASE_DELAY,
-    "Branding Prompt Enhancement (GPT-4o)"
+    DEFAULT_BASE_DELAY
   );
 
   // Debug: Log response

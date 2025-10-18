@@ -244,7 +244,7 @@ export function validateImages(
  * @param dataUrl - Base64 data URL (e.g., "data:image/jpeg;base64,...")
  * @returns Mime type or null if invalid
  */
-export function extractMimeType(dataUrl: string): string | null {
+export function extractMimeType(dataUrl: string): string | null | undefined {
   const match = dataUrl.match(/^data:([^;]+);base64,/);
   return match ? match[1] : null;
 }

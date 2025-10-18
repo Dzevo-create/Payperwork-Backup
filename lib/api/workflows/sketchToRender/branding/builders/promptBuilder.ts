@@ -11,9 +11,9 @@ import { FIDELITY_GUIDES } from "../constants";
  * Gets structure fidelity instruction based on value (0-100)
  */
 export function getStructureFidelityInstruction(fidelity?: number | null): string {
-  if (fidelity === undefined || fidelity === null) fidelity = 100;
-  const key = String(Math.round(fidelity / 10) * 10);
-  return FIDELITY_GUIDES[key] || FIDELITY_GUIDES["100"];
+  const normalizedFidelity = fidelity ?? 100;
+  const key = String(Math.round(normalizedFidelity / 10) * 10);
+  return FIDELITY_GUIDES[key] || FIDELITY_GUIDES["100"] || "EXACT structure preservation - Same camera angle, layout, proportions. Only materials/colors change.";
 }
 
 /**
@@ -107,10 +107,10 @@ export function buildEnhancementUserMessage(
   }
 
   // Add furniture instruction
-  message += buildFurnitureInstruction(settings?.preserveEmptySpace);
+  message += buildFurnitureInstruction(settings?.preserveEmptySpace ?? undefined);
 
   // Add starting instruction
-  message += buildStartingInstruction(settings?.brandingText, settings?.venueType);
+  message += buildStartingInstruction(settings?.brandingText ?? undefined, settings?.venueType ?? undefined);
 
   return message;
 }

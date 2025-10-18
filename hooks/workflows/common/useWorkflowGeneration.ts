@@ -132,7 +132,13 @@ export function validateGenerationInputs(
  */
 export function extractBase64Data(preview: string): { base64: string; mimeType: string } {
   const base64 = preview.split(",")[1];
-  const mimeType = preview.split(";")[0].split(":")[1];
+  if (!base64) {
+    throw new Error("Invalid preview data: Failed to extract base64");
+  }
+  const mimeType = preview.split(";")[0]?.split(":")[1];
+  if (!mimeType) {
+    throw new Error("Invalid preview data: Failed to extract mimeType");
+  }
   return { base64, mimeType };
 }
 

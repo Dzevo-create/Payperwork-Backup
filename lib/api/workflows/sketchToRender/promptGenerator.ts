@@ -158,12 +158,12 @@ CRITICAL RULES - STRUCTURE PRESERVATION:
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages,
+      messages: messages as any,
       temperature: 0.7,
       max_tokens: 400,
     });
 
-    const generatedPrompt = response.choices[0].message.content?.trim();
+    const generatedPrompt = response.choices[0]?.message?.content?.trim();
 
     if (!generatedPrompt) {
       apiLogger.warn("T-Button: GPT-4o returned empty prompt, using fallback");

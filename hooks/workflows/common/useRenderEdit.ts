@@ -81,6 +81,10 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
             fileReaderRef.current = null;
             const result = reader.result as string;
             const base64 = result.split(",")[1];
+            if (!base64) {
+              reject(new Error("Failed to extract base64 data from FileReader result"));
+              return;
+            }
             resolve(base64);
           };
           reader.onerror = () => {
