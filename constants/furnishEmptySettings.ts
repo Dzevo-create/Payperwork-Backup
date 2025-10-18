@@ -1,5 +1,5 @@
 // constants/furnishEmptySettings.ts
-import { Home, Bed, UtensilsCrossed, Briefcase, Bath, Baby, DoorOpen, Wind, Palette, Sparkles, Sofa, Sun, Users as UsersIcon, Package } from "lucide-react";
+import { Home, Bed, UtensilsCrossed, Briefcase, Bath, Baby, DoorOpen, Wind, Palette, Sparkles, Sofa, Sun, Users as UsersIcon, Package, Grid3x3 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 // Space Types
@@ -120,6 +120,7 @@ export const SETTING_ICONS = {
   lighting: Sun,
   targetAudience: UsersIcon,
   materials: Package,
+  structureAdherence: Grid3x3,
 };
 
 // Get Setting Label
