@@ -3,6 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import type { LucideIcon } from "lucide-react";
 
+interface SliderTooltip {
+  value: number;
+  label: string;
+  emoji?: string;
+}
+
 interface SettingsSliderProps {
   /** Icon to display (from lucide-react) */
   icon: LucideIcon;
@@ -20,6 +26,10 @@ interface SettingsSliderProps {
   step?: number;
   /** Unit to display (e.g., "%", "px") */
   unit?: string;
+  /** Slider variant - dropdown (panel) or inline (gradient track) */
+  variant?: "dropdown" | "inline";
+  /** Tooltips for specific values (only for inline variant) */
+  tooltips?: SliderTooltip[];
   /** Additional className for the container */
   className?: string;
 }
@@ -27,23 +37,40 @@ interface SettingsSliderProps {
 /**
  * SettingsSlider Component
  *
- * Reusable slider component for workflow settings
+ * Reusable slider component for workflow settings with two variants:
+ * - "dropdown": Panel style (default) - click to open dropdown with slider
+ * - "inline": Gradient track style - always visible with hover tooltip
  *
  * Features:
- * - Click-outside-to-close
+ * - Click-outside-to-close (dropdown variant)
  * - Visual slider with live value
  * - Matches SettingsDropdown style
- * - Responsive
+ * - Custom tooltips with emojis (inline variant)
+ * - Gradient track (inline variant)
  *
- * @example
+ * @example Dropdown variant
  * ```tsx
  * <SettingsSlider
  *   icon={Sparkles}
  *   label="Stil-Stärke"
  *   value={settings.styleStrength}
  *   onChange={(v) => updateSetting("styleStrength", v)}
- *   min={0}
+ *   variant="dropdown"
+ * />
+ * ```
+ *
+ * @example Inline variant with tooltips
+ * ```tsx
+ * <SettingsSlider
+ *   icon={Grid}
+ *   label="Struktur"
+ *   value={settings.structureFidelity}
+ *   onChange={(v) => updateSetting("structureFidelity", v)}
+ *   variant="inline"
+ *   tooltips={STRUCTURE_FIDELITY_TOOLTIPS}
+ *   min={10}
  *   max={100}
+ *   step={10}
  *   unit="%"
  * />
  * ```
@@ -57,31 +84,97 @@ export function SettingsSlider({
   max = 100,
   step = 1,
   unit = "",
+  variant = "dropdown",
+  tooltips = [],
   className = "",
 }: SettingsSliderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (only for dropdown variant)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
+    if (variant === "dropdown") {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener("mousedown", handleClickOutside);
       }
-    };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }
+  }, [isOpen, variant]);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
+  // Get tooltip for current value (inline variant)
+  const getCurrentTooltip = () => {
+    const tooltip = tooltips.find((t) => t.value === value);
+    if (tooltip) {
+      return `${tooltip.emoji ? tooltip.emoji + " " : ""}${tooltip.label}`;
+    }
+    return `${value}${unit}`;
+  };
 
+  // Calculate thumb position (0-100%) for inline variant
+  const thumbPosition = ((value - min) / (max - min)) * 100;
+
+  // INLINE VARIANT - Gradient track with hover tooltip
+  if (variant === "inline") {
+    return (
+      <div className={`relative group ${className}`}>
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border border-pw-black/10 hover:shadow transition-all min-w-[120px]">
+          {/* Icon and Label */}
+          <div className="flex items-center gap-1.5">
+            <Icon className="w-3.5 h-3.5 text-pw-black/40" />
+            <span className="text-[10px] font-medium text-pw-black/70 whitespace-nowrap">
+              {value}
+              {unit}
+            </span>
+          </div>
+
+          {/* Slider Track */}
+          <div className="relative flex-1 h-1.5 bg-gradient-to-r from-orange-300 via-yellow-300 to-green-300 rounded-full shadow-inner">
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={step}
+              value={value}
+              onChange={(e) => onChange(parseInt(e.target.value))}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            {/* Thumb indicator */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-pw-accent border border-white rounded-full shadow-md pointer-events-none transition-all group-hover:scale-125"
+              style={{
+                left: `${thumbPosition}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Hover Tooltip */}
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-white text-pw-black text-[10px] font-medium rounded-lg shadow-xl border border-pw-black/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[9999]">
+          {getCurrentTooltip()}
+          {/* Arrow pointing down to the right */}
+          <div
+            className="absolute top-full right-4 -mt-px w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"
+            style={{ filter: "drop-shadow(0 1px 0 rgba(0,0,0,0.1))" }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // DROPDOWN VARIANT - Panel style
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Trigger Button */}

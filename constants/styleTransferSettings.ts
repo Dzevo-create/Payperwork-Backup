@@ -4,8 +4,27 @@
  * All dropdown options, labels, and icons for the Style-Transfer workflow settings.
  */
 
-import { Shuffle, Palette, Layers, Sparkles, Eye, Grid3x3 } from "lucide-react";
+import { Shuffle, Palette, Layers, Sparkles, Eye, Grid3x3, Building2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
+// ============================================================================
+// ARCHITECTURAL STYLES
+// ============================================================================
+
+export const ARCHITECTURAL_STYLES = [
+  { value: "modern", label: "Modern" },
+  { value: "contemporary", label: "Zeitgenössisch" },
+  { value: "minimalist", label: "Minimalistisch" },
+  { value: "industrial", label: "Industrial" },
+  { value: "mediterranean", label: "Mediterran" },
+  { value: "scandinavian", label: "Skandinavisch" },
+  { value: "classical", label: "Klassisch" },
+  { value: "baroque", label: "Barock" },
+  { value: "art_deco", label: "Art Déco" },
+  { value: "brutalist", label: "Brutalistisch" },
+  { value: "gothic", label: "Gotisch" },
+  { value: "renaissance", label: "Renaissance" },
+] as const;
 
 // ============================================================================
 // TRANSFER MODES
@@ -70,6 +89,7 @@ export const ARCHITECTURAL_ELEMENTS = [
 // ============================================================================
 
 export const SETTING_ICONS: Record<string, LucideIcon> = {
+  architecturalStyle: Building2,
   transferMode: Shuffle,
   styleStrength: Sparkles,
   structurePreservation: Grid3x3,

@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, Search } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import type { LucideIcon } from "lucide-react";
 
 export interface DropdownOption<T extends string = string> {
@@ -73,7 +73,9 @@ export function SettingsDropdown<T extends string>({
 }: SettingsDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dropdownPosition, setDropdownPosition] = useState<"left" | "right">(align);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Close dropdown when clicking outside
@@ -97,6 +99,35 @@ export function SettingsDropdown<T extends string>({
       searchInputRef.current.focus();
     }
   }, [isOpen, searchable]);
+
+  // Auto-adjust dropdown position to prevent clipping (useLayoutEffect = before paint, no flicker)
+  useLayoutEffect(() => {
+    if (isOpen && dropdownMenuRef.current) {
+      const rect = dropdownMenuRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = rect.width;
+
+      // Check if dropdown would overflow on the right side
+      if (align === "left") {
+        // Dropdown is left-aligned, check if it overflows on the right
+        if (rect.right > viewportWidth) {
+          setDropdownPosition("right");
+        } else {
+          setDropdownPosition("left");
+        }
+      } else {
+        // Dropdown is right-aligned, check if it overflows on the left
+        if (rect.left < 0) {
+          setDropdownPosition("left");
+        } else {
+          setDropdownPosition("right");
+        }
+      }
+    } else {
+      // Reset to default when closed
+      setDropdownPosition(align);
+    }
+  }, [isOpen, align]);
 
   // Filter options based on search query
   const filteredOptions = searchable
@@ -147,8 +178,9 @@ export function SettingsDropdown<T extends string>({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
+          ref={dropdownMenuRef}
           className={`absolute bottom-full mb-2 ${
-            align === "right" ? "right-0" : "left-0"
+            dropdownPosition === "right" ? "right-0" : "left-0"
           } min-w-[11rem] max-w-[16rem] bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-pw-black/10 py-1 z-[9999] animate-in fade-in slide-in-from-bottom-2 duration-150`}
         >
           {/* Search Input (if searchable) */}
@@ -178,12 +210,19 @@ export function SettingsDropdown<T extends string>({
             className={scrollable ? "max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-pw-black/20 scrollbar-track-transparent" : ""}
             style={scrollable ? { maxHeight: maxHeight } : {}}
           >
+            {/* Dropdown Header (always visible) */}
+            {!searchable && (
+              <div className="sticky top-0 bg-white/95 backdrop-blur-xl z-10 px-3 py-2 border-b border-pw-black/10">
+                <div className="text-[10px] font-bold text-pw-black/60 uppercase tracking-wider">
+                  {placeholder}
+                </div>
+              </div>
+            )}
+
             {/* Default Option */}
             <button
               onClick={() => handleSelect(null)}
               className={`w-full px-3 py-2 text-left text-sm transition-colors border-b border-pw-black/10 ${
-                searchable ? "" : "sticky top-0 bg-white/95 backdrop-blur-xl z-10"
-              } ${
                 value === null
                   ? "bg-pw-black/5 text-pw-black/70 font-medium italic"
                   : "text-pw-black/50 hover:bg-pw-black/5 italic"
@@ -191,7 +230,7 @@ export function SettingsDropdown<T extends string>({
             >
               <span className="flex items-center gap-2">
                 {value === null && <span className="text-xs">✓</span>}
-                Default
+                Standard
               </span>
             </button>
 

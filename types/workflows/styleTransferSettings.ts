@@ -5,6 +5,21 @@
  * architectural styles and materialities from reference images to designs.
  */
 
+// Architectural Style - Pre-defined architectural styles
+export type ArchitecturalStyle =
+  | "modern"
+  | "contemporary"
+  | "minimalist"
+  | "industrial"
+  | "mediterranean"
+  | "scandinavian"
+  | "classical"
+  | "baroque"
+  | "art_deco"
+  | "brutalist"
+  | "gothic"
+  | "renaissance";
+
 // Transfer Mode - How strongly the style is transferred
 export type TransferMode = "subtle" | "balanced" | "strong";
 
@@ -32,6 +47,9 @@ export type ArchitecturalElement =
  * Complete Style-Transfer Settings Interface
  */
 export interface StyleTransferSettingsType extends Record<string, unknown> {
+  // Architectural style (optional - guides the transfer)
+  architecturalStyle: ArchitecturalStyle | null;
+
   // Transfer mode
   transferMode: TransferMode;
 
@@ -59,6 +77,7 @@ export interface StyleTransferSettingsType extends Record<string, unknown> {
  * Balanced configuration for most use cases
  */
 export const DEFAULT_STYLE_TRANSFER_SETTINGS: StyleTransferSettingsType = {
+  architecturalStyle: null, // No pre-defined style - let reference image guide
   transferMode: "balanced",
   styleStrength: 70,
   structurePreservation: 80,

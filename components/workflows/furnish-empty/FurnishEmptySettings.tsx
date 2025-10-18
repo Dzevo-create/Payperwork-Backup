@@ -3,6 +3,7 @@
 
 import { FurnishEmptySettingsType, Material } from "@/types/workflows/furnishEmptySettings";
 import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
+import { SettingsSlider } from "@/components/ui/SettingsSlider";
 import {
   SPACE_TYPES,
   FURNISHING_STYLES,
@@ -14,6 +15,7 @@ import {
   getSpaceTypeIcon,
   SETTING_ICONS,
 } from "@/constants/furnishEmptySettings";
+import { STRUCTURE_FIDELITY_TOOLTIPS } from "@/constants/workflowSettings";
 import { useState, useRef, useEffect } from "react";
 import { Check, ChevronDown } from "lucide-react";
 
@@ -179,59 +181,19 @@ export function FurnishEmptySettings({ settings, onSettingsChange }: FurnishEmpt
         align="right"
       />
 
-      {/* Structure Fidelity Slider (same as Branding) */}
-      <div className="relative group">
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border border-pw-black/10 hover:shadow transition-all min-w-[120px]">
-          {/* Icon and Label */}
-          <div className="flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5 text-pw-black/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-            </svg>
-            <span className="text-[10px] font-medium text-pw-black/70 whitespace-nowrap">
-              {settings.structureAdherence ?? 100}%
-            </span>
-          </div>
-
-          {/* Slider Track */}
-          <div className="relative flex-1 h-1.5 bg-gradient-to-r from-orange-300 via-yellow-300 to-green-300 rounded-full shadow-inner">
-            <input
-              type="range"
-              min="10"
-              max="100"
-              step="10"
-              value={settings.structureAdherence ?? 100}
-              onChange={(e) => {
-                updateSetting("structureAdherence", parseInt(e.target.value));
-              }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-            {/* Thumb indicator */}
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-pw-accent border border-white rounded-full shadow-md pointer-events-none transition-all group-hover:scale-125"
-              style={{
-                left: `${((settings.structureAdherence ?? 100) - 10) / 90 * 100}%`,
-                transform: 'translate(-50%, -50%)'
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Hover Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-white text-pw-black text-[10px] font-medium rounded-lg shadow-xl border border-pw-black/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[9999]">
-          {settings.structureAdherence === 100 && "🎯 Exakte Struktur - Nur Materialien ändern"}
-          {settings.structureAdherence === 90 && "📐 Sehr hohe Treue - Minimale Abweichung"}
-          {settings.structureAdherence === 80 && "🏗️ Hohe Treue - Gleiche Grundstruktur"}
-          {settings.structureAdherence === 70 && "🎨 Medium-Hoch - Mehr Kreativität"}
-          {settings.structureAdherence === 60 && "🖼️ Medium - Layout als Guide"}
-          {settings.structureAdherence === 50 && "⚖️ Balanciert - 50/50 Mix"}
-          {settings.structureAdherence === 40 && "🎭 Low-Medium - Größere Änderungen OK"}
-          {settings.structureAdherence === 30 && "🌈 Niedrig - Nur Inspiration"}
-          {settings.structureAdherence === 20 && "✨ Sehr niedrig - Maximum Kreativität"}
-          {settings.structureAdherence === 10 && "💡 Inspiration - Komplette Freiheit"}
-          {/* Arrow pointing down to the right */}
-          <div className="absolute top-full right-4 -mt-px w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.1))' }}></div>
-        </div>
-      </div>
+      {/* Structure Adherence Slider */}
+      <SettingsSlider
+        icon={SETTING_ICONS.structureAdherence}
+        label="Struktur"
+        value={settings.structureAdherence ?? 100}
+        onChange={(v) => updateSetting("structureAdherence", v)}
+        variant="inline"
+        tooltips={STRUCTURE_FIDELITY_TOOLTIPS}
+        min={10}
+        max={100}
+        step={10}
+        unit="%"
+      />
     </div>
   );
 }

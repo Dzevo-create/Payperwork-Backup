@@ -120,3 +120,22 @@ export const QUALITY = [
 ] as const satisfies readonly DropdownOption[];
 
 export type QualityValue = (typeof QUALITY)[number]["value"];
+
+// === SLIDER TOOLTIPS ===
+
+/**
+ * Structure Fidelity Slider Tooltips
+ * Used in Branding and FurnishEmpty workflows
+ */
+export const STRUCTURE_FIDELITY_TOOLTIPS = [
+  { value: 100, label: "Exakte Struktur - Nur Materialien ändern", emoji: "🎯" },
+  { value: 90, label: "Sehr hohe Treue - Minimale Abweichung", emoji: "📐" },
+  { value: 80, label: "Hohe Treue - Gleiche Grundstruktur", emoji: "🏗️" },
+  { value: 70, label: "Medium-Hoch - Mehr Kreativität", emoji: "🎨" },
+  { value: 60, label: "Medium - Layout als Guide", emoji: "🖼️" },
+  { value: 50, label: "Balanciert - 50/50 Mix", emoji: "⚖️" },
+  { value: 40, label: "Low-Medium - Größere Änderungen OK", emoji: "🎭" },
+  { value: 30, label: "Niedrig - Nur Inspiration", emoji: "🌈" },
+  { value: 20, label: "Sehr niedrig - Maximum Kreativität", emoji: "✨" },
+  { value: 10, label: "Inspiration - Komplette Freiheit", emoji: "💡" },
+];
