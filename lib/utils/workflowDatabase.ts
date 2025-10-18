@@ -112,13 +112,21 @@ export async function getRecentWorkflowGenerations(
 export async function deleteWorkflowGeneration(
   tableName: string,
   userId: string,
-  generationId: string
+  generationId: string | number
 ): Promise<boolean> {
   try {
+    // Convert to number if string (database ID is BIGINT)
+    const numericId = typeof generationId === 'string' ? parseInt(generationId, 10) : generationId;
+
+    if (isNaN(numericId)) {
+      logger.error(`[${tableName} DB] Invalid generation ID:`, { generationId, type: typeof generationId });
+      return false;
+    }
+
     const { error } = await supabaseAdmin
       .from(tableName)
       .delete()
-      .eq("id", generationId)
+      .eq("id", numericId)
       .eq("user_id", userId);
 
     if (error) {
@@ -139,13 +147,21 @@ export async function deleteWorkflowGeneration(
 export async function getWorkflowGenerationById(
   tableName: string,
   userId: string,
-  generationId: string
+  generationId: string | number
 ): Promise<WorkflowGeneration | null> {
   try {
+    // Convert to number if string (database ID is BIGINT)
+    const numericId = typeof generationId === 'string' ? parseInt(generationId, 10) : generationId;
+
+    if (isNaN(numericId)) {
+      logger.error(`[${tableName} DB] Invalid generation ID:`, { generationId, type: typeof generationId });
+      return null;
+    }
+
     const { data: generation, error } = await supabaseAdmin
       .from(tableName)
       .select("*")
-      .eq("id", generationId)
+      .eq("id", numericId)
       .eq("user_id", userId)
       .single();
 

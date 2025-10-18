@@ -120,18 +120,12 @@ export async function POST(req: NextRequest) {
       maxOutputTokens: 8192,
     };
 
-    // Step 4: Build content parts (prompt + current image + reference images)
+    // Step 4: Build content parts (prompt + reference images + current image LAST for aspect ratio)
     const parts: Part[] = [
-      { text: enhancedPrompt },
-      {
-        inlineData: {
-          data: currentImage.data,
-          mimeType: currentImage.mimeType,
-        },
-      },
+      { text: enhancedPrompt }
     ];
 
-    // Add reference images if provided
+    // Add reference images FIRST if provided
     if (referenceImages && Array.isArray(referenceImages) && referenceImages.length > 0) {
       referenceImages.forEach((refImg: { data: string; mimeType: string }, index: number) => {
         if (refImg.data && refImg.mimeType) {
@@ -145,6 +139,14 @@ export async function POST(req: NextRequest) {
         }
       });
     }
+
+    // Add current image LAST to preserve aspect ratio
+    parts.push({
+      inlineData: {
+        data: currentImage.data,
+        mimeType: currentImage.mimeType,
+      },
+    });
 
     apiLogger.info("Starting image edit with Nano Banana", { clientId });
 

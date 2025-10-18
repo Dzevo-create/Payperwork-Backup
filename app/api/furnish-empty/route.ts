@@ -93,13 +93,12 @@ export async function POST(req: NextRequest) {
     // Build generation config
     const generationConfig = buildGenerationConfig(settings);
 
-    // Build content parts (text + source image + furniture images)
+    // Build content parts (text + furniture images + source image LAST for aspect ratio)
     const parts = [
-      { text: enhancedPrompt },
-      ...images.map(img => img)
+      { text: enhancedPrompt }
     ];
 
-    // Add furniture images if provided
+    // Add furniture images FIRST if provided
     if (furnitureImages && Array.isArray(furnitureImages) && furnitureImages.length > 0) {
       furnitureImages.forEach((furnitureImg: { data: string; mimeType: string }, index: number) => {
         if (furnitureImg.data && furnitureImg.mimeType) {
@@ -113,6 +112,9 @@ export async function POST(req: NextRequest) {
         }
       });
     }
+
+    // Add source image LAST to preserve aspect ratio
+    parts.push(...images.map(img => img));
 
     apiLogger.info("Furnish-Empty: Generating with Nano Banana", {
       clientId,

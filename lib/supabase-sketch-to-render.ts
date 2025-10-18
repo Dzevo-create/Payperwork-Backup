@@ -37,7 +37,7 @@ export async function getRecentGenerations(
  */
 export async function deleteGeneration(
   userId: string,
-  generationId: string
+  generationId: string | number
 ): Promise<boolean> {
   return deleteWorkflowGeneration(TABLE_NAME, userId, generationId);
 }
@@ -47,7 +47,7 @@ export async function deleteGeneration(
  */
 export async function getGenerationById(
   userId: string,
-  generationId: string
+  generationId: string | number
 ): Promise<SketchToRenderGeneration | null> {
   return getWorkflowGenerationById(TABLE_NAME, userId, generationId);
 }
