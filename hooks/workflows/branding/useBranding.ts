@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { RenderSettingsType } from "@/types/workflows/renderSettings";
+import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 import type { ImageData, GenerationResult, WorkflowHookOptions } from "@/types/workflows/common";
 
 // Legacy alias for backwards compatibility
@@ -41,7 +41,7 @@ export function useBranding(options: UseSketchToRenderOptions = {}) {
     async (
       prompt: string,
       sourceImage: ImageData,
-      settings: RenderSettingsType,
+      settings: BrandingSettingsType,
       referenceImage?: ImageData
     ): Promise<GenerationResult | null> => {
       // Validation - only check preview (file is not needed for generation)
@@ -72,7 +72,7 @@ export function useBranding(options: UseSketchToRenderOptions = {}) {
         const payload: {
           prompt: string;
           sourceImage: { data: string; mimeType: string };
-          settings: RenderSettingsType;
+          settings: BrandingSettingsType;
           referenceImage?: { data: string; mimeType: string };
         } = {
           prompt: prompt.trim(),
