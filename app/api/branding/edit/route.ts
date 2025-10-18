@@ -12,6 +12,7 @@ import { apiLogger } from "@/lib/logger";
 import { geminiClient, GEMINI_MODELS } from "@/lib/api/providers/gemini";
 import { enhanceEditPrompt } from "@/lib/api/workflows/sketchToRender/editEnhancer";
 import { handleApiError } from "@/lib/api-error-handler";
+import type { Part } from "@google/generative-ai";
 
 export const maxDuration = 60; // 60 seconds timeout
 export const dynamic = "force-dynamic";
@@ -118,15 +119,7 @@ export async function POST(req: NextRequest) {
     };
 
     // Step 4: Build content parts (prompt + current image)
-    interface ContentPart {
-      text?: string;
-      inlineData?: {
-        data: string;
-        mimeType: string;
-      };
-    }
-
-    const parts: ContentPart[] = [
+    const parts: Part[] = [
       { text: enhancedPrompt },
       {
         inlineData: {

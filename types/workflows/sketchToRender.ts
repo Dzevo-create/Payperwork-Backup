@@ -4,7 +4,7 @@
  * Defines request and response types for the Sketch-to-Render workflow API.
  */
 
-import { RenderSettingsType } from "./renderSettings";
+import { SketchToRenderSettingsType as RenderSettingsType } from "./sketchToRenderSettings";
 
 /**
  * Image data structure for API requests/responses

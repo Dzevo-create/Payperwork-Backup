@@ -11,7 +11,8 @@ import { useChatStore } from "@/store/chatStore.supabase";
 import { Message, Attachment } from "@/types/chat";
 import { ImageSettingsType } from "@/components/chat/Chat/ImageSettings";
 import { VideoSettingsType } from "@/components/chat/Chat/VideoSettings";
-import { VideoModel, GPTModel } from "@/components/chat/Chat/ChatHeader";
+import { VideoModel as UIVideoModel, GPTModel } from "@/components/chat/Chat/ChatHeader";
+import { VideoModel as APIVideoModel } from "@/types/video";
 import { chatLogger } from '@/lib/logger';
 import { requestQueue } from '@/lib/requestQueue';
 import {
@@ -41,7 +42,7 @@ interface UseMessageOrchestratorParams {
   imageSettings: ImageSettingsType;
   videoSettings: VideoSettingsType;
   isSuperChatEnabled: boolean;
-  selectedVideoModel: VideoModel;
+  selectedVideoModel: UIVideoModel; // UI model ("kling" | "sora2")
   selectedGPTModel: GPTModel;
   replyTo: Message | null;
   clearReply: () => void;
@@ -57,11 +58,26 @@ interface UseMessageOrchestratorParams {
     attachments?: Attachment[];
     contextImages: Attachment[];
     videoSettings: VideoSettingsType;
-    selectedVideoModel: VideoModel;
+    selectedVideoModel: UIVideoModel; // UI model ("kling" | "sora2")
     assistantMessageId: string;
     currentConversationId: string | null;
-    updateMessageWithAttachments: (messageId: string, attachments: Attachment[]) => Promise<void>;
-    addToQueue: (messageId: string, taskId: string, model: VideoModel, type: "text2video" | "image2video", prompt: string, thumbnailUrl?: string, estimatedDuration?: number, duration?: string, aspectRatio?: string) => void;
+    updateMessageWithAttachments: (
+      messageId: string,
+      content: string,
+      attachments: Attachment[],
+      videoTask?: Message["videoTask"]
+    ) => Promise<void>;
+    addToQueue: (
+      messageId: string,
+      taskId: string,
+      model: APIVideoModel, // API model ("payperwork-v1" | "payperwork-v2")
+      type: "text2video" | "image2video",
+      prompt: string,
+      thumbnailUrl?: string,
+      estimatedDuration?: number,
+      duration?: string,
+      aspectRatio?: string
+    ) => void;
     updateQueueTaskId: (messageId: string, taskId: string) => void;
     markVideoCompleted: (messageId: string, videoUrl: string) => void;
     removeFromQueue: (messageId: string) => void;
@@ -72,7 +88,7 @@ interface UseMessageOrchestratorParams {
   addToQueue: (
     messageId: string,
     taskId: string,
-    model: VideoModel,
+    model: APIVideoModel, // API model ("payperwork-v1" | "payperwork-v2")
     type: "text2video" | "image2video",
     prompt: string,
     thumbnailUrl?: string,

@@ -181,6 +181,7 @@ export function ChatArea({ onMenuClick }: ChatAreaProps) {
         />
       )}
       <ChatInput
+        key={currentConversationId || 'default'}
         onSendMessage={handleSendMessage}
         isGenerating={isGenerating}
         onStopGeneration={handleStopGeneration}

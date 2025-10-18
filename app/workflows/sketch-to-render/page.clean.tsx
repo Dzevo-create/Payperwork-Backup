@@ -8,7 +8,7 @@
 'use client';
 
 import { WorkflowPage, type WorkflowPageConfig } from '@/components/workflows/WorkflowPage';
-import { SketchToRenderPromptInput } from '@/components/workflows/SketchToRenderPromptInput';
+import { SketchToRenderPromptInput } from '@/components/workflows/sketch-to-render';
 import { DEFAULT_SKETCH_TO_RENDER_SETTINGS, type SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {

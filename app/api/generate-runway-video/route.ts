@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
       processedImageUrl: processedUrl,
     });
   } catch (error) {
-    apiLogger.error('[Runway] Error:', error);
+    apiLogger.error('[Runway] Error:', error instanceof Error ? error : undefined);
 
     if (error instanceof TaskFailedError) {
       return NextResponse.json(
@@ -281,7 +281,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        error: error.message || "Failed to generate video",
+        error: error instanceof Error ? error.message : "Failed to generate video",
       },
       { status: 500 }
     );

@@ -245,8 +245,8 @@ describe('buildGenerationPayload', () => {
     };
 
     const settings = {
-      style: 'modern',
-      lighting: 'natural',
+      designStyle: 'modern' as const,
+      timeOfDay: 'midday' as const,
     };
 
     const result = buildGenerationPayload(
@@ -277,7 +277,7 @@ describe('buildGenerationPayload', () => {
     };
 
     const settings = {
-      style: 'modern',
+      designStyle: 'modern' as const,
     };
 
     const result = buildGenerationPayload('Test prompt', sourceImage, settings);

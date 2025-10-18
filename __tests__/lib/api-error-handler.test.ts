@@ -20,9 +20,23 @@ jest.mock('@/lib/logger', () => ({
 }));
 
 describe('API Error Handler', () => {
+  const originalEnv = process.env.NODE_ENV;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'development',
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: originalEnv,
+      writable: true,
+      configurable: true,
+    });
   });
 
   describe('createErrorResponse', () => {
@@ -44,7 +58,11 @@ describe('API Error Handler', () => {
     });
 
     it('should not include details in production', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
 
       const response = createErrorResponse(
         ErrorCode.INTERNAL_ERROR,
@@ -154,7 +172,11 @@ describe('API Error Handler', () => {
     });
 
     it('should handle generic errors in development', () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
       const error = new Error('Something went wrong');
       const response = handleApiError(error);
 
@@ -168,7 +190,11 @@ describe('API Error Handler', () => {
     });
 
     it('should handle generic errors in production', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
       const error = new Error('Something went wrong');
       const response = handleApiError(error);
 

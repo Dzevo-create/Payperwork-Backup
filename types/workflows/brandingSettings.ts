@@ -62,6 +62,9 @@ export interface BrandingSettingsType {
 
   /** Preserve Empty Space - If true, keep empty/minimal spaces; if false, allow AI to fill spaces with details */
   preserveEmptySpace?: boolean | null;
+
+  /** Index signature to allow Record<string, unknown> compatibility */
+  [key: string]: unknown;
 }
 
 /**

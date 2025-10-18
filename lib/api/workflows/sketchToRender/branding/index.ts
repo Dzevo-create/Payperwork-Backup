@@ -11,6 +11,7 @@ import { analyzeBrand, formatBrandContext } from "./analysis/brandAnalysis";
 import { buildEnhancementUserMessage } from "./builders/promptBuilder";
 import { buildMessagesWithImages } from "./builders/messageBuilder";
 import { callBrandingEnhancement } from "./client/apiClient";
+import { getBrandingSystemPrompt } from "./constants";
 import { buildFallbackPrompt } from "./fallback/fallbackHandler";
 import { BrandingEnhancementOptions, BrandingPromptGenerationOptions, ImageData } from "./types";
 
@@ -45,6 +46,8 @@ export async function enhanceBrandingPrompt(
     hasBrand: !!settings?.brandingText,
     hasVenueType: !!settings?.venueType,
     hasReference: !!referenceImages?.length,
+    spaceType: settings?.spaceType || "not-set",
+    usingExteriorPrompt: settings?.spaceType === "exterior",
   });
 
   try {
@@ -65,11 +68,12 @@ export async function enhanceBrandingPrompt(
       settings
     );
 
-    // Step 4: Build messages with images
+    // Step 4: Build messages with images (pass spaceType for correct system prompt)
     const messages = buildMessagesWithImages(
       userMessage,
       sourceImage,
-      referenceImages
+      referenceImages,
+      settings?.spaceType
     );
 
     // Step 5: Call API
@@ -131,46 +135,23 @@ export async function generateBrandingPrompt(
     hasUserPrompt: !!userPrompt,
     hasBrand: !!settings?.brandingText,
     hasReference: !!referenceImages?.length,
+    spaceType: settings?.spaceType || "not-set",
+    usingExteriorPrompt: settings?.spaceType === "exterior",
   });
 
   try {
     // Step 1: Analyze brand if provided
     const { guidelines } = await analyzeBrand(settings);
 
-    // Step 2: Build T-Button system prompt (SPECIFIC for T-Button, different from enhancement!)
-    const systemPrompt = `You are a Brand Space Visualization Expert specializing in analyzing spaces and generating detailed prompts for branded environment renderings.
+    // Step 2: Use the same system prompt selection logic as enhancement
+    const systemPrompt = getBrandingSystemPrompt(settings?.spaceType);
 
-Analyze the provided space image and generate a COMPLETE, DETAILED prompt for transforming it into a branded space.
-
-Your prompt should focus on FURNISHINGS and OBJECTS that FILL the space, not just architectural finishes.
-
-Please include:
-- 5-7 specific furniture items (sofas, chairs, tables, shelving units, display cases, counters)
-- 3-4 decorative elements (wall art, plants, sculptures, rugs, cushions)
-- 2-3 lighting fixtures (chandeliers, floor lamps, spotlights, pendant lights)
-- Product displays or brand merchandising (if retail/hospitality)
-- Seating areas or functional zones
-- Brand-specific colors and materials
-- Atmospheric details (ambiance, style, feeling)
-
-Please focus on describing what fills the space (furniture, displays, decor), not just walls, floors, and ceilings. Describe the desired furnished end result with specific objects.
-
-FORMATTING RULES (CRITICAL):
-- Write as FLOWING TEXT, like a natural paragraph
-- NO numbered lists or bullet points
-- NO markdown formatting (no asterisks ** for bold, no _ for italics, no # for headers)
-- Use commas and connecting words to create smooth flowing sentences
-- Describe everything in continuous prose
-- Write naturally, like describing a scene to someone
-
-BAD EXAMPLE (only architecture):
-"Polished marble floors with dark inlays. Cream-colored stone walls. Dark gray marble columns. Coffered ceiling with ambient lighting."
-
-GOOD EXAMPLE (furniture-focused as flowing text):
-"Exact same camera angle and perspective as source. Transform this space into a Nike flagship retail store. Sleek modern interior with polished concrete floors and white walls featuring bold black Nike swoosh logos. Central display area with illuminated glass shelving showcasing signature sneakers like Air Jordan and Air Max. Comfortable seating area with black leather benches and orange accent cushions for trying on shoes. Large floor-to-ceiling LED screens displaying athlete imagery and brand campaigns. Minimalist product displays with floating shelves holding featured footwear collections. Industrial-style pendant lighting with focused spotlights highlighting key products. Brand colors of black, white, and vibrant orange throughout the space. Potted greenery accent plants adding freshness. Modern retail ambiance with high-end finishes and welcoming atmosphere."
-
-Generate a comprehensive, furniture-focused prompt that could be used directly for image generation.
-Output ONLY the prompt text as flowing prose, no formatting, no explanations.`;
+    apiLogger.info("🔍 T-Button: System Prompt Selection", {
+      spaceType: settings?.spaceType || "not-set",
+      promptType: settings?.spaceType === "exterior" ? "EXTERIOR (strict)" : "INTERIOR (default)",
+      promptLength: systemPrompt.length,
+      containsForbiddenWarning: systemPrompt.includes("FORBIDDEN")
+    });
 
     // Step 3: Build user message
     let userMessage = `Analyze this space and generate a detailed prompt for transforming it into a photorealistic branded environment rendering.`;
@@ -201,16 +182,27 @@ Output ONLY the prompt text as flowing prose, no formatting, no explanations.`;
 
     // Add critical instruction about empty space handling
     if (!settings?.preserveEmptySpace) {
-      userMessage += `\n\nPlease generate a furniture-rich prompt that describes a fully furnished space:
+      if (settings?.spaceType === "exterior") {
+        userMessage += `\n\nPlease create an EXTERIOR-focused prompt:
+- Include EXTERIOR branding elements (signage, logos on building facade, brand displays)
+- Include EXTERIOR fixtures (facade lighting, entrance canopy, awnings, architectural features)
+- Include landscape elements (planters, outdoor plants, trees, entrance area)
+- Include atmospheric elements (weather, lighting conditions, street presence)
+- Focus on branded ARCHITECTURAL features and OUTDOOR environment
+- CRITICAL: Do NOT include ANY interior elements (NO furniture, NO display cases, NO indoor lighting, NO floors, NO seating areas)
+- Describe the desired branded EXTERIOR result - what the building looks like from the STREET`;
+      } else {
+        userMessage += `\n\nPlease generate a furniture-rich prompt that describes a fully furnished space:
 - Include around 5-7 specific furniture items (sofas, chairs, tables, shelving, display cases, counters)
 - Include around 3-4 decorative elements (wall art, plants, sculptures, rugs)
 - Include around 2-3 lighting fixtures (chandeliers, lamps, spotlights, pendant lights)
 - Describe seating areas, product displays, or functional brand zones
 - Focus on objects and furnishings that fill the space, not just architectural finishes
 - Describe the desired furnished result, not the current empty state`;
+      }
     }
 
-    userMessage += `\n\nGenerate a complete, detailed prompt that preserves the exact camera angle and transforms this space into a branded environment.`;
+    userMessage += `\n\nGenerate a complete, detailed prompt that preserves the exact camera angle and transforms this ${settings?.spaceType === "exterior" ? "building exterior" : "space"} into a branded environment.`;
 
     // Step 4: Build messages with images (using the T-Button specific system prompt!)
     interface MessageContent {

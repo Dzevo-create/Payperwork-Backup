@@ -23,7 +23,7 @@ const brandingPromptCache = new LRUCache<string>(50, 10 * 60 * 1000);
  */
 export async function POST(req: NextRequest) {
   const clientId = getClientId(req);
-  const startTime = perfMonitor.startTimer('branding-generate-prompt');
+  const startTime = perfMonitor.startTimer();
 
   try {
     // API Key validation

@@ -138,10 +138,12 @@ export class FalProvider extends VideoProvider {
       });
 
       // Log detailed status with timing info
-      const queuePosition = 'queue_position' in status ? (status as Record<string, unknown>).queue_position : undefined;
+      const queuePosition = 'queue_position' in status
+        ? (status as unknown as Record<string, unknown>).queue_position
+        : undefined;
       const statusMsg = status.status === "IN_QUEUE"
-        ? `IN_QUEUE (position: ${queuePosition ?? 'unknown'})`
-        : status.status;
+        ? `IN_QUEUE (position: ${String(queuePosition ?? 'unknown')})`
+        : String(status.status);
       videoLogger.info(`fal.ai status check for ${taskId}: ${statusMsg}`);
 
       // Map fal.ai status to our VideoStatus

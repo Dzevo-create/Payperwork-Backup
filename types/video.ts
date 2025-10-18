@@ -3,11 +3,19 @@
  */
 
 /**
- * Video generation model selection
+ * Video generation model selection (API model names)
  * - payperwork-v1: Uses Kling AI (high quality, slower, advanced features)
  * - payperwork-v2: Uses fal.ai Sora 2 (faster, different style)
+ *
+ * Note: UI uses "kling" | "sora2" - see VideoModel in ChatHeader
  */
 export type VideoModel = "payperwork-v1" | "payperwork-v2";
+
+/**
+ * UI Video model selection
+ * This is what users see and select in the UI
+ */
+export type UIVideoModel = "kling" | "sora2";
 
 /**
  * Video generation type

@@ -6,7 +6,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useRecentGenerations, type Generation } from '@/hooks/workflows/common/useRecentGenerations';
 import { workflowLogger } from '@/lib/logger';
-import { getUserIdSync } from '@/lib/supabase/insert-helper';
 
 // Mock dependencies
 jest.mock('@/lib/logger', () => ({
@@ -113,8 +112,8 @@ describe('useRecentGenerations', () => {
         expect(result.current.recentGenerations.length).toBe(2);
       });
 
-      expect(result.current.recentGenerations[0].id).toBe('gen-1');
-      expect(result.current.recentGenerations[1].id).toBe('gen-2');
+      expect(result.current.recentGenerations[0]?.id).toBe('gen-1');
+      expect(result.current.recentGenerations[1]?.id).toBe('gen-2');
     });
 
     it('should format generations correctly with url field', async () => {
@@ -135,7 +134,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        expect(result.current.recentGenerations[0].imageUrl).toBe(
+        expect(result.current.recentGenerations[0]?.imageUrl).toBe(
           'https://example.com/image1.jpg'
         );
       });
@@ -158,7 +157,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        expect(result.current.recentGenerations[0].imageUrl).toBe(
+        expect(result.current.recentGenerations[0]?.imageUrl).toBe(
           'https://example.com/image1.jpg'
         );
       });
@@ -181,7 +180,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        expect(result.current.recentGenerations[0].imageUrl).toBe(
+        expect(result.current.recentGenerations[0]?.imageUrl).toBe(
           'https://example.com/image1.jpg'
         );
       });
@@ -205,7 +204,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        expect(result.current.recentGenerations[0].timestamp).toEqual(new Date(mockDate));
+        expect(result.current.recentGenerations[0]?.timestamp).toEqual(new Date(mockDate));
       });
     });
 
@@ -227,7 +226,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        expect(result.current.recentGenerations[0].timestamp).toEqual(new Date(mockDate));
+        expect(result.current.recentGenerations[0]?.timestamp).toEqual(new Date(mockDate));
       });
     });
 
@@ -257,7 +256,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        const gen = result.current.recentGenerations[0];
+        const gen = result.current.recentGenerations[0]!;
         expect(gen.id).toBe('gen-1');
         expect(gen.imageUrl).toBe('https://example.com/image1.jpg');
         expect(gen.thumbnailUrl).toBe('https://example.com/thumb1.jpg');
@@ -290,7 +289,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        expect(result.current.recentGenerations[0].sourceType).toBe('from_render');
+        expect(result.current.recentGenerations[0]?.sourceType).toBe('from_render');
       });
     });
 
@@ -312,7 +311,7 @@ describe('useRecentGenerations', () => {
       const { result } = renderHook(() => useRecentGenerations('sketch-to-render'));
 
       await waitFor(() => {
-        expect(result.current.recentGenerations[0].sourceImageUrl).toBe(
+        expect(result.current.recentGenerations[0]?.sourceImageUrl).toBe(
           'https://example.com/source.jpg'
         );
       });
@@ -469,7 +468,7 @@ describe('useRecentGenerations', () => {
       });
 
       expect(result.current.recentGenerations.length).toBe(1);
-      expect(result.current.recentGenerations[0].id).toBe('gen-2');
+      expect(result.current.recentGenerations[0]?.id).toBe('gen-2');
     });
 
     it('should call delete API with correct parameters', async () => {
@@ -650,7 +649,7 @@ describe('useRecentGenerations', () => {
       });
 
       expect(result.current.recentGenerations.length).toBe(2);
-      expect(result.current.recentGenerations[0].id).toBe('new-1');
+      expect(result.current.recentGenerations[0]?.id).toBe('new-1');
     });
   });
 

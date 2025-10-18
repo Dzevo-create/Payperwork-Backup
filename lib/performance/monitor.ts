@@ -52,10 +52,9 @@ export class PerformanceMonitor {
 
   /**
    * Start a timer for an operation
-   * @param operation - The operation name
    * @returns The start time in milliseconds
    */
-  startTimer(operation: string): number {
+  startTimer(): number {
     return performance.now();
   }
 
@@ -171,7 +170,7 @@ export class PerformanceMonitor {
    */
   private percentile(sortedValues: number[], percentile: number): number {
     const index = Math.ceil(sortedValues.length * percentile) - 1;
-    return sortedValues[Math.max(0, index)];
+    return sortedValues[Math.max(0, index)] ?? 0;
   }
 
   /**
@@ -280,14 +279,14 @@ export const perfMonitor = new PerformanceMonitor();
  */
 export function monitored(operation: string) {
   return function (
-    target: unknown,
-    propertyKey: string,
+    _target: unknown,
+    _propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: unknown[]) {
-      const startTime = perfMonitor.startTimer(operation);
+      const startTime = perfMonitor.startTimer();
 
       try {
         const result = await originalMethod.apply(this, args);
@@ -317,7 +316,7 @@ export async function withMonitoring<T>(
   fn: () => Promise<T>,
   metadata?: Record<string, unknown>
 ): Promise<T> {
-  const startTime = perfMonitor.startTimer(operation);
+  const startTime = perfMonitor.startTimer();
 
   try {
     const result = await fn();

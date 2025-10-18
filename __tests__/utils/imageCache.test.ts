@@ -3,7 +3,7 @@
  * Tests image caching functionality for workflow optimizations
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 
 // Mock image cache implementation
 class ImageCache {

@@ -6,7 +6,7 @@
  */
 
 import { openaiClient, OPENAI_ENHANCEMENT_CONFIG, retryWithBackoff } from "@/lib/api/providers/openai";
-import { SketchToSketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
+import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import { apiLogger } from "@/lib/logger";
 
 /**

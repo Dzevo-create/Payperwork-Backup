@@ -7,6 +7,7 @@ import { getUserIdSync } from '@/lib/supabase/insert-helper';
 export interface Generation {
   id: string;
   imageUrl: string;
+  thumbnailUrl?: string;
   timestamp: Date;
   prompt?: string;
   preset?: string;
@@ -54,20 +55,27 @@ export function useRecentGenerations(
 
       const data = await response.json();
 
-      const formattedGenerations = (data.generations || []).map((gen: Record<string, unknown>) => ({
-        id: gen.id as string,
-        imageUrl: (gen.url || gen.image_url || gen.imageUrl) as string,
-        thumbnailUrl: gen.thumbnail_url || gen.thumbnailUrl,
-        timestamp: new Date(gen.created_at || gen.timestamp),
-        prompt: gen.prompt,
-        preset: gen.preset,
-        name: gen.name,
-        type: gen.type,
-        sourceType: gen.source_type || gen.sourceType,
-        mediaType: gen.media_type || gen.mediaType || 'image',
-        settings: gen.settings,
-        sourceImageUrl: gen.source_image || gen.sourceImage || gen.source_image_url || gen.sourceImageUrl,
-      }));
+      const formattedGenerations = (data.generations || []).map((gen: Record<string, unknown>) => {
+        const timestampValue = gen.created_at || gen.timestamp;
+        const timestamp = typeof timestampValue === 'string' || typeof timestampValue === 'number'
+          ? new Date(timestampValue)
+          : new Date();
+
+        return {
+          id: gen.id as string,
+          imageUrl: (gen.url || gen.image_url || gen.imageUrl) as string,
+          thumbnailUrl: gen.thumbnail_url || gen.thumbnailUrl,
+          timestamp,
+          prompt: gen.prompt,
+          preset: gen.preset,
+          name: gen.name,
+          type: gen.type,
+          sourceType: gen.source_type || gen.sourceType,
+          mediaType: gen.media_type || gen.mediaType || 'image',
+          settings: gen.settings,
+          sourceImageUrl: gen.source_image || gen.sourceImage || gen.source_image_url || gen.sourceImageUrl,
+        } as Generation;
+      });
 
       setRecentGenerations(formattedGenerations);
 

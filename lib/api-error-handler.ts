@@ -151,7 +151,7 @@ export function handleApiError(error: unknown, context?: string): NextResponse<A
       process.env.NODE_ENV === 'development'
         ? error.message
         : 'Ein interner Fehler ist aufgetreten',
-      process.env.NODE_ENV === 'development' ? error.stack : undefined
+      process.env.NODE_ENV === 'development' && error.stack ? { stack: error.stack } : undefined
     );
   }
 

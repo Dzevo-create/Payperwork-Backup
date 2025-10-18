@@ -9,6 +9,7 @@ export interface LightboxItem {
   name?: string;
   prompt?: string;
   type?: 'render' | 'video' | 'upscale';
+  sourceImageUrl?: string;
 }
 
 export interface UseWorkflowLightbox {

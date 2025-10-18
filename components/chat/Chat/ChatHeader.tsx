@@ -5,7 +5,10 @@ import { Share2, Menu, ChevronDown, Edit2 } from "lucide-react";
 
 export type GPTModel = "gpt-4o" | "gpt-5";
 export type AIModel = "chatgpt" | "claude" | "gemini";
+// UI Video model - user-facing model selection
 export type VideoModel = "kling" | "sora2";
+// Re-export from types/video for convenience
+export type { VideoModel as APIVideoModel, UIVideoModel } from "@/types/video";
 
 interface ChatHeaderProps {
   onMenuClick?: () => void;

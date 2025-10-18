@@ -553,7 +553,7 @@ describe('useWorkflowState', () => {
 
   describe('Type Safety', () => {
     it('should maintain settings type consistency', () => {
-      interface CustomSettings {
+      interface CustomSettings extends Record<string, unknown> {
         customField: string;
         numericField: number;
         booleanField: boolean;

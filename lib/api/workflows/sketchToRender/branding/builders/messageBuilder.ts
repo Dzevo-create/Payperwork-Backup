@@ -4,8 +4,9 @@
  * Builds OpenAI message arrays with images
  */
 
-import { BRANDING_ENHANCEMENT_SYSTEM_PROMPT } from "../constants";
+import { getBrandingSystemPrompt } from "../constants";
 import { ImageData } from "../types";
+import { apiLogger } from "@/lib/logger";
 
 // OpenAI message content types
 interface TextContent {
@@ -29,14 +30,27 @@ interface ChatMessage {
 
 /**
  * Builds OpenAI messages array with images
+ * @param spaceType - "interior" or "exterior" - determines which system prompt to use
  */
 export function buildMessagesWithImages(
   userMessage: string,
   sourceImage: ImageData,
-  referenceImages?: ImageData[]
+  referenceImages?: ImageData[],
+  spaceType?: "interior" | "exterior" | null
 ): ChatMessage[] {
+  // Use appropriate system prompt based on space type
+  const systemPrompt = getBrandingSystemPrompt(spaceType);
+
+  // Log which system prompt is being used
+  apiLogger.info("🔍 Message Builder: System Prompt Selection", {
+    spaceType: spaceType || "not-set",
+    promptType: spaceType === "exterior" ? "EXTERIOR (strict)" : "INTERIOR (default)",
+    promptLength: systemPrompt.length,
+    containsForbiddenWarning: systemPrompt.includes("FORBIDDEN")
+  });
+
   const messages: ChatMessage[] = [
-    { role: "system", content: BRANDING_ENHANCEMENT_SYSTEM_PROMPT }
+    { role: "system", content: systemPrompt }
   ];
 
   const userContent: MessageContent[] = [{ type: "text", text: userMessage }];

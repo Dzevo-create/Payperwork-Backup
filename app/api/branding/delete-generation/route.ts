@@ -34,7 +34,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    apiLogger.error('[Delete Generation API] Error:', error);
+    apiLogger.error('[Delete Generation API] Error:', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) || "Failed to delete generation" },
       { status: 500 }

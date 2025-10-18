@@ -72,7 +72,7 @@ export function useSketchToRender(options: UseSketchToRenderOptions = {}) {
         const payload: {
           prompt: string;
           sourceImage: { data: string; mimeType: string };
-          settings: RenderSettingsType;
+          settings: SketchToRenderSettingsType;
           referenceImage?: { data: string; mimeType: string };
         } = {
           prompt: prompt.trim(),

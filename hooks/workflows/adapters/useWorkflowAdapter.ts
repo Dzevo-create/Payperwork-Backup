@@ -13,17 +13,29 @@ import { usePromptEnhancer } from '../common/usePromptEnhancer';
 import { useRenderEdit } from '../common/useRenderEdit';
 import { useUpscale } from '../common/useUpscale';
 import type { SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
+import type { BrandingSettingsType } from '@/types/workflows/brandingSettings';
+
+/**
+ * Workflow Generation Result Interface
+ */
+export interface WorkflowGenerationResult {
+  imageUrl: string;
+  id?: string;
+  timestamp?: Date;
+  prompt?: string;
+  settings?: Record<string, unknown>;
+}
 
 /**
  * Standard Generate Hook Interface
  */
-export interface StandardGenerateHook {
+export interface StandardGenerateHook<TSettings = Record<string, unknown>> {
   generate: (params: {
     prompt: string;
-    settings: Record<string, unknown>;
+    settings: TSettings;
     sourceImage: string | null;
-    referenceImages: string[];
-  }) => Promise<unknown>;
+    referenceImages: (string | null)[];
+  }) => Promise<WorkflowGenerationResult | null>;
   isGenerating: boolean;
   error: string | null;
   progress: number;
@@ -46,7 +58,7 @@ export interface StandardEditHook {
     editPrompt: string;
     currentImageUrl: string;
     originalPrompt?: string;
-  }) => Promise<string | null>;
+  }) => Promise<WorkflowGenerationResult | null>;
   isEditing: boolean;
   error: string | null;
 }
@@ -65,7 +77,7 @@ export interface StandardUpscaleHook {
 /**
  * Adapter for Sketch-to-Render Hook
  */
-export function useSketchToRenderAdapter(): StandardGenerateHook {
+export function useSketchToRenderAdapter(): StandardGenerateHook<SketchToRenderSettingsType> {
   const hook = useSketchToRender();
 
   return {
@@ -87,7 +99,7 @@ export function useSketchToRenderAdapter(): StandardGenerateHook {
       const result = await hook.generate(
         prompt,
         sourceImageData as any,
-        settings as RenderSettingsType,
+        settings as SketchToRenderSettingsType,
         referenceImageData as any
       );
 
@@ -102,7 +114,7 @@ export function useSketchToRenderAdapter(): StandardGenerateHook {
 /**
  * Adapter for Branding Hook
  */
-export function useBrandingAdapter(): StandardGenerateHook {
+export function useBrandingAdapter(): StandardGenerateHook<BrandingSettingsType> {
   const hook = useBranding();
 
   return {
@@ -124,7 +136,7 @@ export function useBrandingAdapter(): StandardGenerateHook {
       const result = await hook.generate(
         prompt,
         sourceImageData as any,
-        settings as RenderSettingsType,
+        settings as SketchToRenderSettingsType,
         referenceImageData as any
       );
 
@@ -184,7 +196,19 @@ export function useRenderEditAdapter(): StandardEditHook {
   return {
     edit: async (params) => {
       const { editPrompt, currentImageUrl, originalPrompt } = params;
-      return await hook.editRender(editPrompt, currentImageUrl, originalPrompt);
+      const imageUrl = await hook.editRender(editPrompt, currentImageUrl, originalPrompt);
+
+      if (!imageUrl) {
+        return null;
+      }
+
+      // Wrap the string result in WorkflowGenerationResult
+      return {
+        imageUrl,
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        prompt: originalPrompt,
+      };
     },
     isEditing: hook.isEditing,
     error: hook.error,

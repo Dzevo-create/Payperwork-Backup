@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       name: file.name,
     });
   } catch (error) {
-    apiLogger.error('Upload error:', error);
+    apiLogger.error('Upload error:', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) || "Failed to upload file" },
       { status: 500 }

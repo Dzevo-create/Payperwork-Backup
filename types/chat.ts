@@ -14,6 +14,9 @@ export interface Attachment {
   // Video-specific properties
   thumbnail?: string;
   duration?: string;
+  // Image cropping/editing properties
+  originalUrl?: string;
+  originalBase64?: string;
 }
 
 export interface Message {

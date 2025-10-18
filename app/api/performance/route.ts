@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
  * Clear all performance metrics
  * Note: In production, this should be protected with admin authentication
  */
-export async function DELETE(req: NextRequest) {
+export async function DELETE() {
   try {
     const previousSize = perfMonitor.size();
     perfMonitor.clear();

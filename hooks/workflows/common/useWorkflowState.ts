@@ -13,7 +13,7 @@ export interface InputData {
   referenceImages: ImageData[];
 }
 
-export interface WorkflowState<TSettings> {
+export interface WorkflowState<TSettings extends Record<string, unknown>> {
   prompt: string;
   setPrompt: (prompt: string) => void;
 
@@ -50,7 +50,7 @@ const DEFAULT_INPUT_DATA: InputData = {
  * Shared workflow state hook
  * Manages basic state for all workflows: prompt, settings, input data, result
  */
-export function useWorkflowState<TSettings>(
+export function useWorkflowState<TSettings extends Record<string, unknown>>(
   defaultSettings: TSettings
 ): WorkflowState<TSettings> {
   const [prompt, setPrompt] = useState("");

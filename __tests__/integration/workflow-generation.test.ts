@@ -3,7 +3,7 @@
  * Tests end-to-end workflow generation processes
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 
 // Mock workflow types
 interface WorkflowInput {

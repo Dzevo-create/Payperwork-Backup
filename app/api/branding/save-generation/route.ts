@@ -90,11 +90,11 @@ export async function POST(req: NextRequest) {
     apiLogger.error('[SaveGeneration API] Unexpected error:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined,
+      name: error instanceof Error ? error.name : 'UnknownError',
     });
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : String(error) || "Failed to save generation",
+        error: error instanceof Error ? error.message : (String(error) || "Failed to save generation"),
         details: "Check server logs for full error details",
       },
       { status: 500 }

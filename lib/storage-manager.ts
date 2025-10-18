@@ -135,7 +135,7 @@ export function safeSetItem(key: string, value: string): boolean {
         return false;
       }
     } else {
-      apiLogger.error("localStorage.setItem failed", error, { key: fullKey });
+      apiLogger.error("localStorage.setItem failed", error instanceof Error ? error : undefined, { key: fullKey });
       return false;
     }
   }

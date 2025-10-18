@@ -83,11 +83,11 @@ export async function retryWithBackoff<T>(
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Check if we should retry this error
-      const shouldRetry = config.shouldRetry(error, attempt);
+      const shouldRetry = config.shouldRetry(lastError, attempt);
       const isLastAttempt = attempt === config.maxRetries;
 
       if (!shouldRetry || isLastAttempt) {
-        throw error;
+        throw lastError;
       }
 
       // Calculate delay with exponential backoff and jitter
@@ -99,7 +99,7 @@ export async function retryWithBackoff<T>(
       );
 
       // Notify about retry
-      config.onRetry(error, attempt + 1, delay);
+      config.onRetry(lastError, attempt + 1, delay);
 
       // Wait before next attempt
       await new Promise(resolve => setTimeout(resolve, delay));

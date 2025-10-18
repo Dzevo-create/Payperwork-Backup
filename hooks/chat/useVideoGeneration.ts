@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { VideoSettingsType } from "@/components/chat/Chat/VideoSettings";
-import { VideoModel } from "@/components/chat/Chat/ChatHeader";
+import { VideoModel as UIVideoModel } from "@/components/chat/Chat/ChatHeader";
+import { VideoModel as APIVideoModel } from "@/types/video";
 import { Message, Attachment } from "@/types/chat";
 import { addCameraMovementToPrompt } from "@/utils/cameraPrompts";
 import { getErrorMessage } from "@/utils/errorHandler";
@@ -22,7 +23,7 @@ export interface VideoGenerationParams {
   attachments?: Attachment[];
   contextImages?: Attachment[];
   videoSettings: VideoSettingsType;
-  selectedVideoModel: VideoModel;
+  selectedVideoModel: UIVideoModel; // UI model ("kling" | "sora2")
   assistantMessageId: string;
   currentConversationId: string | null;
   // Callbacks
@@ -31,11 +32,11 @@ export interface VideoGenerationParams {
     content: string,
     attachments: Attachment[],
     videoTask?: Message["videoTask"]
-  ) => void;
+  ) => Promise<void>;
   addToQueue: (
     messageId: string,
     taskId: string,
-    model: "payperwork-v1" | "payperwork-v2",
+    model: APIVideoModel, // API model ("payperwork-v1" | "payperwork-v2")
     type: "text2video" | "image2video",
     prompt: string,
     thumbnailUrl?: string,
@@ -101,7 +102,8 @@ export function useVideoGeneration(): UseVideoGenerationReturn {
       const hasContextImage = contextImages && contextImages.length > 0;
       const hasImage = hasImageAttachment || hasContextImage;
 
-      // Determine model and type
+      // Map UI model selection to API model names
+      // UI: "kling" | "sora2" -> API: "payperwork-v1" | "payperwork-v2"
       const model: "payperwork-v1" | "payperwork-v2" = selectedVideoModel === "sora2" ? "payperwork-v2" : "payperwork-v1";
       const type: "text2video" | "image2video" = hasImage ? "image2video" : "text2video";
 

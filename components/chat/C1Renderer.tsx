@@ -48,7 +48,7 @@ export function C1Renderer(props: C1RendererProps) {
           setIsLoading(false);
         }
       } catch (err) {
-        chatLogger.error('Failed to load C1 components:', err);
+        chatLogger.error('Failed to load C1 components:', err instanceof Error ? err : undefined);
         if (mounted) {
           setError(err instanceof Error ? err.message : "Failed to load Super Chat");
           setIsLoading(false);

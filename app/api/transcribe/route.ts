@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       text: transcription.text,
     });
   } catch (error) {
-    apiLogger.error('Whisper API Error:', error);
+    apiLogger.error('Whisper API Error:', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) || "Failed to transcribe audio" },
       { status: 500 }

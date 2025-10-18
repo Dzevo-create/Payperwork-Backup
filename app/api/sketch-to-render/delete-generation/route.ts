@@ -38,7 +38,7 @@ async function handleDelete(req: NextRequest) {
     apiLogger.info('[Delete Generation API] Successfully deleted:', generationId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    apiLogger.error('[Delete Generation API] Unexpected error:', error);
+    apiLogger.error('[Delete Generation API] Unexpected error:', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) || "Failed to delete generation" },
       { status: 500 }

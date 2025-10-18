@@ -8,7 +8,6 @@ import { useWorkflowHandlers, type WorkflowHandlersConfig } from '@/hooks/workfl
 import { useWorkflowState, type WorkflowState } from '@/hooks/workflows/common/useWorkflowState';
 import type { Generation } from '@/hooks/workflows/common/useRecentGenerations';
 import { workflowLogger } from '@/lib/logger';
-import { getUserIdSync } from '@/lib/supabase/insert-helper';
 import { uploadBase64Image, uploadFile } from '@/lib/supabase-library';
 
 // Mock dependencies
@@ -437,10 +436,10 @@ describe('useWorkflowHandlers', () => {
       expect(mockSetRecentGenerations).toHaveBeenCalledWith(expect.any(Function));
 
       // Test the function passed to setRecentGenerations
-      const setterFn = mockSetRecentGenerations.mock.calls[0][0];
+      const setterFn = mockSetRecentGenerations.mock.calls[0]?.[0];
       const newGenerations = setterFn([]);
-      expect(newGenerations[0].id).toBe('gen-123');
-      expect(newGenerations[0].type).toBe('render');
+      expect(newGenerations[0]?.id).toBe('gen-123');
+      expect(newGenerations[0]?.type).toBe('render');
     });
 
     it('should handle upload errors gracefully', async () => {
@@ -548,9 +547,9 @@ describe('useWorkflowHandlers', () => {
         await result.current.handleEditSuccess('data:image/jpeg;base64,editedData');
       });
 
-      const setterFn = mockSetRecentGenerations.mock.calls[0][0];
+      const setterFn = mockSetRecentGenerations.mock.calls[0]?.[0];
       const newGenerations = setterFn([]);
-      expect(newGenerations[0].sourceType).toBe('from_render');
+      expect(newGenerations[0]?.sourceType).toBe('from_render');
     });
   });
 
@@ -666,9 +665,9 @@ describe('useWorkflowHandlers', () => {
         await result.current.handleUpscaleSuccess('https://freepik.com/upscaled.jpg');
       });
 
-      const setterFn = mockSetRecentGenerations.mock.calls[0][0];
+      const setterFn = mockSetRecentGenerations.mock.calls[0]?.[0];
       const newGenerations = setterFn([]);
-      expect(newGenerations[0].type).toBe('upscale');
+      expect(newGenerations[0]?.type).toBe('upscale');
     });
   });
 

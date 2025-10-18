@@ -29,5 +29,15 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "backup/**/*",
+    "template-c1-next/**/*",
+    "**/*.clean.tsx",
+    "**/*.new.tsx",
+    "**/*.new-broken.tsx",
+    "**/*.old-legacy.tsx",
+    "scripts/**/*",
+    "store/deprecated/**/*"
+  ]
 }

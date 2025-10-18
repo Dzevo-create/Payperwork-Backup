@@ -8,7 +8,7 @@
 'use client';
 
 import { WorkflowPage, type WorkflowPageConfig } from '@/components/workflows/WorkflowPage';
-import { BrandingPromptInput } from '@/components/workflows/BrandingPromptInput';
+import { BrandingPromptInput } from '@/components/workflows/branding';
 import { DEFAULT_BRANDING_SETTINGS, type BrandingSettingsType } from '@/types/workflows/brandingSettings';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {

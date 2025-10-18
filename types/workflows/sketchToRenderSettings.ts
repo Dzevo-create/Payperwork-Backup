@@ -59,6 +59,9 @@ export interface SketchToRenderSettingsType {
 
   /** Render quality level */
   quality?: "ultra" | "high" | "standard" | null;
+
+  /** Index signature to allow Record<string, unknown> compatibility */
+  [key: string]: unknown;
 }
 
 /**

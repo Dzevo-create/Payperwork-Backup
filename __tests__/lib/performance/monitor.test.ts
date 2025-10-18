@@ -16,29 +16,29 @@ describe('PerformanceMonitor', () => {
 
   describe('Basic Metric Recording', () => {
     it('should record a successful operation', () => {
-      const startTime = monitor.startTimer('test-operation');
+      const startTime = monitor.startTimer();
       monitor.recordMetric('test-operation', startTime, true);
 
       const metrics = monitor.getMetrics('test-operation');
       expect(metrics).toHaveLength(1);
-      expect(metrics[0].operation).toBe('test-operation');
-      expect(metrics[0].success).toBe(true);
-      expect(metrics[0].duration).toBeGreaterThanOrEqual(0);
+      expect(metrics[0]?.operation).toBe('test-operation');
+      expect(metrics[0]?.success).toBe(true);
+      expect(metrics[0]?.duration).toBeGreaterThanOrEqual(0);
     });
 
     it('should record a failed operation', () => {
-      const startTime = monitor.startTimer('test-operation');
+      const startTime = monitor.startTimer();
       monitor.recordMetric('test-operation', startTime, false, { error: 'Test error' });
 
       const metrics = monitor.getMetrics('test-operation');
       expect(metrics).toHaveLength(1);
-      expect(metrics[0].success).toBe(false);
-      expect(metrics[0].metadata?.error).toBe('Test error');
+      expect(metrics[0]?.success).toBe(false);
+      expect(metrics[0]?.metadata?.error).toBe('Test error');
     });
 
     it('should record multiple operations', () => {
       for (let i = 0; i < 5; i++) {
-        const startTime = monitor.startTimer('test-operation');
+        const startTime = monitor.startTimer();
         monitor.recordMetric('test-operation', startTime, true);
       }
 
@@ -50,7 +50,7 @@ describe('PerformanceMonitor', () => {
       const ops = ['image-generation', 'prompt-generation', 'database-query'];
 
       ops.forEach(op => {
-        const startTime = monitor.startTimer(op);
+        const startTime = monitor.startTimer();
         monitor.recordMetric(op, startTime, true);
       });
 
@@ -60,7 +60,7 @@ describe('PerformanceMonitor', () => {
     });
 
     it('should track metadata', () => {
-      const startTime = monitor.startTimer('test-operation');
+      const startTime = monitor.startTimer();
       monitor.recordMetric('test-operation', startTime, true, {
         userId: 123,
         type: 'test',
@@ -68,7 +68,7 @@ describe('PerformanceMonitor', () => {
       });
 
       const metrics = monitor.getMetrics('test-operation');
-      expect(metrics[0].metadata).toEqual({
+      expect(metrics[0]?.metadata).toEqual({
         userId: 123,
         type: 'test',
         size: 'large'
@@ -78,18 +78,18 @@ describe('PerformanceMonitor', () => {
 
   describe('Timer Functionality', () => {
     it('should return a valid start time', () => {
-      const startTime = monitor.startTimer('test');
+      const startTime = monitor.startTimer();
       expect(typeof startTime).toBe('number');
       expect(startTime).toBeGreaterThan(0);
     });
 
     it('should measure elapsed time correctly', async () => {
-      const startTime = monitor.startTimer('test');
+      const startTime = monitor.startTimer();
       await new Promise(resolve => setTimeout(resolve, 50));
       monitor.recordMetric('test', startTime, true);
 
       const metrics = monitor.getMetrics('test');
-      expect(metrics[0].duration).toBeGreaterThanOrEqual(45); // Allow for slight timing variance
+      expect(metrics[0]?.duration).toBeGreaterThanOrEqual(45); // Allow for slight timing variance
     });
   });
 
@@ -138,7 +138,7 @@ describe('PerformanceMonitor', () => {
   describe('All Stats', () => {
     beforeEach(() => {
       ['op1', 'op2', 'op3'].forEach(op => {
-        const startTime = monitor.startTimer(op);
+        const startTime = monitor.startTimer();
         monitor.recordMetric(op, startTime, true);
       });
     });
@@ -155,7 +155,7 @@ describe('PerformanceMonitor', () => {
     it('should provide valid stats for each operation', () => {
       const allStats = monitor.getAllStats();
 
-      allStats.forEach((stats, operation) => {
+      allStats.forEach((stats) => {
         expect(stats.count).toBeGreaterThan(0);
         expect(stats.avgDuration).toBeGreaterThanOrEqual(0);
       });
@@ -177,8 +177,8 @@ describe('PerformanceMonitor', () => {
       const slowOps = monitor.getSlowOperations();
 
       expect(slowOps).toHaveLength(1);
-      expect(slowOps[0].operation).toBe('slow-op');
-      expect(slowOps[0].duration).toBeGreaterThanOrEqual(100);
+      expect(slowOps[0]?.operation).toBe('slow-op');
+      expect(slowOps[0]?.duration).toBeGreaterThanOrEqual(100);
     });
 
     it('should limit slow operations results', () => {
@@ -207,26 +207,26 @@ describe('PerformanceMonitor', () => {
 
       // Should be sorted in descending order
       for (let i = 1; i < slowOps.length; i++) {
-        expect(slowOps[i - 1].duration).toBeGreaterThanOrEqual(slowOps[i].duration);
+        expect(slowOps[i - 1]?.duration).toBeGreaterThanOrEqual(slowOps[i]?.duration ?? 0);
       }
     });
   });
 
   describe('Failed Operations', () => {
     it('should track failed operations', () => {
-      const startTime = monitor.startTimer('test');
+      const startTime = monitor.startTimer();
       monitor.recordMetric('test', startTime, false, { error: 'Test failure' });
 
       const failed = monitor.getFailedOperations();
 
       expect(failed).toHaveLength(1);
-      expect(failed[0].success).toBe(false);
-      expect(failed[0].metadata?.error).toBe('Test failure');
+      expect(failed[0]?.success).toBe(false);
+      expect(failed[0]?.metadata?.error).toBe('Test failure');
     });
 
     it('should limit failed operations results', () => {
       for (let i = 0; i < 30; i++) {
-        const startTime = monitor.startTimer('test');
+        const startTime = monitor.startTimer();
         monitor.recordMetric('test', startTime, false);
       }
 
@@ -236,7 +236,7 @@ describe('PerformanceMonitor', () => {
 
     it('should sort failed operations by timestamp', () => {
       for (let i = 0; i < 5; i++) {
-        const startTime = monitor.startTimer('test');
+        const startTime = monitor.startTimer();
         monitor.recordMetric('test', startTime, false);
       }
 
@@ -244,7 +244,7 @@ describe('PerformanceMonitor', () => {
 
       // Should be sorted in descending order (most recent first)
       for (let i = 1; i < failed.length; i++) {
-        expect(failed[i - 1].timestamp).toBeGreaterThanOrEqual(failed[i].timestamp);
+        expect(failed[i - 1]?.timestamp).toBeGreaterThanOrEqual(failed[i]?.timestamp ?? 0);
       }
     });
   });
@@ -279,8 +279,8 @@ describe('PerformanceMonitor', () => {
       const summary = monitor.getSummary();
 
       for (let i = 1; i < summary.topOperations.length; i++) {
-        expect(summary.topOperations[i - 1].count).toBeGreaterThanOrEqual(
-          summary.topOperations[i].count
+        expect(summary.topOperations[i - 1]?.count ?? 0).toBeGreaterThanOrEqual(
+          summary.topOperations[i]?.count ?? 0
         );
       }
     });
@@ -296,7 +296,7 @@ describe('PerformanceMonitor', () => {
 
   describe('Metric Management', () => {
     it('should clear all metrics', () => {
-      const startTime = monitor.startTimer('test');
+      const startTime = monitor.startTimer();
       monitor.recordMetric('test', startTime, true);
 
       expect(monitor.size()).toBe(1);
@@ -311,7 +311,7 @@ describe('PerformanceMonitor', () => {
       expect(monitor.size()).toBe(0);
 
       for (let i = 0; i < 5; i++) {
-        const startTime = monitor.startTimer('test');
+        const startTime = monitor.startTimer();
         monitor.recordMetric('test', startTime, true);
       }
 
@@ -321,7 +321,7 @@ describe('PerformanceMonitor', () => {
     it('should limit stored metrics', () => {
       // Record more than max metrics (default 1000)
       for (let i = 0; i < 1100; i++) {
-        const startTime = monitor.startTimer('test');
+        const startTime = monitor.startTimer();
         monitor.recordMetric('test', startTime, true);
       }
 
@@ -345,7 +345,7 @@ describe('PerformanceMonitor', () => {
     beforeEach(() => {
       ['op1', 'op2', 'op3'].forEach(op => {
         for (let i = 0; i < 3; i++) {
-          const startTime = monitor.startTimer(op);
+          const startTime = monitor.startTimer();
           monitor.recordMetric(op, startTime, true);
         }
       });
@@ -389,8 +389,8 @@ describe('withMonitoring wrapper', () => {
 
     const metrics = monitor.getMetrics('test-operation');
     expect(metrics).toHaveLength(1);
-    expect(metrics[0].success).toBe(true);
-    expect(metrics[0].duration).toBeGreaterThanOrEqual(50);
+    expect(metrics[0]?.success).toBe(true);
+    expect(metrics[0]?.duration).toBeGreaterThanOrEqual(50);
   });
 
   it('should monitor failed async operations', async () => {
@@ -402,8 +402,8 @@ describe('withMonitoring wrapper', () => {
 
     const metrics = monitor.getMetrics('test-operation');
     expect(metrics).toHaveLength(1);
-    expect(metrics[0].success).toBe(false);
-    expect(metrics[0].metadata?.error).toBe('Test error');
+    expect(metrics[0]?.success).toBe(false);
+    expect(metrics[0]?.metadata?.error).toBe('Test error');
   });
 
   it('should include custom metadata', async () => {
@@ -412,6 +412,6 @@ describe('withMonitoring wrapper', () => {
     await withMonitoring('test-operation', testFn, { userId: 123 });
 
     const metrics = monitor.getMetrics('test-operation');
-    expect(metrics[0].metadata?.userId).toBe(123);
+    expect(metrics[0]?.metadata?.userId).toBe(123);
   });
 });

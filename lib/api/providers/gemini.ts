@@ -3,7 +3,7 @@
  * Centralized configuration and helper functions for Google Gemini API
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, type GenerativeModel, type Part } from "@google/generative-ai";
 import { apiLogger } from "@/lib/logger";
 import { retryWithBackoff, imageGenerationRetryConfig } from "@/utils/retryWithBackoff";
 
@@ -62,7 +62,7 @@ export function buildEnhancedImagePrompt(
   const enhancements: string[] = [];
 
   // Add style description
-  if (settings.style) {
+  if (settings.style && typeof settings.style === 'string') {
     const styleDesc = IMAGE_STYLE_DESCRIPTIONS[settings.style];
     if (styleDesc) {
       enhancements.push(styleDesc);
@@ -70,7 +70,7 @@ export function buildEnhancedImagePrompt(
   }
 
   // Add lighting description
-  if (settings.lighting) {
+  if (settings.lighting && typeof settings.lighting === 'string') {
     const lightingDesc = IMAGE_LIGHTING_DESCRIPTIONS[settings.lighting];
     if (lightingDesc) {
       enhancements.push(lightingDesc);
@@ -78,7 +78,7 @@ export function buildEnhancedImagePrompt(
   }
 
   // Add quality description
-  if (settings.quality) {
+  if (settings.quality && typeof settings.quality === 'string') {
     const qualityDesc = IMAGE_QUALITY_DESCRIPTIONS[settings.quality];
     if (qualityDesc) {
       enhancements.push(qualityDesc);
@@ -86,7 +86,7 @@ export function buildEnhancedImagePrompt(
   }
 
   // Add aspect ratio description with special handling for 21:9
-  if (settings.aspectRatio) {
+  if (settings.aspectRatio && typeof settings.aspectRatio === 'string') {
     const aspectRatioDesc = IMAGE_ASPECT_RATIO_DESCRIPTIONS[settings.aspectRatio];
     if (aspectRatioDesc) {
       enhancements.push(aspectRatioDesc);
@@ -127,7 +127,7 @@ export function buildGenerationConfig(settings: Record<string, unknown>): Gemini
   };
 
   // Add imageConfig with aspect ratio if specified
-  if (settings?.aspectRatio) {
+  if (settings?.aspectRatio && typeof settings.aspectRatio === 'string') {
     generationConfig.imageConfig = {
       aspectRatio: settings.aspectRatio,
     };
@@ -136,26 +136,12 @@ export function buildGenerationConfig(settings: Record<string, unknown>): Gemini
   return generationConfig;
 }
 
-// Gemini content part types
-interface TextPart {
-  text: string;
-}
-
-interface InlineDataPart {
-  inlineData: {
-    mimeType: string;
-    data: string;
-  };
-}
-
-type ContentPart = TextPart | InlineDataPart;
-
 // Build content parts for image generation
 export function buildContentParts(
   enhancedPrompt: string,
   referenceImages?: Array<{ data: string; mimeType: string }>
-): ContentPart[] {
-  const parts: ContentPart[] = [{ text: enhancedPrompt }];
+): Part[] {
+  const parts: Part[] = [{ text: enhancedPrompt }];
 
   // Add reference images if provided (for editing/character consistency)
   if (referenceImages && Array.isArray(referenceImages)) {
@@ -209,10 +195,16 @@ export function parseImageFromResponse(
   let imageData: string | undefined;
   let mimeType: string | undefined;
 
+  const firstCandidate = candidates[0];
+  if (!firstCandidate) {
+    apiLogger.warn(`First candidate is undefined for image ${index + 1}/${numImages}`, { clientId });
+    return null;
+  }
+
   // Try different possible response structures
   // Option 1: Check if parts array exists in content
-  if (candidates[0].content?.parts && Array.isArray(candidates[0].content.parts)) {
-    const imagePart = candidates[0].content.parts.find((part) => part.inlineData);
+  if (firstCandidate.content?.parts && Array.isArray(firstCandidate.content.parts)) {
+    const imagePart = firstCandidate.content.parts.find((part) => part.inlineData);
     if (imagePart?.inlineData) {
       imageData = imagePart.inlineData.data;
       mimeType = imagePart.inlineData.mimeType;
@@ -220,14 +212,14 @@ export function parseImageFromResponse(
   }
 
   // Option 2: Check if image data is directly in candidate
-  if (!imageData && candidates[0].inlineData) {
-    imageData = candidates[0].inlineData.data;
-    mimeType = candidates[0].inlineData.mimeType;
+  if (!imageData && firstCandidate.inlineData) {
+    imageData = firstCandidate.inlineData.data;
+    mimeType = firstCandidate.inlineData.mimeType;
   }
 
   // Option 3: Check if parts is directly on candidate
-  if (!imageData && candidates[0].parts && Array.isArray(candidates[0].parts)) {
-    const imagePart = candidates[0].parts.find((part) => part.inlineData);
+  if (!imageData && firstCandidate.parts && Array.isArray(firstCandidate.parts)) {
+    const imagePart = firstCandidate.parts.find((part) => part.inlineData);
     if (imagePart?.inlineData) {
       imageData = imagePart.inlineData.data;
       mimeType = imagePart.inlineData.mimeType;
@@ -239,7 +231,7 @@ export function parseImageFromResponse(
       `Failed to find image ${index + 1}/${numImages} in Gemini response`,
       undefined,
       {
-        candidateStructure: JSON.stringify(candidates[0]).substring(0, 500),
+        candidateStructure: JSON.stringify(firstCandidate).substring(0, 500),
         clientId,
       }
     );
@@ -253,14 +245,12 @@ export function parseImageFromResponse(
 }
 
 // Gemini model interface (compatible with Google Generative AI SDK GenerativeModel)
-export interface GeminiModel {
-  generateContent: (params: unknown) => Promise<GeminiResult>;
-}
+export type GeminiModel = GenerativeModel;
 
 // Generate a single image with retry logic
 export async function generateSingleImage(
   model: GeminiModel,
-  parts: ContentPart[],
+  parts: Part[],
   generationConfig: GeminiGenerationConfig,
   index: number,
   numImages: number,
@@ -274,8 +264,8 @@ export async function generateSingleImage(
 
       return await model.generateContent({
         contents: [{ role: "user", parts }],
-        generationConfig,
-      });
+        generationConfig: generationConfig as any,
+      }) as GeminiResult;
     },
     {
       ...imageGenerationRetryConfig,

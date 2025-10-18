@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       generations,
     });
   } catch (error) {
-    apiLogger.error('[GetGenerations API] Error:', error);
+    apiLogger.error('[GetGenerations API] Error:', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) || "Failed to fetch generations" },
       { status: 500 }

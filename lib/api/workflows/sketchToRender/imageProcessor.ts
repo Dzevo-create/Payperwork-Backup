@@ -110,21 +110,23 @@ export function validateSourceImage(sourceImage: unknown): ValidationResult {
     };
   }
 
-  if (typeof sourceImage !== "object") {
+  if (typeof sourceImage !== "object" || sourceImage === null) {
     return {
       valid: false,
       error: "Source image must be an object",
     };
   }
 
-  if (!sourceImage.data || typeof sourceImage.data !== "string") {
+  const imgData = sourceImage as { data?: unknown; mimeType?: unknown };
+
+  if (!imgData.data || typeof imgData.data !== "string") {
     return {
       valid: false,
       error: "Source image data is required and must be a base64 string",
     };
   }
 
-  if (!sourceImage.mimeType || typeof sourceImage.mimeType !== "string") {
+  if (!imgData.mimeType || typeof imgData.mimeType !== "string") {
     return {
       valid: false,
       error: "Source image mimeType is required",
@@ -133,15 +135,15 @@ export function validateSourceImage(sourceImage: unknown): ValidationResult {
 
   // Validate mime type
   const validMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-  if (!validMimeTypes.includes(sourceImage.mimeType.toLowerCase())) {
+  if (!validMimeTypes.includes(imgData.mimeType.toLowerCase())) {
     return {
       valid: false,
-      error: `Invalid mime type: ${sourceImage.mimeType}. Must be one of: ${validMimeTypes.join(", ")}`,
+      error: `Invalid mime type: ${imgData.mimeType}. Must be one of: ${validMimeTypes.join(", ")}`,
     };
   }
 
   // Validate base64 data
-  if (sourceImage.data.length < 100) {
+  if (imgData.data.length < 100) {
     return {
       valid: false,
       error: "Source image data appears to be too short",
@@ -181,14 +183,16 @@ export function validateReferenceImages(referenceImages?: unknown[]): Validation
       };
     }
 
-    if (!refImage.data || typeof refImage.data !== "string") {
+    const imgData = refImage as { data?: unknown; mimeType?: unknown };
+
+    if (!imgData.data || typeof imgData.data !== "string") {
       return {
         valid: false,
         error: `Reference image ${i + 1} is missing valid data`,
       };
     }
 
-    if (!refImage.mimeType || typeof refImage.mimeType !== "string") {
+    if (!imgData.mimeType || typeof imgData.mimeType !== "string") {
       return {
         valid: false,
         error: `Reference image ${i + 1} is missing mimeType`,
@@ -196,10 +200,10 @@ export function validateReferenceImages(referenceImages?: unknown[]): Validation
     }
 
     const validMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-    if (!validMimeTypes.includes(refImage.mimeType.toLowerCase())) {
+    if (!validMimeTypes.includes(imgData.mimeType.toLowerCase())) {
       return {
         valid: false,
-        error: `Reference image ${i + 1} has invalid mime type: ${refImage.mimeType}`,
+        error: `Reference image ${i + 1} has invalid mime type: ${imgData.mimeType}`,
       };
     }
   }

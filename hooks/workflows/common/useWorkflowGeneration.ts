@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { SketchToSketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
+import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 
 /**
  * Shared types and utilities for workflow generation hooks

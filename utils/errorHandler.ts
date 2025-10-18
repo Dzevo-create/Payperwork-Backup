@@ -74,18 +74,18 @@ export function getErrorMessage(error: unknown): string {
   }
 
   // If error has a status code (HTTP response)
-  if (error.status) {
-    const statusCode = error.status.toString();
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const statusCode = String(error.status);
     return ERROR_MESSAGES[statusCode] || `Fehler ${statusCode}`;
   }
 
   // If error has an error field
-  if (error.error) {
+  if (typeof error === 'object' && error !== null && 'error' in error) {
     return getErrorMessage(error.error);
   }
 
   // If error has a message field
-  if (error.message) {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
     return getErrorMessage(error.message);
   }
 
@@ -143,7 +143,7 @@ export function formatErrorForDisplay(error: unknown): {
 
   const isRetryable = retryableErrors.some(code =>
     (typeof error === 'string' && error.includes(code)) ||
-    (error?.message && error.message.includes(code))
+    (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.includes(code))
   );
 
   return {

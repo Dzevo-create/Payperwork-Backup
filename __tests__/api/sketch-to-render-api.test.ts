@@ -35,7 +35,7 @@ jest.mock('@/lib/api/workflows/sketchToRender', () => ({
     source,
   ]),
   validateImages: jest.fn(() => ({ valid: true })),
-  buildArchitecturalPrompt: jest.fn((prompt, settings) => `Fallback: ${prompt}`),
+  buildArchitecturalPrompt: jest.fn((prompt) => `Fallback: ${prompt}`),
 }));
 
 jest.mock('@/lib/api/providers/gemini', () => ({
