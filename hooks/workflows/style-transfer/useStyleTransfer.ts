@@ -37,16 +37,9 @@ export function useStyleTransfer(options: UseStyleTransferOptions = {}) {
       settings: StyleTransferSettingsType,
       referenceImage?: ImageData
     ): Promise<GenerationResult | null> => {
-      // Validation: Style-Transfer requires BOTH source AND reference images
+      // Validation: Style-Transfer requires source image (reference image is optional)
       if (!sourceImage?.preview) {
         const errorMsg = "Ausgangsbild (Design) ist erforderlich";
-        setError(errorMsg);
-        onErrorRef.current?.(errorMsg);
-        return null;
-      }
-
-      if (!referenceImage?.preview) {
-        const errorMsg = "Referenzbild (Stil) ist erforderlich für Style-Transfer";
         setError(errorMsg);
         onErrorRef.current?.(errorMsg);
         return null;
@@ -63,21 +56,24 @@ export function useStyleTransfer(options: UseStyleTransferOptions = {}) {
         const sourceBase64 = sourceImage.preview.split(",")[1] || '';
         const sourceMimeType = sourceImage.preview.split(";")[0]?.split(":")[1] || 'image/jpeg';
 
-        const refBase64 = referenceImage.preview.split(",")[1] || '';
-        const refMimeType = referenceImage.preview.split(";")[0]?.split(":")[1] || 'image/jpeg';
-
-        const payload = {
+        const payload: any = {
           prompt: prompt.trim(),
           sourceImage: {
             data: sourceBase64,
             mimeType: sourceMimeType,
           },
-          referenceImage: {
-            data: refBase64,
-            mimeType: refMimeType,
-          },
           settings,
         };
+
+        // Add reference image only if provided
+        if (referenceImage?.preview) {
+          const refBase64 = referenceImage.preview.split(",")[1] || '';
+          const refMimeType = referenceImage.preview.split(";")[0]?.split(":")[1] || 'image/jpeg';
+          payload.referenceImage = {
+            data: refBase64,
+            mimeType: refMimeType,
+          };
+        }
 
         setProgress(20);
 

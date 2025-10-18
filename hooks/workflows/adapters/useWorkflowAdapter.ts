@@ -10,12 +10,14 @@
 import { useSketchToRender } from '../sketch-to-render/useSketchToRender';
 import { useBranding } from '../branding/useBranding';
 import { useFurnishEmpty } from '../furnish-empty/useFurnishEmpty';
+import { useStyleTransfer } from '../style-transfer/useStyleTransfer';
 import { usePromptEnhancer } from '../common/usePromptEnhancer';
 import { useRenderEdit } from '../common/useRenderEdit';
 import { useUpscale } from '../common/useUpscale';
 import type { SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
 import type { BrandingSettingsType } from '@/types/workflows/brandingSettings';
 import type { FurnishEmptySettingsType } from '@/types/workflows/furnishEmptySettings';
+import type { StyleTransferSettingsType } from '@/types/workflows/styleTransferSettings';
 
 /**
  * Workflow Generation Result Interface
@@ -178,6 +180,44 @@ export function useFurnishEmptyAdapter(): StandardGenerateHook<FurnishEmptySetti
         prompt,
         sourceImageData as any,
         settings as FurnishEmptySettingsType,
+        referenceImageData as any
+      );
+
+      return result;
+    },
+    isGenerating: hook.isGenerating,
+    error: hook.error,
+    progress: hook.progress,
+  };
+}
+
+/**
+ * Adapter for Style-Transfer Hook
+ */
+export function useStyleTransferAdapter(): StandardGenerateHook<StyleTransferSettingsType> {
+  const hook = useStyleTransfer();
+
+  return {
+    generate: async (params) => {
+      const { prompt, settings, sourceImage, referenceImages } = params;
+
+      // Convert base64 preview string to ImageData format expected by useStyleTransfer
+      // useStyleTransfer expects: { file: File | null, preview: string | null }
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
+        file: null, // File object not needed for generation, only preview
+        preview: sourceImage, // Base64 data URL
+      } : {file: null, preview: null};
+
+      // Reference image is optional for Style-Transfer
+      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
+        file: null,
+        preview: referenceImages[0] || null,
+      } : undefined;
+
+      const result = await hook.generate(
+        prompt,
+        sourceImageData as any,
+        settings as StyleTransferSettingsType,
         referenceImageData as any
       );
 

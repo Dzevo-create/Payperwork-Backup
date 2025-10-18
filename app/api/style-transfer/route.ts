@@ -4,7 +4,7 @@
  * Main "Generate" button endpoint for transferring architectural styles.
  * Uses Nano Banana (Gemini 2.5 Flash Image) for image generation.
  *
- * Requires BOTH source image (design) AND reference image (style).
+ * Requires source image (design). Reference image (style) is optional.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -62,13 +62,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate reference image (style source) - CRITICAL for Style-Transfer!
-    if (!referenceImage || !referenceImage.data) {
-      return NextResponse.json(
-        { error: "Reference image (style) is required for style transfer" },
-        { status: 400 }
-      );
-    }
+    // Reference image is optional - presets can be used without reference image
 
     apiLogger.info("Style-Transfer: Starting generation", {
       clientId,
@@ -97,30 +91,32 @@ export async function POST(req: NextRequest) {
 
     // Build content parts:
     // 1. Text prompt first
-    // 2. Reference image (style to transfer)
+    // 2. Reference image (style to transfer) - OPTIONAL
     // 3. Source image LAST (to preserve aspect ratio)
-    const parts = [
-      { text: enhancedPrompt },
-      // Reference image (style source)
-      {
+    const parts: any[] = [{ text: enhancedPrompt }];
+
+    // Add reference image if provided
+    if (referenceImage?.data) {
+      parts.push({
         inlineData: {
           mimeType: referenceImage.mimeType || "image/jpeg",
           data: referenceImage.data,
         },
+      });
+    }
+
+    // Source image LAST to preserve aspect ratio
+    parts.push({
+      inlineData: {
+        mimeType: sourceImage.mimeType || "image/jpeg",
+        data: sourceImage.data,
       },
-      // Source image LAST to preserve aspect ratio
-      {
-        inlineData: {
-          mimeType: sourceImage.mimeType || "image/jpeg",
-          data: sourceImage.data,
-        },
-      },
-    ];
+    });
 
     apiLogger.info("Style-Transfer: Generating with Nano Banana", {
       clientId,
       promptLength: enhancedPrompt.length,
-      imageCount: 2, // source + reference
+      imageCount: referenceImage?.data ? 2 : 1, // source + optional reference
     });
 
     const result = await generateSingleImage(

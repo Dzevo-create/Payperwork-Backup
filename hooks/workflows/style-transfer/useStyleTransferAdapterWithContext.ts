@@ -25,12 +25,9 @@ export function useStyleTransferAdapterWithContext(): StandardGenerateHook<Style
         preview: referenceImages[0] || null,
       } : undefined;
 
-      // Style-Transfer requires BOTH source and reference images
+      // Style-Transfer requires source image (reference image is optional)
       if (!sourceImageData.preview) {
         throw new Error("Ausgangsbild (Design) ist erforderlich");
-      }
-      if (!referenceImageData || !referenceImageData.preview) {
-        throw new Error("Referenzbild (Stil) ist erforderlich");
       }
 
       // Call the original hook's generate function

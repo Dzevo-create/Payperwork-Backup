@@ -20,6 +20,8 @@ interface SettingsDropdownProps<T extends string> {
   onChange: (value: T | null) => void;
   /** Placeholder text when value is null */
   placeholder: string;
+  /** Always show title instead of selected value (default: false) */
+  alwaysShowTitle?: boolean;
   /** Enable search functionality (default: false) */
   searchable?: boolean;
   /** Additional className for the container */
@@ -64,6 +66,7 @@ export function SettingsDropdown<T extends string>({
   value,
   onChange,
   placeholder,
+  alwaysShowTitle = false,
   searchable = false,
   className = "",
   align = "left",
@@ -136,6 +139,7 @@ export function SettingsDropdown<T extends string>({
 
   // Get current label
   const getCurrentLabel = () => {
+    if (alwaysShowTitle) return placeholder; // Always show title if requested
     if (value === null) return placeholder; // Show placeholder when Default is selected
     const option = options.find((opt) => opt.value === value);
     return option?.label || value; // Return custom value if not found in options

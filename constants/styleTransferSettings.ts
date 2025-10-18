@@ -4,7 +4,7 @@
  * All dropdown options, labels, and icons for the Style-Transfer workflow settings.
  */
 
-import { Shuffle, Palette, Layers, Sparkles, Eye, Grid3x3, Building2 } from "lucide-react";
+import { Building2, Zap, Sparkles, Grid3x3, Package, Palette, Droplet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 // ============================================================================
@@ -27,61 +27,63 @@ export const ARCHITECTURAL_STYLES = [
 ] as const;
 
 // ============================================================================
-// TRANSFER MODES
+// TRANSFER INTENSITY
 // ============================================================================
 
-export const TRANSFER_MODES = [
+export const TRANSFER_INTENSITIES = [
   { value: "subtle", label: "Subtil" },
   { value: "balanced", label: "Ausgewogen" },
   { value: "strong", label: "Stark" },
 ] as const;
 
 // ============================================================================
-// MATERIAL TRANSFER OPTIONS
+// MATERIAL PALETTES
 // ============================================================================
 
-export const MATERIAL_TRANSFERS = [
-  { value: "none", label: "Keine" },
-  { value: "partial", label: "Teilweise" },
-  { value: "full", label: "Vollständig" },
-  { value: "selective", label: "Selektiv" },
+export const MATERIAL_PALETTES = [
+  { value: "natural", label: "Natürlich (Holz, Stein)" },
+  { value: "industrial", label: "Industrial (Metall, Beton)" },
+  { value: "luxury", label: "Luxuriös (Marmor, Gold)" },
+  { value: "rustic", label: "Rustikal (Holz, Ziegel)" },
+  { value: "modern", label: "Modern (Glas, Stahl)" },
+  { value: "traditional", label: "Traditionell (Stein, Holz)" },
+  { value: "mixed", label: "Gemischt" },
 ] as const;
 
 // ============================================================================
-// COLOR TRANSFER OPTIONS
+// COLOR SCHEMES
 // ============================================================================
 
-export const COLOR_TRANSFERS = [
-  { value: "none", label: "Keine" },
-  { value: "palette", label: "Farbpalette" },
-  { value: "full", label: "Vollständig" },
-  { value: "harmonized", label: "Harmonisiert" },
+export const COLOR_SCHEMES = [
+  { value: "neutral", label: "Neutral (Weiß, Grau, Beige)" },
+  { value: "warm", label: "Warm (Rot, Orange, Gelb)" },
+  { value: "cool", label: "Kühl (Blau, Grün, Violett)" },
+  { value: "monochrome", label: "Monochrom (Eine Farbe)" },
+  { value: "vibrant", label: "Lebendig (Kräftige Farben)" },
+  { value: "pastel", label: "Pastell (Zarte Farben)" },
+  { value: "earth_tones", label: "Erdtöne (Braun, Terrakotta)" },
+  { value: "jewel_tones", label: "Juwelentöne (Smaragd, Rubin)" },
+  { value: "black_white", label: "Schwarz-Weiß" },
+  { value: "gold_accent", label: "Gold-Akzente" },
 ] as const;
 
 // ============================================================================
-// DETAIL LEVELS
+// ACCENT COLORS
 // ============================================================================
 
-export const DETAIL_LEVELS = [
-  { value: "low", label: "Niedrig" },
-  { value: "medium", label: "Mittel" },
-  { value: "high", label: "Hoch" },
-  { value: "very_high", label: "Sehr Hoch" },
-] as const;
-
-// ============================================================================
-// ARCHITECTURAL ELEMENTS (for multi-select)
-// ============================================================================
-
-export const ARCHITECTURAL_ELEMENTS = [
-  { value: "facade", label: "Fassade" },
-  { value: "windows", label: "Fenster" },
-  { value: "doors", label: "Türen" },
-  { value: "roof", label: "Dach" },
-  { value: "columns", label: "Säulen" },
-  { value: "ornaments", label: "Ornamente" },
-  { value: "textures", label: "Texturen" },
-  { value: "lighting", label: "Beleuchtung" },
+export const ACCENT_COLORS = [
+  { value: "red", label: "Rot" },
+  { value: "blue", label: "Blau" },
+  { value: "green", label: "Grün" },
+  { value: "yellow", label: "Gelb" },
+  { value: "orange", label: "Orange" },
+  { value: "purple", label: "Lila" },
+  { value: "pink", label: "Rosa" },
+  { value: "gold", label: "Gold" },
+  { value: "silver", label: "Silber" },
+  { value: "bronze", label: "Bronze" },
+  { value: "white", label: "Weiß" },
+  { value: "black", label: "Schwarz" },
 ] as const;
 
 // ============================================================================
@@ -90,12 +92,12 @@ export const ARCHITECTURAL_ELEMENTS = [
 
 export const SETTING_ICONS: Record<string, LucideIcon> = {
   architecturalStyle: Building2,
-  transferMode: Shuffle,
+  transferIntensity: Zap,
   styleStrength: Sparkles,
   structurePreservation: Grid3x3,
-  materialTransfer: Layers,
-  colorTransfer: Palette,
-  detailLevel: Eye,
+  materialPalette: Package,
+  colorScheme: Palette,
+  accentColor: Droplet,
 };
 
 // ============================================================================
@@ -109,27 +111,19 @@ export function getSettingLabel(key: string, value: string | null): string {
   if (!value) return "Auswählen";
 
   const labelMaps: Record<string, Record<string, string>> = {
-    transferMode: Object.fromEntries(
-      TRANSFER_MODES.map((s) => [s.value, s.label])
+    transferIntensity: Object.fromEntries(
+      TRANSFER_INTENSITIES.map((s) => [s.value, s.label])
     ),
-    materialTransfer: Object.fromEntries(
-      MATERIAL_TRANSFERS.map((s) => [s.value, s.label])
+    materialPalette: Object.fromEntries(
+      MATERIAL_PALETTES.map((s) => [s.value, s.label])
     ),
-    colorTransfer: Object.fromEntries(
-      COLOR_TRANSFERS.map((s) => [s.value, s.label])
+    colorScheme: Object.fromEntries(
+      COLOR_SCHEMES.map((s) => [s.value, s.label])
     ),
-    detailLevel: Object.fromEntries(
-      DETAIL_LEVELS.map((s) => [s.value, s.label])
+    accentColor: Object.fromEntries(
+      ACCENT_COLORS.map((s) => [s.value, s.label])
     ),
   };
 
   return labelMaps[key]?.[value] || value;
-}
-
-/**
- * Get label for architectural element
- */
-export function getArchitecturalElementLabel(value: string): string {
-  const element = ARCHITECTURAL_ELEMENTS.find((e) => e.value === value);
-  return element?.label || value;
 }

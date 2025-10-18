@@ -20,17 +20,46 @@ export type ArchitecturalStyle =
   | "gothic"
   | "renaissance";
 
-// Transfer Mode - How strongly the style is transferred
-export type TransferMode = "subtle" | "balanced" | "strong";
+// Transfer Intensity - How strongly the style is transferred
+export type TransferIntensity = "subtle" | "balanced" | "strong";
 
-// Material Transfer - Which materials are transferred
-export type MaterialTransfer = "none" | "partial" | "full" | "selective";
+// Material Palette - Types of materials to focus on
+export type MaterialPalette =
+  | "natural"        // Wood, Stone
+  | "industrial"     // Metal, Concrete
+  | "luxury"         // Marble, Gold
+  | "rustic"         // Wood, Brick
+  | "modern"         // Glass, Steel
+  | "traditional"    // Stone, Wood
+  | "mixed";         // Combination
 
-// Color Transfer - Which colors are transferred
-export type ColorTransfer = "none" | "palette" | "full" | "harmonized";
+// Color Scheme - Color palettes
+export type ColorScheme =
+  | "neutral"          // White, Gray, Beige
+  | "warm"             // Red, Orange, Yellow
+  | "cool"             // Blue, Green, Violet
+  | "monochrome"       // One color
+  | "vibrant"          // Bold colors
+  | "pastel"           // Soft colors
+  | "earth_tones"      // Brown, Terracotta
+  | "jewel_tones"      // Emerald, Ruby
+  | "black_white"      // Black & White
+  | "gold_accent";     // Gold accents
 
-// Detail Level - How detailed the transfer is
-export type DetailLevel = "low" | "medium" | "high" | "very_high";
+// Accent Color - Specific primary color
+export type AccentColor =
+  | "red"
+  | "blue"
+  | "green"
+  | "yellow"
+  | "orange"
+  | "purple"
+  | "pink"
+  | "gold"
+  | "silver"
+  | "bronze"
+  | "white"
+  | "black";
 
 // Architectural Elements - Specific elements that can be transferred
 export type ArchitecturalElement =
@@ -47,29 +76,26 @@ export type ArchitecturalElement =
  * Complete Style-Transfer Settings Interface
  */
 export interface StyleTransferSettingsType extends Record<string, unknown> {
-  // Architectural style (optional - guides the transfer)
+  // 1. Architectural style (optional - guides the transfer)
   architecturalStyle: ArchitecturalStyle | null;
 
-  // Transfer mode
-  transferMode: TransferMode;
+  // 2. Transfer intensity (how strongly to apply the style)
+  transferIntensity: TransferIntensity;
 
-  // Style strength (0-100%)
+  // 3. Style strength (0-100%)
   styleStrength: number;
 
-  // Structure preservation (0-100%)
+  // 4. Structure preservation (0-100%)
   structurePreservation: number;
 
-  // Material transfer mode
-  materialTransfer: MaterialTransfer;
+  // 5. Material palette (which materials to focus on)
+  materialPalette: MaterialPalette | null;
 
-  // Color transfer mode
-  colorTransfer: ColorTransfer;
+  // 6. Color scheme (color palette)
+  colorScheme: ColorScheme | null;
 
-  // Detail level
-  detailLevel: DetailLevel;
-
-  // Specific architectural elements to transfer (empty = all)
-  architecturalElements: ArchitecturalElement[];
+  // 7. Accent color (optional primary color)
+  accentColor: AccentColor | null;
 }
 
 /**
@@ -77,12 +103,11 @@ export interface StyleTransferSettingsType extends Record<string, unknown> {
  * Balanced configuration for most use cases
  */
 export const DEFAULT_STYLE_TRANSFER_SETTINGS: StyleTransferSettingsType = {
-  architecturalStyle: null, // No pre-defined style - let reference image guide
-  transferMode: "balanced",
-  styleStrength: 70,
-  structurePreservation: 80,
-  materialTransfer: "full",
-  colorTransfer: "full",
-  detailLevel: "high",
-  architecturalElements: [], // Empty means transfer all elements
+  architecturalStyle: null,      // No pre-defined style - let reference image guide
+  transferIntensity: "balanced", // Balanced transfer
+  styleStrength: 70,             // 70% style strength
+  structurePreservation: 80,     // 80% structure preservation
+  materialPalette: null,         // No specific material palette - use reference
+  colorScheme: null,             // No specific color scheme - use reference
+  accentColor: null,             // No accent color - use reference
 };

@@ -1,13 +1,14 @@
 /**
  * Style-Transfer Settings Component
  *
- * Displays all settings controls for the Style-Transfer workflow:
- * - Transfer Mode (Dropdown)
- * - Style Strength (Slider)
- * - Structure Preservation (Slider)
- * - Material Transfer (Dropdown)
- * - Color Transfer (Dropdown)
- * - Detail Level (Dropdown)
+ * Option 2 - Mit mehr Kontrolle:
+ * - Architectural Style (Dropdown)
+ * - Transfer Intensity (Dropdown - Subtle/Balanced/Strong)
+ * - Style Strength (Slider - 0-100%)
+ * - Structure Preservation (Slider - 0-100%)
+ * - Material Palette (Dropdown - Natural/Industrial/Luxury/etc.)
+ * - Color Scheme (Dropdown - Warm/Cool/Neutral/Vibrant/etc.)
+ * - Accent Color (Dropdown - Red/Blue/Gold/etc.)
  */
 
 "use client";
@@ -17,11 +18,10 @@ import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
 import { SettingsSlider } from "@/components/ui/SettingsSlider";
 import {
   ARCHITECTURAL_STYLES,
-  TRANSFER_MODES,
-  MATERIAL_TRANSFERS,
-  COLOR_TRANSFERS,
-  DETAIL_LEVELS,
-  getSettingLabel,
+  TRANSFER_INTENSITIES,
+  MATERIAL_PALETTES,
+  COLOR_SCHEMES,
+  ACCENT_COLORS,
   SETTING_ICONS,
 } from "@/constants/styleTransferSettings";
 
@@ -50,16 +50,18 @@ export function StyleTransferSettings({
         value={settings.architecturalStyle}
         onChange={(v) => updateSetting("architecturalStyle", v as any)}
         placeholder="Stil"
+        alwaysShowTitle={true}
         scrollable={true}
       />
 
-      {/* Transfer Mode */}
+      {/* Transfer Intensity */}
       <SettingsDropdown
-        icon={SETTING_ICONS.transferMode!}
-        options={TRANSFER_MODES}
-        value={settings.transferMode}
-        onChange={(v) => updateSetting("transferMode", v as any)}
-        placeholder={getSettingLabel("transferMode", settings.transferMode)}
+        icon={SETTING_ICONS.transferIntensity!}
+        options={TRANSFER_INTENSITIES}
+        value={settings.transferIntensity}
+        onChange={(v) => updateSetting("transferIntensity", v as any)}
+        placeholder="Intensität"
+        alwaysShowTitle={true}
       />
 
       {/* Style Strength Slider */}
@@ -84,34 +86,39 @@ export function StyleTransferSettings({
         unit="%"
       />
 
-      {/* Material Transfer */}
+      {/* Material Palette */}
       <SettingsDropdown
-        icon={SETTING_ICONS.materialTransfer!}
-        options={MATERIAL_TRANSFERS}
-        value={settings.materialTransfer}
-        onChange={(v) => updateSetting("materialTransfer", v as any)}
-        placeholder={getSettingLabel(
-          "materialTransfer",
-          settings.materialTransfer
-        )}
+        icon={SETTING_ICONS.materialPalette!}
+        options={MATERIAL_PALETTES}
+        value={settings.materialPalette}
+        onChange={(v) => updateSetting("materialPalette", v as any)}
+        placeholder="Material Palette"
+        alwaysShowTitle={true}
+        scrollable={true}
       />
 
-      {/* Color Transfer */}
+      {/* Color Scheme */}
       <SettingsDropdown
-        icon={SETTING_ICONS.colorTransfer!}
-        options={COLOR_TRANSFERS}
-        value={settings.colorTransfer}
-        onChange={(v) => updateSetting("colorTransfer", v as any)}
-        placeholder={getSettingLabel("colorTransfer", settings.colorTransfer)}
+        icon={SETTING_ICONS.colorScheme!}
+        options={COLOR_SCHEMES}
+        value={settings.colorScheme}
+        onChange={(v) => updateSetting("colorScheme", v as any)}
+        placeholder="Color Scheme"
+        alwaysShowTitle={true}
+        scrollable={true}
+        align="right"
       />
 
-      {/* Detail Level */}
+      {/* Accent Color */}
       <SettingsDropdown
-        icon={SETTING_ICONS.detailLevel!}
-        options={DETAIL_LEVELS}
-        value={settings.detailLevel}
-        onChange={(v) => updateSetting("detailLevel", v as any)}
-        placeholder={getSettingLabel("detailLevel", settings.detailLevel)}
+        icon={SETTING_ICONS.accentColor!}
+        options={ACCENT_COLORS}
+        value={settings.accentColor}
+        onChange={(v) => updateSetting("accentColor", v as any)}
+        placeholder="Accent Color"
+        alwaysShowTitle={true}
+        scrollable={true}
+        align="right"
       />
     </div>
   );

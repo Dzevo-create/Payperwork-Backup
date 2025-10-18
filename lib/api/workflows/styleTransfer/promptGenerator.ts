@@ -1,8 +1,15 @@
 /**
  * Style-Transfer Prompt Generator
  *
- * Generates detailed prompts for style transfer based on settings and user input.
- * Creates flowing text descriptions for AI image generation.
+ * Generates detailed prompts for style transfer based on Option 2 settings.
+ * Creates flowing text descriptions for AI image generation using:
+ * - Architectural Style (preset styles)
+ * - Transfer Intensity (subtle/balanced/strong)
+ * - Style Strength (0-100%)
+ * - Structure Preservation (0-100%)
+ * - Material Palette (natural/industrial/luxury/etc)
+ * - Color Scheme (neutral/warm/cool/etc)
+ * - Accent Color (optional primary color)
  */
 
 import { StyleTransferSettingsType } from "@/types/workflows/styleTransferSettings";
@@ -15,104 +22,116 @@ export function generateStyleTransferPrompt(
   userPrompt?: string
 ): string {
   const {
-    transferMode,
+    architecturalStyle,
+    transferIntensity,
     styleStrength,
     structurePreservation,
-    materialTransfer,
-    colorTransfer,
-    detailLevel,
-    architecturalElements,
+    materialPalette,
+    colorScheme,
+    accentColor,
   } = settings;
 
-  // Transfer Mode descriptions
-  const modeDescriptions: Record<string, string> = {
-    subtle:
-      "Subtly transfer the style while maintaining most of the original design characteristics",
-    balanced:
-      "Transfer the style in a balanced way, preserving key design elements while introducing new stylistic features",
-    strong:
-      "Strongly transfer the style, allowing significant design changes and comprehensive style adoption",
+  // Architectural Style descriptions
+  const styleDescriptions: Record<string, string> = {
+    modern: "the clean lines and minimalist aesthetic of Modern architecture, with emphasis on geometric forms, glass facades, and open spaces",
+    contemporary: "the Contemporary style with innovative design elements, mixed materials, and bold asymmetrical compositions",
+    minimalist: "the Minimalist philosophy of 'less is more', featuring simple forms, neutral palettes, and functional elegance",
+    industrial: "the Industrial aesthetic with exposed structures, raw materials like metal and concrete, and utilitarian design",
+    mediterranean: "the Mediterranean style with terracotta roofs, stucco walls, arched openings, and warm earthy tones",
+    scandinavian: "the Scandinavian design principles of simplicity, natural light, light wood tones, and functional beauty",
+    classical: "the Classical architecture with symmetry, columns, pediments, and timeless proportions",
+    baroque: "the Baroque grandeur with ornate details, dramatic curves, rich materials, and theatrical flourishes",
+    art_deco: "the Art Deco elegance with geometric patterns, streamlined forms, luxurious materials, and bold vertical elements",
+    brutalist: "the Brutalist style with raw concrete, massive forms, dramatic sculptural shapes, and honest materiality",
+    gothic: "the Gothic architecture with pointed arches, ribbed vaults, flying buttresses, and intricate stone details",
+    renaissance: "the Renaissance principles of harmony, proportion, classical orders, and refined ornamentation",
   };
 
-  // Material Transfer descriptions
+  // Transfer Intensity descriptions
+  const intensityDescriptions: Record<string, string> = {
+    subtle: "subtly, maintaining most original characteristics while introducing gentle stylistic hints",
+    balanced: "in a balanced manner, preserving key design elements while introducing clear stylistic features",
+    strong: "strongly, allowing significant transformation and comprehensive style adoption",
+  };
+
+  // Material Palette descriptions
   const materialDescriptions: Record<string, string> = {
-    none: "Keep all original materials unchanged, preserving the existing material palette",
-    partial:
-      "Transfer main materials only, focusing on primary surfaces like facades and roofs",
-    full: "Transfer all materials from the reference style, including textures, finishes, and material properties",
-    selective:
-      "Selectively transfer specific materials that enhance the design while maintaining original material choices where appropriate",
+    natural: "Use natural materials like wood and stone, emphasizing organic textures and earthy warmth",
+    industrial: "Use industrial materials like metal and concrete, with raw exposed surfaces and utilitarian finishes",
+    luxury: "Use luxury materials like marble and gold, creating an opulent and refined aesthetic",
+    rustic: "Use rustic materials like weathered wood and brick, conveying warmth and handcrafted character",
+    modern: "Use modern materials like glass and steel, emphasizing sleekness and contemporary sophistication",
+    traditional: "Use traditional materials like stone and wood, respecting classic building methods and timeless quality",
+    mixed: "Use a mixed material palette, thoughtfully combining different materials for visual interest",
   };
 
-  // Color Transfer descriptions
+  // Color Scheme descriptions
   const colorDescriptions: Record<string, string> = {
-    none: "Preserve the original color scheme entirely without modifications",
-    palette:
-      "Adopt the color palette from the reference style while maintaining original color distribution",
-    full: "Transfer all colors from the reference style, including primary, secondary, and accent colors",
-    harmonized:
-      "Transfer colors from reference style but harmonize them with the original design for cohesive integration",
+    neutral: "Apply a neutral color scheme with whites, grays, and beiges for timeless elegance",
+    warm: "Apply a warm color scheme with reds, oranges, and yellows for inviting energy",
+    cool: "Apply a cool color scheme with blues, greens, and violets for calming sophistication",
+    monochrome: "Apply a monochrome color scheme focused on one color with tonal variations",
+    vibrant: "Apply a vibrant color scheme with bold, saturated colors for dynamic impact",
+    pastel: "Apply a pastel color scheme with soft, muted colors for gentle charm",
+    earth_tones: "Apply an earth-toned color scheme with browns and terracottas for natural warmth",
+    jewel_tones: "Apply a jewel-toned color scheme with rich emeralds and rubies for luxurious depth",
+    black_white: "Apply a black and white color scheme for dramatic contrast and timeless simplicity",
+    gold_accent: "Apply a color scheme with prominent gold accents for luxurious highlights",
   };
 
-  // Detail Level descriptions
-  const detailDescriptions: Record<string, string> = {
-    low: "Transfer broad style elements and general aesthetic characteristics",
-    medium:
-      "Transfer style with moderate detail, including key ornamental and textural features",
-    high: "Transfer style with high detail preservation, capturing intricate design elements and fine textures",
-    very_high:
-      "Transfer style with maximum detail fidelity, replicating even subtle stylistic nuances and micro-details",
-  };
-
-  // Architectural element labels
-  const elementLabels: Record<string, string> = {
-    facade: "facade design and composition",
-    windows: "window styles, frames, and proportions",
-    doors: "door designs, frames, and hardware",
-    roof: "roof structure, materials, and details",
-    columns: "column styles, capitals, and bases",
-    ornaments: "ornamental details and decorative elements",
-    textures: "surface textures and material finishes",
-    lighting: "lighting effects and atmospheric qualities",
+  // Accent Color descriptions
+  const accentDescriptions: Record<string, string> = {
+    red: "Use red as a strategic accent color to highlight key architectural features",
+    blue: "Use blue as a strategic accent color to add calm sophistication to focal points",
+    green: "Use green as a strategic accent color to introduce natural freshness",
+    yellow: "Use yellow as a strategic accent color to create vibrant focal points",
+    orange: "Use orange as a strategic accent color for energetic highlights",
+    purple: "Use purple as a strategic accent color for regal elegance",
+    pink: "Use pink as a strategic accent color for contemporary softness",
+    gold: "Use gold as a strategic accent color for luxurious embellishment",
+    silver: "Use silver as a strategic accent color for modern sophistication",
+    bronze: "Use bronze as a strategic accent color for warm metallic richness",
+    white: "Use white as a strategic accent color for crisp contrast",
+    black: "Use black as a strategic accent color for bold definition",
   };
 
   // Build flowing text prompt
-  let prompt = `Transform the source design by transferring the architectural style from the reference image. `;
+  let prompt = `Transform this architectural sketch into a stunning photorealistic rendering`;
 
-  prompt += `Apply a ${transferMode} transfer approach: ${modeDescriptions[transferMode]}. `;
-
-  prompt += `The style transfer should operate at ${styleStrength}% strength, creating a ${styleStrength < 40 ? "subtle" : styleStrength < 70 ? "moderate" : "strong"} stylistic transformation. `;
-
-  prompt += `Preserve ${structurePreservation}% of the original structure and layout, ensuring ${structurePreservation < 40 ? "significant flexibility" : structurePreservation < 70 ? "balanced preservation" : "strict adherence"} to the original composition. `;
-
-  prompt += `Regarding materials: ${materialDescriptions[materialTransfer]}. `;
-
-  prompt += `For color treatment: ${colorDescriptions[colorTransfer]}. `;
-
-  prompt += `Apply ${detailLevel} detail level: ${detailDescriptions[detailLevel]}. `;
-
-  // Handle architectural elements
-  if (architecturalElements && architecturalElements.length > 0) {
-    const elementsList = architecturalElements
-      .map((e) => elementLabels[e])
-      .join(", ");
-    prompt += `Focus specifically on transferring these architectural elements: ${elementsList}. `;
-  } else {
-    prompt += `Transfer all architectural elements comprehensively, including facade, windows, doors, roof, ornaments, textures, and lighting. `;
+  // Add architectural style if selected
+  if (architecturalStyle && styleDescriptions[architecturalStyle]) {
+    prompt += ` by embracing ${styleDescriptions[architecturalStyle]}`;
   }
 
-  // Critical requirements
-  prompt += `\n\nCritical Requirements:\n`;
-  prompt += `- Analyze the reference image thoroughly for style characteristics, materials, colors, proportions, and architectural details\n`;
-  prompt += `- Apply the identified style elements to the source design while respecting the specified preservation level\n`;
-  prompt += `- Maintain architectural coherence and structural integrity throughout the transformation\n`;
-  prompt += `- Ensure realistic integration of style elements with proper scale, proportion, and context\n`;
-  prompt += `- Create a seamless blend between source design and reference style without jarring discontinuities\n`;
-  prompt += `- Preserve photorealistic quality with accurate lighting, shadows, and material properties\n`;
-  prompt += `- Maintain the overall composition and spatial arrangement of the source design\n`;
-  prompt += `- Ensure all transferred elements are contextually appropriate and architecturally sound\n\n`;
+  prompt += `, while maintaining the ${structurePreservation >= 80 ? "precise" : structurePreservation >= 50 ? "general" : "flexible"} composition and perspective of the original illustration. `;
 
-  prompt += `The final result should appear as a professional architectural rendering that successfully combines the source design's composition with the reference style's aesthetic qualities, creating a cohesive and believable architectural visualization.`;
+  // Add transfer intensity
+  prompt += `Apply the style transformation ${intensityDescriptions[transferIntensity]} `;
+  prompt += `with ${styleStrength}% style strength, creating a ${styleStrength < 40 ? "subtle" : styleStrength < 70 ? "moderate" : "pronounced"} stylistic transformation. `;
+
+  // Add material palette if selected
+  if (materialPalette && materialDescriptions[materialPalette]) {
+    prompt += `${materialDescriptions[materialPalette]} `;
+  }
+
+  // Add color scheme if selected
+  if (colorScheme && colorDescriptions[colorScheme]) {
+    prompt += `${colorDescriptions[colorScheme]} `;
+  }
+
+  // Add accent color if selected
+  if (accentColor && accentDescriptions[accentColor]) {
+    prompt += `${accentDescriptions[accentColor]}, providing striking contrast without overwhelming the overall design. `;
+  }
+
+  // Technical requirements
+  prompt += `\nIncorporate realistic textures and materials with precision rendering. `;
+  prompt += `The lighting should mimic natural daylight, casting soft yet defined shadows that accentuate geometric patterns, creating depth and dimension. `;
+  prompt += `Introduce atmospheric details like ${structurePreservation >= 70 ? "subtle" : "expressive"} sky conditions and reflections on surfaces, giving the scene vibrancy and life. `;
+
+  // Preservation requirements
+  prompt += `\nEnsure architectural accuracy by ${structurePreservation >= 80 ? "strictly preserving" : structurePreservation >= 50 ? "carefully maintaining" : "flexibly adapting"} the scale and proportions from the sketch. `;
+  prompt += `The end result should be a photorealistic rendering that ${structurePreservation >= 70 ? "precisely captures" : "creatively interprets"} the essence of the original drawing while elevating it to professional-quality visualization. `;
 
   // Append user prompt if provided
   if (userPrompt && userPrompt.trim()) {
