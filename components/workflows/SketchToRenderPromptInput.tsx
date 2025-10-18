@@ -6,7 +6,7 @@ import { SketchToRenderSettings } from "./SketchToRenderSettings";
 import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
-interface RenderPromptInputProps {
+interface SketchToRenderPromptInputProps {
   prompt: string;
   onPromptChange: (prompt: string) => void;
   onGenerate: () => void;
@@ -19,12 +19,12 @@ interface RenderPromptInputProps {
 }
 
 /**
- * RenderPromptInput Component
+ * SketchToRenderPromptInput Component
  *
  * Unified prompt input matching ChatInput design pattern
  * Includes RenderSettings bar above and integrated action buttons
  */
-export function RenderPromptInput({
+export function SketchToRenderPromptInput({
   prompt,
   onPromptChange,
   onGenerate,
@@ -34,7 +34,7 @@ export function RenderPromptInput({
   disabled = false,
   settings,
   onSettingsChange,
-}: RenderPromptInputProps) {
+}: SketchToRenderPromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isRecording, isTranscribing, toggleRecording, setOnTranscriptionComplete } = useVoiceRecording();
 

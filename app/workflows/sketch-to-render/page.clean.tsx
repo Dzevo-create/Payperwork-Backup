@@ -8,7 +8,7 @@
 'use client';
 
 import { WorkflowPage, type WorkflowPageConfig } from '@/components/workflows/WorkflowPage';
-import { RenderPromptInput } from '@/components/workflows/RenderPromptInput';
+import { SketchToRenderPromptInput } from '@/components/workflows/SketchToSketchToRenderPromptInput';
 import { DEFAULT_SKETCH_TO_RENDER_SETTINGS, type SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {
@@ -28,7 +28,7 @@ const sketchToRenderConfig: WorkflowPageConfig<SketchToRenderSettingsType> = {
   defaultSettings: DEFAULT_SKETCH_TO_RENDER_SETTINGS,
 
   // Workflow-specific components
-  PromptInputComponent: RenderPromptInput,
+  PromptInputComponent: SketchToRenderPromptInput,
 
   // Workflow-specific hooks (using adapters for standardization)
   hooks: {

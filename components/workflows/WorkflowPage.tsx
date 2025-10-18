@@ -19,7 +19,7 @@ import { ChatSidebar } from "@/components/chat/Sidebar/ChatSidebar";
 import { InputsPanel } from "@/components/workflows/InputsPanel";
 import { ResultPanel } from "@/components/workflows/ResultPanel";
 import { RecentGenerations } from "@/components/workflows/RecentGenerations";
-import { RenderLightbox } from "@/components/workflows/RenderLightbox";
+import { SketchToRenderLightbox } from "@/components/workflows/SketchToRenderLightbox";
 import ImageCropModal from "@/components/chat/ImageCrop/ImageCropModal";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { useChatStore } from "@/store/chatStore.supabase";
@@ -493,7 +493,7 @@ export function WorkflowPage<TSettings = Record<string, unknown>>({ config }: Wo
 
       {/* Lightbox */}
       {lightbox.lightboxOpen && lightbox.lightboxItem && (
-        <RenderLightbox
+        <SketchToRenderLightbox
           isOpen={lightbox.lightboxOpen}
           item={lightbox.lightboxItem}
           onClose={lightbox.closeLightbox}
