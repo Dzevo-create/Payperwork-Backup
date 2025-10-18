@@ -13,8 +13,8 @@ import { DEFAULT_FURNISH_EMPTY_SETTINGS, type FurnishEmptySettingsType } from '@
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { FurnishEmptyProvider } from '@/contexts/FurnishEmptyContext';
 import { useFurnishEmptyAdapterWithContext } from '@/hooks/workflows/furnish-empty/useFurnishEmptyAdapterWithContext';
+import { useFurnishEmptyPromptEnhancerAdapter } from '@/hooks/workflows/furnish-empty/useFurnishEmptyPromptEnhancerAdapter';
 import {
-  usePromptEnhancerAdapter,
   useRenderEditAdapter,
   useUpscaleAdapter
 } from '@/hooks/workflows';
@@ -35,7 +35,7 @@ const furnishEmptyConfig: WorkflowPageConfig<FurnishEmptySettingsType> = {
   hooks: {
     useGenerate: useFurnishEmptyAdapterWithContext,
     useEnhance: (sourceImage, settings) =>
-      usePromptEnhancerAdapter(sourceImage, settings),
+      useFurnishEmptyPromptEnhancerAdapter(sourceImage, settings as FurnishEmptySettingsType),
     useEdit: useRenderEditAdapter,
     useUpscale: useUpscaleAdapter,
   },
