@@ -70,32 +70,32 @@ export function generateFurnishEmptyPrompt(
     first_time_renters: "first-time renters",
   };
 
-  let prompt = `Transform this empty ${spaceTypeLabels[settings.spaceType]} into a beautifully furnished space with the following specifications:\n\n`;
+  // Get labels with fallbacks for undefined values
+  const spaceType = spaceTypeLabels[settings.spaceType] || "room";
+  const style = styleLabels[settings.furnishingStyle] || "modern";
+  const colorScheme = colorLabels[settings.colorScheme] || "neutral tones";
+  const density = densityLabels[settings.furnitureDensity] || "moderately furnished";
+  const lighting = lightingLabels[settings.lighting] || "natural light";
+  const audience = audienceLabels[settings.targetAudience] || "general buyers";
 
-  prompt += `Style: ${styleLabels[settings.furnishingStyle]}\n`;
-  prompt += `Color Scheme: ${colorLabels[settings.colorScheme]}\n`;
-  prompt += `Furniture Density: ${densityLabels[settings.furnitureDensity]}\n`;
-  prompt += `Lighting: ${lightingLabels[settings.lighting]}\n`;
-  prompt += `Target Audience: ${audienceLabels[settings.targetAudience]}\n`;
+  // Generate flowing text prompt (no bullet points or lists)
+  let prompt = `Transform this empty ${spaceType} into a beautifully furnished space that showcases ${style} design principles. `;
 
-  prompt += `\nRequirements:\n`;
-  prompt += `- Maintain the original room architecture, walls, windows, and doors exactly as they are\n`;
-  prompt += `- Add appropriate furniture for a ${spaceTypeLabels[settings.spaceType]}\n`;
-  prompt += `- Follow ${styleLabels[settings.furnishingStyle]} design principles\n`;
-  prompt += `- Use ${colorLabels[settings.colorScheme]} color palette\n`;
-  prompt += `- Include ${densityLabels[settings.furnitureDensity]} amount of furniture\n`;
-  prompt += `- Create ${lightingLabels[settings.lighting]} atmosphere\n`;
-  prompt += `- Design for ${audienceLabels[settings.targetAudience]}\n`;
-  prompt += `- Ensure realistic shadows and lighting that match the room\n`;
-  prompt += `- Keep perspective and proportions accurate\n`;
-  prompt += `- Make it look professionally staged for real estate photography\n`;
-  prompt += `- Do not change the room structure, only add furniture and decor\n`;
+  prompt += `The space should feature a ${colorScheme} color palette with ${density} furniture arrangement, creating an inviting ${lighting} atmosphere. `;
+
+  prompt += `This design is specifically tailored for ${audience}, ensuring the space appeals to their lifestyle and preferences. `;
+
+  prompt += `Maintain the original room architecture including all walls, windows, and doors exactly as they are in the source image. `;
+
+  prompt += `Add appropriate furniture and decor that fits a ${spaceType}, following ${style} aesthetic with attention to realistic proportions and perspective. `;
+
+  prompt += `Ensure realistic shadows and lighting that naturally match the room's existing light sources. `;
+
+  prompt += `The final result should look like a professionally staged interior design photograph, ready for a premium real estate listing, without changing the fundamental room structure.`;
 
   if (userPrompt && userPrompt.trim()) {
-    prompt += `\nAdditional Requirements: ${userPrompt.trim()}\n`;
+    prompt += ` ${userPrompt.trim()}`;
   }
-
-  prompt += `\nThe result should look like a professional interior design photograph, ready for a real estate listing.`;
 
   return prompt;
 }
