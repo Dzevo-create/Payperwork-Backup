@@ -210,19 +210,12 @@ export function SettingsDropdown<T extends string>({
             className={scrollable ? "max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-pw-black/20 scrollbar-track-transparent" : ""}
             style={scrollable ? { maxHeight: maxHeight } : {}}
           >
-            {/* Dropdown Header (always visible) */}
-            {!searchable && (
-              <div className="sticky top-0 bg-white/95 backdrop-blur-xl z-10 px-3 py-2 border-b border-pw-black/10">
-                <div className="text-[10px] font-bold text-pw-black/60 uppercase tracking-wider">
-                  {placeholder}
-                </div>
-              </div>
-            )}
-
             {/* Default Option */}
             <button
               onClick={() => handleSelect(null)}
               className={`w-full px-3 py-2 text-left text-sm transition-colors border-b border-pw-black/10 ${
+                searchable ? "" : "sticky top-0 bg-white/95 backdrop-blur-xl z-10"
+              } ${
                 value === null
                   ? "bg-pw-black/5 text-pw-black/70 font-medium italic"
                   : "text-pw-black/50 hover:bg-pw-black/5 italic"

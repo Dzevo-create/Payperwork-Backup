@@ -16,6 +16,7 @@ import { StyleTransferSettingsType } from "@/types/workflows/styleTransferSettin
 import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
 import { SettingsSlider } from "@/components/ui/SettingsSlider";
 import {
+  ARCHITECTURAL_STYLES,
   TRANSFER_MODES,
   MATERIAL_TRANSFERS,
   COLOR_TRANSFERS,
@@ -42,6 +43,16 @@ export function StyleTransferSettings({
 
   return (
     <div className="flex items-center justify-end gap-1 flex-wrap">
+      {/* Architectural Style */}
+      <SettingsDropdown
+        icon={SETTING_ICONS.architecturalStyle!}
+        options={ARCHITECTURAL_STYLES}
+        value={settings.architecturalStyle}
+        onChange={(v) => updateSetting("architecturalStyle", v as any)}
+        placeholder="Stil"
+        scrollable={true}
+      />
+
       {/* Transfer Mode */}
       <SettingsDropdown
         icon={SETTING_ICONS.transferMode!}
