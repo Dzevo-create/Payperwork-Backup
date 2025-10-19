@@ -11,6 +11,7 @@ import { SearchModal } from "./SearchModal";
 import { ConversationList } from "./ConversationList";
 import { NavigationSection } from "./NavigationSection";
 import { WorkflowList } from "./WorkflowList";
+import { PresentationsSection } from "./PresentationsSection";
 import { useLibraryStore } from "@/store/libraryStore.v2";
 
 interface Message {
@@ -172,7 +173,7 @@ export function ChatSidebar({
             {/* New Presentation Button */}
             <div className="px-2 py-0.5">
               <button
-                onClick={() => router.push("/slides")}
+                onClick={() => router.push("/chat?workflow=slides")}
                 className="w-full p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 hover:scale-[1.02] flex items-center justify-start gap-2"
                 aria-label="New Presentation"
               >
@@ -208,6 +209,9 @@ export function ChatSidebar({
                 <WorkflowList />
               </NavigationSection>
             </div>
+
+            {/* Presentations Section */}
+            <PresentationsSection />
 
             {/* Chats Section */}
             <div className="px-4 py-2">

@@ -1,37 +1,33 @@
-"use client";
+/**
+ * Slides Page - Redirect to Chat Workflow
+ *
+ * This page redirects to the new inline slides workflow in chat.
+ *
+ * @author Payperwork Team
+ * @date 2025-10-19
+ * @phase Phase 4: Layout Integration
+ */
 
-import SlidesLayout from "@/components/slides/SlidesLayout";
-import { ErrorBoundary } from "react-error-boundary";
+'use client';
 
-function ErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
-  error: Error;
-  resetErrorBoundary: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="text-center space-y-4">
-        <h2 className="text-2xl font-bold text-destructive">
-          Something went wrong
-        </h2>
-        <p className="text-muted-foreground">{error.message}</p>
-        <button
-          onClick={resetErrorBoundary}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Try again
-        </button>
-      </div>
-    </div>
-  );
-}
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SlidesPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to chat with slides workflow
+    router.replace('/chat?workflow=slides');
+  }, [router]);
+
+  // Show loading state while redirecting
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <SlidesLayout />
-    </ErrorBoundary>
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-sm text-muted-foreground">Redirecting to Slides Workflow...</p>
+      </div>
+    </div>
   );
 }

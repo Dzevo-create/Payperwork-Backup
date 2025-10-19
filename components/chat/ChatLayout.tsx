@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChatSidebar } from "./Sidebar/ChatSidebar";
+import { SlidesWorkflowContainer } from "@/components/slides/workflow/SlidesWorkflowContainer";
+import { useSlidesSocket } from "@/hooks/slides/useSlidesSocket";
 import { SearchModal } from "./shared/SearchModal";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { ToastContainer } from "@/components/shared/Toast";
@@ -27,9 +29,12 @@ export function ChatLayout() {
   useNavigationCleanup();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const workflow = searchParams.get('workflow');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Get state from Zustand store
   const messages = useChatStore((state) => state.messages);
@@ -61,6 +66,20 @@ export function ChatLayout() {
 
   // AbortController for title generation
   const titleAbortControllerRef = useRef<AbortController | null>(null);
+
+  // Load user for WebSocket
+  useEffect(() => {
+    const loadUser = async () => {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+    };
+    loadUser();
+  }, []);
+
+  // Connect to Slides WebSocket
+  useSlidesSocket(userId);
 
   // Load conversations from Supabase on mount (ONLY ONCE per session)
   useEffect(() => {
@@ -316,7 +335,11 @@ export function ChatLayout() {
 
         {/* Main Chat Container */}
         <div className="flex-1 flex flex-col overflow-hidden rounded-none sm:rounded-2xl shadow-lg bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-lg border-0 sm:border sm:border-pw-black/10">
-          <ChatArea onMenuClick={() => setIsSidebarOpen(true)} />
+          {workflow === 'slides' ? (
+            <SlidesWorkflowContainer />
+          ) : (
+            <ChatArea onMenuClick={() => setIsSidebarOpen(true)} />
+          )}
         </div>
 
         {/* Mobile Backdrop */}
