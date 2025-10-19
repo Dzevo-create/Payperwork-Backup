@@ -46,6 +46,7 @@ export function SlidesWorkflowContainer() {
   const setFormat = useSlidesStore((state) => state.setFormat);
   const theme = useSlidesStore((state) => state.theme);
   const setTheme = useSlidesStore((state) => state.setTheme);
+  const setCurrentTopics = useSlidesStore((state) => state.setCurrentTopics);
 
   // NEW: Phase 2 - Computer Panel
   const toolHistory = useSlidesStore((state) => state.toolHistory);
