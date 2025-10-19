@@ -64,7 +64,7 @@ export async function startPolling(options: PollingOptions): Promise<() => void>
       console.log(`📊 Poll ${pollCount}: Status = ${taskData.status}`);
 
       // Process task data based on status
-      if (taskData.status === 'running') {
+      if (taskData.status === 'running' || taskData.status === 'pending') {
         // Extract and emit thinking steps
         if (taskData.thinking_steps && Array.isArray(taskData.thinking_steps)) {
           for (const step of taskData.thinking_steps) {
@@ -138,7 +138,7 @@ export async function startPolling(options: PollingOptions): Promise<() => void>
           emitGenerationProgress(userId, presentationId || taskId, taskData.progress);
         }
 
-        // Continue polling
+        // Continue polling (for both 'running' and 'pending' status)
         setTimeout(poll, interval);
       } else if (taskData.status === 'completed') {
         isRunning = false;
