@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { X, Settings, User, LogOut, Moon, Bell, Library } from "lucide-react";
 import { SidebarHeader } from "./SidebarHeader";
 import { NewChatButton } from "./NewChatButton";
@@ -65,10 +65,12 @@ export function ChatSidebar({
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const workflow = searchParams.get('workflow');
   const unseenCount = useLibraryStore((state) => state.unseenCount);
 
-  // Only show active conversation if we're on the chat page
-  const isOnChatPage = pathname === "/chat" || pathname === "/";
+  // Only show active conversation if we're on the chat page AND NOT in slides workflow
+  const isOnChatPage = (pathname === "/chat" || pathname === "/") && workflow !== 'slides';
 
   // Cleanup timeouts on unmount to prevent memory leaks
   useEffect(() => {
