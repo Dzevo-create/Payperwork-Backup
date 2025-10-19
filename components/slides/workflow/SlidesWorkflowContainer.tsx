@@ -226,13 +226,15 @@ export function SlidesWorkflowContainer() {
 
       {/* Slides Computer Panel (right side, conditional) - Toggled by Monitor Button */}
       {showComputerPanel && (
-        <div className="flex-1 min-w-[500px] max-w-[700px] flex-shrink-0">
-          <SlidesComputerPanel
-            slides={finalSlides}
-            isGenerating={isGenerating}
-            format={format}
-            theme={theme}
-          />
+        <div className="flex-1 min-w-[500px] max-w-[700px] flex-shrink-0 px-3 sm:px-4 md:px-6 py-4">
+          <div className="h-full max-w-3xl mx-auto">
+            <SlidesComputerPanel
+              slides={finalSlides}
+              isGenerating={isGenerating}
+              format={format}
+              theme={theme}
+            />
+          </div>
         </div>
       )}
     </div>

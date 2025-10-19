@@ -112,12 +112,9 @@ export function ComputerPanel({ toolActions, isOpen = true, onClose }: ComputerP
   if (!isOpen) return null;
 
   return (
-    <div className="h-full flex flex-col bg-transparent">
-      {/* Container Wrapper */}
-      <div className="h-full flex flex-col px-3 sm:px-4 md:px-6 py-4">
-        <div className="h-full flex flex-col max-w-3xl mx-auto w-full bg-white border border-pw-black/10 rounded-2xl shadow-sm overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-pw-black/10 bg-gradient-to-r from-pw-black/5 to-transparent">
+    <div className="h-full flex flex-col bg-white border border-pw-black/10 rounded-2xl shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-pw-black/10 bg-gradient-to-r from-pw-black/5 to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Monitor className="w-5 h-5 text-pw-accent" />
@@ -351,8 +348,6 @@ export function ComputerPanel({ toolActions, isOpen = true, onClose }: ComputerP
             })}
           </div>
         )}
-      </div>
-        </div>
       </div>
     </div>
   );
