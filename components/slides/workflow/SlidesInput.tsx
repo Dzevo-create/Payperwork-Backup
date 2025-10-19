@@ -3,7 +3,7 @@
  *
  * Two-row input design:
  * - Row 1 (top): Prompt textarea
- * - Row 2 (bottom): Buttons - Upload, Mic, Send, Settings, Monitor, Prompt Generator
+ * - Row 2 (bottom): Buttons - Upload, Mic, Send, Settings, Monitor, Prompt Enhancer (T)
  *
  * @author Payperwork Team
  * @date 2025-10-20
@@ -12,7 +12,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Settings, Mic, Send, Monitor } from 'lucide-react';
+import { Settings, Mic, Send, Monitor, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select';
 import { FORMAT_OPTIONS, THEME_OPTIONS } from '@/constants/slides';
 import { PresentationFormat, PresentationTheme } from '@/types/slides';
-import { PromptGeneratorModal } from './PromptGeneratorModal';
 
 interface SlidesInputProps {
   currentPrompt: string;
@@ -58,7 +57,7 @@ export function SlidesInput({
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [isPromptGeneratorOpen, setIsPromptGeneratorOpen] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const isDisabled = !currentPrompt.trim() || isGenerating;
 
@@ -105,9 +104,36 @@ export function SlidesInput({
     // TODO: Handle file upload (images, PDFs)
   };
 
-  const handlePromptGenerated = (generatedPrompt: string) => {
-    setCurrentPrompt(generatedPrompt);
-    textareaRef.current?.focus();
+  const handleEnhancePrompt = async () => {
+    if (!currentPrompt.trim() || isEnhancing) return;
+
+    setIsEnhancing(true);
+
+    try {
+      // Call API to enhance prompt with format, theme, and CI analysis
+      const response = await fetch('/api/slides/workflow/enhance-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: currentPrompt,
+          format,
+          theme,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.enhancedPrompt) {
+        setCurrentPrompt(data.enhancedPrompt);
+        textareaRef.current?.focus();
+      } else {
+        console.error('Failed to enhance prompt:', data.error);
+      }
+    } catch (error) {
+      console.error('Error enhancing prompt:', error);
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
   const toggleDropdown = () => {
@@ -171,15 +197,19 @@ export function SlidesInput({
               {/* Spacer */}
               <div className="flex-1" />
 
-              {/* Prompt Generator Button */}
+              {/* Prompt Enhancer Button */}
               <button
-                onClick={() => setIsPromptGeneratorOpen(true)}
-                disabled={isGenerating}
+                onClick={handleEnhancePrompt}
+                disabled={isGenerating || isEnhancing || !currentPrompt.trim()}
                 className="flex-shrink-0 px-2.5 py-1.5 hover:bg-pw-accent/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Prompt Generator"
-                title="Prompt Generator"
+                aria-label="Prompt verbessern"
+                title="Prompt verbessern"
               >
-                <span className="text-sm font-semibold text-pw-accent">T</span>
+                {isEnhancing ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-pw-accent" />
+                ) : (
+                  <span className="text-sm font-semibold text-pw-accent">T</span>
+                )}
               </button>
 
               {/* Settings Button */}
@@ -285,14 +315,6 @@ export function SlidesInput({
         </div>
       </div>
 
-      {/* Prompt Generator Modal */}
-      <PromptGeneratorModal
-        isOpen={isPromptGeneratorOpen}
-        onClose={() => setIsPromptGeneratorOpen(false)}
-        onGenerate={handlePromptGenerated}
-        currentFormat={format}
-        currentTheme={theme}
-      />
     </>
   );
 }
