@@ -391,12 +391,12 @@ export function SlidesWorkflowContainer() {
         </div>
       )}
 
-      {/* Slides Computer Panel (right side, conditional) - BREITER! */}
-      {finalSlides.length > 0 && (
+      {/* Slides Computer Panel (right side, conditional) - Toggled by Monitor Button */}
+      {showComputerPanel && (
         <div className="flex-1 min-w-[500px] max-w-[700px] flex-shrink-0">
           <SlidesComputerPanel
             slides={finalSlides}
-            isGenerating={false}
+            isGenerating={isGenerating}
             format={format}
             theme={theme}
           />
