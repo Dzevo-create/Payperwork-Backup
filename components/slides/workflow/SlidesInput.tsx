@@ -12,7 +12,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Settings, Mic, Send, Upload, Monitor, Sparkles } from 'lucide-react';
+import { Settings, Mic, Send, Upload, Monitor } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -175,11 +175,11 @@ export function SlidesInput({
               <button
                 onClick={() => setIsPromptGeneratorOpen(true)}
                 disabled={isGenerating}
-                className="flex-shrink-0 p-2 hover:bg-pw-accent/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-shrink-0 px-2.5 py-1.5 hover:bg-pw-accent/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 aria-label="Prompt Generator"
                 title="Prompt Generator"
               >
-                <Sparkles className="w-4 h-4 text-pw-accent" />
+                <span className="text-sm font-semibold text-pw-accent">T</span>
               </button>
 
               {/* Settings Button */}

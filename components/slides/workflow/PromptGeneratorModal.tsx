@@ -16,7 +16,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { X, Upload, Loader2, Sparkles } from 'lucide-react';
+import { X, Upload, Loader2 } from 'lucide-react';
 import { PresentationFormat, PresentationTheme } from '@/types/slides';
 
 interface PromptGeneratorModalProps {
@@ -111,7 +111,7 @@ export function PromptGeneratorModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-pw-black/10 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-pw-accent" />
+            <span className="text-lg font-bold text-pw-accent">T</span>
             <h2 className="text-lg font-semibold text-pw-black">Prompt Generator</h2>
           </div>
           <button
@@ -276,7 +276,7 @@ export function PromptGeneratorModal({
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-bold">T</span>
                 <span>Prompt generieren</span>
               </>
             )}
