@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChatSidebar } from "./Sidebar/ChatSidebar";
 import { SlidesWorkflowContainer } from "@/components/slides/workflow/SlidesWorkflowContainer";
 import { useSlidesSocket } from "@/hooks/slides/useSlidesSocket";
+import { supabase } from "@/lib/supabase";
 import { SearchModal } from "./shared/SearchModal";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { ToastContainer } from "@/components/shared/Toast";
@@ -70,8 +71,6 @@ export function ChatLayout() {
   // Load user for WebSocket
   useEffect(() => {
     const loadUser = async () => {
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       setUserId(user?.id || null);
     };
