@@ -346,10 +346,15 @@ export function SlidesWorkflowContainer() {
         </div>
       )}
 
-      {/* NEW: Phase 2 - Computer Panel (right side, conditional) */}
-      {showComputerPanel && (
-        <div className="w-96 flex-shrink-0">
-          <ComputerPanel toolActions={toolHistory} isOpen={showComputerPanel} />
+      {/* Slides Computer Panel (right side, conditional) - BREITER! */}
+      {finalSlides.length > 0 && (
+        <div className="flex-1 min-w-[500px] max-w-[700px] flex-shrink-0">
+          <SlidesComputerPanel
+            slides={finalSlides}
+            isGenerating={false}
+            format={format}
+            theme={theme}
+          />
         </div>
       )}
     </div>
