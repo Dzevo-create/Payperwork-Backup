@@ -318,3 +318,29 @@ export function emitGenerationError(
     timestamp: new Date().toISOString(),
   });
 }
+
+// ============================================
+// NEW: Phase 4 - Topics Generation Events
+// ============================================
+
+/**
+ * Emit topics generated event
+ *
+ * @param userId - User ID
+ * @param data - Topics data
+ */
+export function emitTopicsGenerated(
+  userId: string,
+  data: {
+    topics: string[];
+    messageId: string;
+  }
+): void {
+  emitToUser(userId, 'topics:generated', {
+    topics: data.topics,
+    messageId: data.messageId,
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`✅ Emitted topics:generated to user:${userId} with ${data.topics.length} topics`);
+}
