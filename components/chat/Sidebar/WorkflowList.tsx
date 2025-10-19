@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Pencil, Palette, Sofa, Shuffle, LucideProps } from "lucide-react";
+import { Pencil, Palette, Sofa, Shuffle, DraftingCompass, LucideProps } from "lucide-react";
 
 export interface Workflow {
   id: string;
@@ -39,6 +39,13 @@ const workflows: Workflow[] = [
     icon: Shuffle,
     route: "/workflows/style-transfer",
     description: "Design + Referenz → Neuer Stil",
+  },
+  {
+    id: "render-to-cad",
+    name: "Render-to-CAD",
+    icon: DraftingCompass,
+    route: "/workflows/render-to-cad",
+    description: "Renderings → Technische CAD-Zeichnungen",
   },
 ];
 

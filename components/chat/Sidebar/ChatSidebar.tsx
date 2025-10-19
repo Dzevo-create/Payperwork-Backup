@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { X, Settings, User, LogOut, Moon, Bell, Library } from "lucide-react";
+import { X, Settings, User, LogOut, Moon, Bell, Library, Presentation } from "lucide-react";
 import { SidebarHeader } from "./SidebarHeader";
 import { NewChatButton } from "./NewChatButton";
 import { SidebarSearch } from "./SidebarSearch";
@@ -168,6 +168,18 @@ export function ChatSidebar({
           <>
             {/* New Chat Button */}
             <NewChatButton onClick={onNewChat} />
+
+            {/* New Presentation Button */}
+            <div className="px-2 py-0.5">
+              <button
+                onClick={() => router.push("/slides")}
+                className="w-full p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 hover:scale-[1.02] flex items-center justify-start gap-2"
+                aria-label="New Presentation"
+              >
+                <Presentation className="w-4 h-4 text-pw-black/60" />
+                <span className="text-sm text-pw-black/70">New Presentation</span>
+              </button>
+            </div>
 
             {/* Search */}
             <SidebarSearch onClick={() => setIsSearchModalOpen(true)} />

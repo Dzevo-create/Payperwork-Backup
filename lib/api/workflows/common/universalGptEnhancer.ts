@@ -22,7 +22,7 @@ const openai = new OpenAI({
 // TYPES
 // ============================================================================
 
-export type WorkflowType = "sketch-to-render" | "furnish-empty" | "branding" | "style-transfer";
+export type WorkflowType = "sketch-to-render" | "furnish-empty" | "branding" | "style-transfer" | "render-to-cad";
 
 export interface ImageData {
   data: string; // base64
@@ -186,6 +186,41 @@ Generate a flowing text prompt (no lists or bullet points) that:
 6. Maintains the specified detail level throughout
 
 The prompt should be detailed but concise (200-400 words), written as continuous flowing text that an AI image generator can use to successfully transfer the architectural style from reference to source while maintaining structural integrity and photorealistic quality.`,
+    maxTokens: 800,
+    temperature: 0.7,
+  },
+
+  "render-to-cad": {
+    type: "render-to-cad",
+    systemPrompt: `You are an expert CAD technician and architectural draftsperson with deep knowledge of technical drawing standards, architectural notation, and CAD drafting best practices.
+
+Your task is to analyze an architectural rendering or photograph and create a detailed, flowing text prompt for an AI image generator that will convert the image into a professional technical CAD-style drawing.
+
+CRITICAL REQUIREMENTS:
+- The spatial layout and proportions MUST be preserved from the original image
+- Transform photorealistic elements into clean technical line drawings
+- Apply proper CAD line weights, dimensioning, and architectural symbols
+- Ensure professional drafting standards (black lines on white background)
+- Include appropriate annotations, dimensions, and technical notation based on settings
+- Create a drawing suitable for architectural documentation and construction
+
+Your prompt should be written as natural flowing text (not bullet points or lists), describing how to transform the rendering/photo into a professional CAD technical drawing.`,
+    userPromptTemplate: ({ settingsContext, userPrompt }) => `Please analyze this architectural rendering or photograph and create a detailed prompt for transforming it into a professional CAD technical drawing based on the following:
+
+CAD GENERATION SETTINGS:
+${settingsContext}
+
+${userPrompt ? `USER REQUEST: ${userPrompt}\n\n` : ""}
+
+Generate a flowing text prompt (no lists or bullet points) that:
+1. Describes how to convert this image into a technical CAD drawing
+2. Incorporates the detail level and metadata/annotation preferences
+3. Maintains the exact spatial layout and proportions from the source image
+4. Applies proper CAD line weights, symbols, and notation standards
+5. Ensures professional drafting quality with clear dimensioning
+6. Creates a drawing suitable for architectural documentation
+
+The prompt should be detailed but concise (200-400 words), written as continuous flowing text that an AI image generator can use to create a professional CAD technical drawing while preserving the original image's spatial information.`,
     maxTokens: 800,
     temperature: 0.7,
   },
@@ -375,6 +410,21 @@ export async function enhanceStyleTransferPrompt(params: {
 }): Promise<string> {
   return enhancePromptWithGPT({
     workflowType: "style-transfer",
+    ...params,
+  });
+}
+
+/**
+ * Enhance Render-to-CAD Prompt
+ */
+export async function enhanceRenderToCadPrompt(params: {
+  userPrompt: string;
+  sourceImage: ImageData;
+  settings: Record<string, any>;
+  referenceImages?: ImageData[];
+}): Promise<string> {
+  return enhancePromptWithGPT({
+    workflowType: "render-to-cad",
     ...params,
   });
 }

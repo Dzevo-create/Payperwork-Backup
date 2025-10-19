@@ -11,6 +11,8 @@ import { useSketchToRender } from '../sketch-to-render/useSketchToRender';
 import { useBranding } from '../branding/useBranding';
 import { useFurnishEmpty } from '../furnish-empty/useFurnishEmpty';
 import { useStyleTransfer } from '../style-transfer/useStyleTransfer';
+import { useRenderToCad } from '../render-to-cad/useRenderToCad';
+import { useRenderToCadEnhancer } from '../render-to-cad/useRenderToCadEnhancer';
 import { usePromptEnhancer } from '../common/usePromptEnhancer';
 import { useRenderEdit } from '../common/useRenderEdit';
 import { useUpscale } from '../common/useUpscale';
@@ -18,6 +20,7 @@ import type { SketchToRenderSettingsType } from '@/types/workflows/sketchToRende
 import type { BrandingSettingsType } from '@/types/workflows/brandingSettings';
 import type { FurnishEmptySettingsType } from '@/types/workflows/furnishEmptySettings';
 import type { StyleTransferSettingsType } from '@/types/workflows/styleTransferSettings';
+import type { RenderToCadSettingsType } from '@/types/workflows/renderToCadSettings';
 
 /**
  * Workflow Generation Result Interface
@@ -230,6 +233,37 @@ export function useStyleTransferAdapter(): StandardGenerateHook<StyleTransferSet
 }
 
 /**
+ * Adapter for Render-to-CAD Hook
+ */
+export function useRenderToCadAdapter(): StandardGenerateHook<RenderToCadSettingsType> {
+  const hook = useRenderToCad();
+
+  return {
+    generate: async (params) => {
+      const { prompt, settings, sourceImage } = params;
+
+      // Convert base64 preview string to ImageData format expected by useRenderToCad
+      // useRenderToCad expects: { file: File | null, preview: string | null }
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
+        file: null, // File object not needed for generation, only preview
+        preview: sourceImage, // Base64 data URL
+      } : {file: null, preview: null};
+
+      const result = await hook.generate(
+        prompt,
+        sourceImageData as any,
+        settings as RenderToCadSettingsType
+      );
+
+      return result;
+    },
+    isGenerating: hook.isGenerating,
+    error: hook.error,
+    progress: hook.progress,
+  };
+}
+
+/**
  * Adapter for Prompt Enhancer Hook
  */
 export function usePromptEnhancerAdapter(
@@ -259,6 +293,46 @@ export function usePromptEnhancerAdapter(
         prompt,
         sourceImageData as any,
         settings
+      );
+
+      return result || prompt;
+    },
+    isEnhancing: hook.isEnhancing,
+    error: hook.error,
+  };
+}
+
+/**
+ * Adapter for Render-to-CAD Prompt Enhancer Hook
+ * Uses workflow-specific endpoint: /api/render-to-cad/generate-prompt
+ */
+export function useRenderToCadEnhancerAdapter(
+  sourceImage: string | null,
+  settings: Record<string, unknown>
+): StandardEnhanceHook {
+  const hook = useRenderToCadEnhancer();
+
+  return {
+    enhance: async (prompt: string) => {
+      if (!sourceImage) {
+        return prompt; // Can't enhance without source image
+      }
+
+      // Convert base64 to File object for validation
+      const response = await fetch(sourceImage);
+      const blob = await response.blob();
+      const file = new File([blob], 'source-image.jpg', { type: 'image/jpeg' });
+
+      // Convert to ImageData format expected by useRenderToCadEnhancer
+      const sourceImageData = {
+        file,
+        preview: sourceImage,
+      };
+
+      const result = await hook.enhancePrompt(
+        prompt,
+        sourceImageData as any,
+        settings as RenderToCadSettingsType
       );
 
       return result || prompt;
