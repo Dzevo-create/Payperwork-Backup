@@ -177,9 +177,9 @@ export function SlidesWorkflowContainer() {
 
   return (
     <div className="w-full h-full flex gap-6 overflow-hidden">
-      {/* Messages Area (left side, flex-1) */}
+      {/* Messages Area (left/center) */}
       <div
-        className={`flex flex-col ${showPreview ? 'flex-1' : 'w-full'} overflow-hidden`}
+        className={`flex flex-col ${showPreview || showComputerPanel ? 'flex-1' : 'w-full'} overflow-hidden`}
       >
         {/* Welcome or Messages */}
         {!hasMessages ? (

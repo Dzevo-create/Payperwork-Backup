@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
 import { UserMessage } from './messages/UserMessage';
 import { ThinkingMessage } from './messages/ThinkingMessage';
+import { EnhancedThinkingMessage } from './messages/EnhancedThinkingMessage';
 import { TopicsMessage } from './messages/TopicsMessage';
 import { GenerationMessage } from './messages/GenerationMessage';
 import { ResultMessage } from './messages/ResultMessage';
@@ -42,7 +43,8 @@ export function SlidesMessageList() {
             case 'user':
               return <UserMessage key={message.id} message={message} />;
             case 'thinking':
-              return <ThinkingMessage key={message.id} message={message} />;
+              // Use Enhanced Thinking Message for better UX
+              return <EnhancedThinkingMessage key={message.id} message={message} />;
             case 'topics':
               return <TopicsMessage key={message.id} message={message} />;
             case 'generation':
