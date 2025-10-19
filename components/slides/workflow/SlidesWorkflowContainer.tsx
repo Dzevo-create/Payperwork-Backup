@@ -64,6 +64,115 @@ export function SlidesWorkflowContainer() {
     }
   }, [currentPrompt]);
 
+  const pollTaskStatus = async (taskId: string) => {
+    console.log('🔄 Starting to poll task status for:', taskId);
+    let lastThinkingContent = '';
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/slides/manus-task/${taskId}`);
+        const data = await response.json();
+
+        if (!data.success) {
+          console.error('Failed to fetch task status:', data.error);
+          return;
+        }
+
+        const taskStatus = data.data;
+        console.log('📊 Task status:', taskStatus.status);
+
+        // Display thinking steps/analysis in real-time
+        if (taskStatus.output && typeof taskStatus.output === 'string') {
+          const thinkingContent = taskStatus.output;
+
+          // Only update if content changed
+          if (thinkingContent !== lastThinkingContent) {
+            lastThinkingContent = thinkingContent;
+
+            // Find and update existing thinking message
+            const messages = useSlidesStore.getState().messages;
+            const thinkingMsgIndex = messages.findIndex(m => m.type === 'thinking');
+
+            if (thinkingMsgIndex !== -1) {
+              const thinkingMsg = messages[thinkingMsgIndex];
+              useSlidesStore.getState().updateMessage(thinkingMsg.id, {
+                content: thinkingContent,
+              });
+            }
+          }
+        }
+
+        // Check if task completed
+        if (taskStatus.status === 'completed') {
+          clearInterval(pollInterval);
+          console.log('✅ Task completed!');
+
+          // Parse topics from output
+          try {
+            let topicsArray: string[] = [];
+
+            // Try to parse JSON from output
+            if (taskStatus.output) {
+              const jsonMatch = taskStatus.output.match(/\[[\s\S]*?\]/);
+              if (jsonMatch) {
+                topicsArray = JSON.parse(jsonMatch[0]);
+              }
+            }
+
+            // Add topics message
+            addMessage({
+              id: `msg-topics-${Date.now()}`,
+              type: 'topics',
+              content: {
+                topics: topicsArray,
+              },
+              timestamp: new Date().toISOString(),
+            });
+
+            setGenerationStatus('idle');
+          } catch (parseError) {
+            console.error('Error parsing topics:', parseError);
+
+            // Add error message
+            addMessage({
+              id: `msg-error-${Date.now()}`,
+              type: 'result',
+              content: {
+                error: 'Failed to parse generated topics',
+              },
+              timestamp: new Date().toISOString(),
+            });
+
+            setGenerationStatus('error');
+          }
+        } else if (taskStatus.status === 'failed') {
+          clearInterval(pollInterval);
+          console.error('❌ Task failed:', taskStatus.error);
+
+          // Add error message
+          addMessage({
+            id: `msg-error-${Date.now()}`,
+            type: 'result',
+            content: {
+              error: taskStatus.error || 'Task failed',
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          setGenerationStatus('error');
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    // Safety: Clear interval after 5 minutes (timeout)
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      console.log('⏰ Polling timeout after 5 minutes');
+    }, 5 * 60 * 1000);
+  };
+
   const handleSendMessage = async () => {
     if (!currentPrompt.trim()) return;
 
@@ -82,7 +191,7 @@ export function SlidesWorkflowContainer() {
     addMessage({
       id: `msg-thinking-${Date.now()}`,
       type: 'thinking',
-      content: 'Analyzing topic and creating outline...',
+      content: 'Connecting to Manus AI...',
       timestamp: new Date().toISOString(),
     });
 
@@ -90,10 +199,20 @@ export function SlidesWorkflowContainer() {
 
     // Call API to generate topics
     try {
+      // Get userId from localStorage, fallback to dev user
+      let userId = localStorage.getItem('userId');
+
+      // Development fallback (wie bei anderen Features)
+      if (!userId) {
+        userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('userId', userId);
+        console.log('🔧 Dev mode: Created temporary userId:', userId);
+      }
+
       const response = await fetch('/api/slides/workflow/generate-topics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: message, format, theme }),
+        body: JSON.stringify({ prompt: message, format, theme, userId }),
       });
 
       if (!response.ok) {
@@ -102,8 +221,11 @@ export function SlidesWorkflowContainer() {
 
       const data = await response.json();
 
-      if (data.success) {
-        console.log('Topic generation started');
+      if (data.success && data.data?.taskId) {
+        console.log('✅ Topic generation started, taskId:', data.data.taskId);
+
+        // Start polling for task updates
+        pollTaskStatus(data.data.taskId);
       }
     } catch (error) {
       console.error('Error generating topics:', error);

@@ -16,6 +16,7 @@ import {
   emitSlidePreviewUpdate,
   emitPresentationReady,
   emitPresentationError,
+  emitTopicsGenerated,
 } from "@/lib/socket/server";
 import crypto from "crypto";
 
@@ -69,30 +70,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 });
     }
 
-    // Get presentation
-    const { data: presentation } = await supabase
-      .from("presentations")
-      .select("user_id, id")
-      .eq("id", manusTask.presentation_id)
-      .single();
+    const taskType = manusTask.task_type;
+    const userId = manusTask.user_id;
 
-    if (!presentation) {
-      return NextResponse.json({ success: false, error: "Presentation not found" }, { status: 404 });
-    }
+    // ========== Route based on task type ==========
+    if (taskType === "generate_topics") {
+      // Handle topics generation events
+      switch (webhookData.event_type) {
+        case "task_started":
+          return handleTopicsTaskStarted(supabase, userId, taskId, webhookData);
+        case "task_updated":
+          return handleTopicsTaskUpdated(supabase, userId, taskId, webhookData);
+        case "task_stopped":
+          return handleTopicsTaskStopped(supabase, userId, taskId, manusTask, webhookData);
+        default:
+          return NextResponse.json({ success: true, message: "Event acknowledged" });
+      }
+    } else if (taskType === "generate_slides") {
+      // Handle slides generation events (existing logic)
+      // Get presentation
+      const { data: presentation } = await supabase
+        .from("presentations")
+        .select("user_id, id")
+        .eq("id", manusTask.presentation_id)
+        .single();
 
-    const userId = presentation.user_id;
-    const presentationId = presentation.id;
+      if (!presentation) {
+        return NextResponse.json({ success: false, error: "Presentation not found" }, { status: 404 });
+      }
 
-    // ========== Handle different event types ==========
-    switch (webhookData.event_type) {
-      case "task_started":
-        return handleTaskStarted(supabase, userId, presentationId, taskId, webhookData);
-      case "task_updated":
-        return handleTaskUpdated(supabase, userId, presentationId, taskId, webhookData);
-      case "task_stopped":
-        return handleTaskStopped(supabase, userId, presentationId, taskId, manusTask, webhookData);
-      default:
-        return NextResponse.json({ success: true, message: "Event acknowledged" });
+      const presentationId = presentation.id;
+
+      switch (webhookData.event_type) {
+        case "task_started":
+          return handleTaskStarted(supabase, userId, presentationId, taskId, webhookData);
+        case "task_updated":
+          return handleTaskUpdated(supabase, userId, presentationId, taskId, webhookData);
+        case "task_stopped":
+          return handleTaskStopped(supabase, userId, presentationId, taskId, manusTask, webhookData);
+        default:
+          return NextResponse.json({ success: true, message: "Event acknowledged" });
+      }
+    } else {
+      return NextResponse.json({ success: false, error: "Unknown task type" }, { status: 400 });
     }
   } catch (error: any) {
     console.error("Error in webhook endpoint:", error);
@@ -217,5 +237,197 @@ async function handleTaskStopped(
     await supabase.from("presentations").update({ status: "error" }).eq("id", presentationId);
     emitGenerationError(userId, presentationId, parseError.message, "parsing");
     return NextResponse.json({ success: false, error: `Failed to parse slides: ${parseError.message}` }, { status: 500 });
+  }
+}
+
+// ============================================
+// Topics Event Handlers
+// ============================================
+
+async function handleTopicsTaskStarted(
+  supabase: any,
+  userId: string,
+  taskId: string,
+  webhookData: any
+) {
+  console.log(`Topics task started: ${taskId}`);
+
+  await supabase
+    .from("manus_tasks")
+    .update({ status: "running", webhook_data: webhookData })
+    .eq("task_id", taskId);
+
+  emitGenerationStatus(userId, {
+    status: "thinking",
+    message: "AI analysiert dein Thema...",
+  });
+
+  emitThinkingStepUpdate(userId, {
+    id: "step-init",
+    title: "Themen-Analyse gestartet",
+    status: "running",
+    description: "AI beginnt mit der Analyse deines Themas...",
+    actions: [],
+    startedAt: new Date().toISOString(),
+  });
+
+  return NextResponse.json({ success: true, message: "Topics task started event processed" });
+}
+
+async function handleTopicsTaskUpdated(
+  supabase: any,
+  userId: string,
+  taskId: string,
+  webhookData: any
+) {
+  console.log(`Topics task updated: ${taskId}`);
+
+  // ========== DETAILED LOGGING ==========
+  console.log("=== TOPICS WEBHOOK PAYLOAD ===");
+  console.log(JSON.stringify(webhookData, null, 2));
+  console.log("==============================");
+
+  await supabase
+    .from("manus_tasks")
+    .update({ webhook_data: webhookData })
+    .eq("task_id", taskId);
+
+  // Emit thinking steps
+  if (webhookData.thinking_steps) {
+    for (const step of webhookData.thinking_steps) {
+      emitThinkingStepUpdate(userId, step);
+    }
+  }
+
+  // Emit tool use (search, browse, python)
+  if (webhookData.thinking_action) {
+    const action = webhookData.thinking_action;
+    emitThinkingActionAdd(userId, action.step_id, {
+      id: action.id,
+      type: action.type,
+      text: action.text,
+      timestamp: action.timestamp,
+    });
+  }
+
+  // Emit progress updates
+  if (webhookData.progress !== undefined) {
+    emitGenerationStatus(userId, {
+      status: "thinking",
+      message: webhookData.current_step || "Analysiere Thema...",
+    });
+  }
+
+  return NextResponse.json({ success: true, message: "Topics task updated event processed" });
+}
+
+async function handleTopicsTaskStopped(
+  supabase: any,
+  userId: string,
+  taskId: string,
+  manusTask: any,
+  webhookData: any
+) {
+  console.log(`Topics task stopped: ${taskId}`);
+
+  // Update task status
+  await supabase
+    .from("manus_tasks")
+    .update({
+      status: webhookData.stop_reason === "finish" ? "completed" : "failed",
+      webhook_data: webhookData,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("task_id", taskId);
+
+  // Handle failure
+  if (webhookData.stop_reason !== "finish") {
+    console.error("Topics generation failed:", webhookData.stop_reason);
+    emitGenerationStatus(userId, {
+      status: "error",
+      message: "Themen-Generierung fehlgeschlagen",
+    });
+    emitGenerationError(userId, null, webhookData.stop_reason || "Unknown error");
+    return NextResponse.json({ success: true, message: "Topics task failure recorded" });
+  }
+
+  // Parse topics from output
+  try {
+    let topics: string[] = [];
+
+    // Try to extract topics from webhook data
+    if (webhookData.output) {
+      const outputStr = typeof webhookData.output === "string"
+        ? webhookData.output
+        : JSON.stringify(webhookData.output);
+
+      // Try to extract JSON array from output
+      const jsonMatch = outputStr.match(/\[\s*"[^"]+"\s*(?:,\s*"[^"]+"\s*)*\]/);
+      if (jsonMatch) {
+        topics = JSON.parse(jsonMatch[0]);
+      } else {
+        // Fallback: split by newlines and clean
+        topics = outputStr
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0 && line.length <= 100)
+          .slice(0, 10);
+      }
+    }
+
+    // Validate: exactly 10 topics
+    if (topics.length === 0 || topics.length !== 10) {
+      console.warn(`Invalid topics count: ${topics.length}, using fallback`);
+      topics = [
+        "Einführung",
+        "Hintergrund",
+        "Hauptkonzepte",
+        "Wichtige Merkmale",
+        "Anwendungsfälle",
+        "Vorteile",
+        "Herausforderungen",
+        "Best Practices",
+        "Zukunftstrends",
+        "Zusammenfassung",
+      ];
+    }
+
+    // Store topics in database
+    await supabase
+      .from("manus_tasks")
+      .update({ output: { topics } })
+      .eq("task_id", taskId);
+
+    // Emit topics via WebSocket
+    const messageId = `msg-${Date.now()}-topics`;
+    emitTopicsGenerated(userId, {
+      topics,
+      messageId,
+    });
+
+    console.log("✅ Topics generated and emitted:", topics.length);
+
+    return NextResponse.json({
+      success: true,
+      message: "Topics generated successfully",
+      data: { topics_count: topics.length },
+    });
+  } catch (parseError: any) {
+    console.error("Error parsing topics:", parseError);
+
+    // Update task with error
+    await supabase
+      .from("manus_tasks")
+      .update({
+        status: "failed",
+        error: parseError.message,
+      })
+      .eq("task_id", taskId);
+
+    emitGenerationError(userId, null, parseError.message, "parsing");
+    return NextResponse.json(
+      { success: false, error: `Failed to parse topics: ${parseError.message}` },
+      { status: 500 }
+    );
   }
 }
