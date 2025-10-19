@@ -224,6 +224,16 @@ export function ChatLayout() {
 
   // Handle new chat (ChatGPT/Claude behavior)
   const handleNewChat = () => {
+    // If we're in slides workflow, navigate to chat first
+    if (workflow === 'slides') {
+      router.push('/chat');
+      // State will be reset after navigation
+      setCurrentConversationId(null);
+      setMessages([]);
+      conversationCreatedRef.current = false;
+      return;
+    }
+
     // If current chat is empty (no messages), do nothing - we're already in a fresh chat
     if (messages.length === 0) {
       return;
@@ -261,18 +271,12 @@ export function ChatLayout() {
       // Mark as restored FIRST to prevent useEffect from interfering
       hasRestoredRef.current = true;
 
-      // If we need to navigate, do it in a way that preserves state
-      if (pathname !== "/chat") {
-        chatLogger.debug('🔀 Navigating to /chat');
-        // setCurrentConversationId already loads messages from store, no need to call setMessages
-        setCurrentConversationId(conv.id);
-        // Navigate after state is set
-        router.push("/chat");
-      } else {
-        // Already on chat page, just update state
-        // setCurrentConversationId already loads messages from store
-        setCurrentConversationId(conv.id);
-      }
+      // Always navigate to /chat (this will remove any workflow query params)
+      chatLogger.debug('🔀 Navigating to /chat');
+      // setCurrentConversationId already loads messages from store, no need to call setMessages
+      setCurrentConversationId(conv.id);
+      // Navigate after state is set (this removes ?workflow=slides if present)
+      router.push("/chat");
 
       chatLogger.info('Conversation loaded:');
     } else {
