@@ -1,6 +1,6 @@
 "use client";
 
-import { FilePresentation, Sparkles, Zap, Layout } from "lucide-react";
+import { Presentation, Sparkles, Zap, Layout } from "lucide-react";
 
 export default function SlidesEmptyState() {
   return (
@@ -10,7 +10,7 @@ export default function SlidesEmptyState() {
         <div className="flex justify-center">
           <div className="relative">
             <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <FilePresentation className="w-10 h-10 text-primary" />
+              <Presentation className="w-10 h-10 text-primary" />
             </div>
             <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
               <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
@@ -56,7 +56,7 @@ export default function SlidesEmptyState() {
 
           <div className="flex items-start gap-3 text-left p-3 rounded-lg bg-background/50 border">
             <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-              <FilePresentation className="w-4 h-4 text-green-500" />
+              <Presentation className="w-4 h-4 text-green-500" />
             </div>
             <div>
               <div className="font-medium">Export Options</div>

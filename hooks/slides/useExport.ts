@@ -1,13 +1,11 @@
 // ============================================
 // Export Hook
-// Version: 1.0
+// Version: 1.0 (Placeholder - Export via API)
 // Date: 2025-10-19
 // ============================================
 
 import { useState } from "react";
 import { Presentation, Slide, ExportFormat } from "@/types/slides";
-import { exportToPDF } from "@/lib/export/pdf-exporter";
-import { exportToPPTX } from "@/lib/export/pptx-exporter";
 import { useToast } from "@/hooks/useToast";
 
 /**
@@ -22,6 +20,7 @@ export function useExport() {
 
   /**
    * Export presentation
+   * NOTE: This currently uses a placeholder. In production, exports should be handled via API route.
    *
    * @param format - Export format (pdf or pptx)
    * @param presentation - Presentation metadata
@@ -38,41 +37,24 @@ export function useExport() {
     setExportProgress(0);
 
     try {
-      if (format === "pdf") {
-        if (!slideElements || slideElements.length === 0) {
-          throw new Error("Slide elements required for PDF export");
-        }
+      toast({
+        title: `${format.toUpperCase()} Export`,
+        description: "Export functionality coming soon! This will use an API endpoint.",
+      });
 
-        toast({
-          title: "PDF wird erstellt...",
-          description: `${slides.length} Slides werden exportiert`,
-        });
+      // TODO: Implement API-based export
+      // Example:
+      // const response = await fetch('/api/slides/export', {
+      //   method: 'POST',
+      //   body: JSON.stringify({ presentationId: presentation.id, format })
+      // });
 
-        // Export to PDF
-        await exportToPDF(presentation, slides, slideElements);
+      setExportProgress(100);
 
-        setExportProgress(100);
-
-        toast({
-          title: "PDF erfolgreich erstellt!",
-          description: "Der Download wurde gestartet.",
-        });
-      } else if (format === "pptx") {
-        toast({
-          title: "PPTX wird erstellt...",
-          description: `${slides.length} Slides werden exportiert`,
-        });
-
-        // Export to PPTX
-        await exportToPPTX(presentation, slides);
-
-        setExportProgress(100);
-
-        toast({
-          title: "PPTX erfolgreich erstellt!",
-          description: "Der Download wurde gestartet.",
-        });
-      }
+      toast({
+        title: "Feature Coming Soon",
+        description: `${format.toUpperCase()} export will be available in the next update.`,
+      });
     } catch (error) {
       console.error("Export failed:", error);
 

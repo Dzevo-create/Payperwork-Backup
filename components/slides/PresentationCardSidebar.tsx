@@ -3,7 +3,7 @@
 import { Presentation } from "@/types/slides";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertCircle, Trash2, FilePresentation } from "lucide-react";
+import { Loader2, AlertCircle, Trash2, Presentation as PresentationIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -70,7 +70,7 @@ export default function PresentationCardSidebar({
           className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: `${getThemeColor()}20` }}
         >
-          <FilePresentation
+          <PresentationIcon
             className="w-4 h-4"
             style={{ color: getThemeColor() }}
           />
