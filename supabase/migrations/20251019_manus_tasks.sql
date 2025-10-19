@@ -47,29 +47,28 @@ CREATE TRIGGER trigger_update_manus_tasks_updated_at
 -- Enable Row Level Security (RLS)
 ALTER TABLE manus_tasks ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policy: Users can only see their own tasks
-CREATE POLICY "Users can view own manus tasks"
+-- Create permissive policies for development (no auth.uid() dependency)
+-- These allow all operations for service role and development users
+
+CREATE POLICY "Allow all select on manus_tasks"
   ON manus_tasks
   FOR SELECT
-  USING (user_id = auth.uid()::text);
+  USING (true);
 
--- Create RLS policy: Users can insert their own tasks
-CREATE POLICY "Users can insert own manus tasks"
+CREATE POLICY "Allow all insert on manus_tasks"
   ON manus_tasks
   FOR INSERT
-  WITH CHECK (user_id = auth.uid()::text);
+  WITH CHECK (true);
 
--- Create RLS policy: Users can update their own tasks
-CREATE POLICY "Users can update own manus tasks"
+CREATE POLICY "Allow all update on manus_tasks"
   ON manus_tasks
   FOR UPDATE
-  USING (user_id = auth.uid()::text);
+  USING (true);
 
--- Create RLS policy: Users can delete their own tasks
-CREATE POLICY "Users can delete own manus tasks"
+CREATE POLICY "Allow all delete on manus_tasks"
   ON manus_tasks
   FOR DELETE
-  USING (user_id = auth.uid()::text);
+  USING (true);
 
 -- Comment on table
 COMMENT ON TABLE manus_tasks IS 'Stores Manus API tasks for topics and slides generation with real-time status updates';
