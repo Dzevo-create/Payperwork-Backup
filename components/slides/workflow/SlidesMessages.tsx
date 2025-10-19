@@ -21,28 +21,30 @@ export function SlidesMessages() {
   const messages = useSlidesStore((state) => state.messages);
 
   return (
-    <div className="space-y-6 p-6 max-w-4xl mx-auto">
-      {messages.map((message) => {
-        switch (message.type) {
-          case 'user':
-            return <UserMessage key={message.id} message={message} />;
+    <div className="px-3 sm:px-4 md:px-6 py-6">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+        {messages.map((message) => {
+          switch (message.type) {
+            case 'user':
+              return <UserMessage key={message.id} message={message} />;
 
-          case 'thinking':
-            return <ThinkingMessage key={message.id} message={message} />;
+            case 'thinking':
+              return <ThinkingMessage key={message.id} message={message} />;
 
-          case 'topics':
-            return <TopicsMessage key={message.id} message={message} />;
+            case 'topics':
+              return <TopicsMessage key={message.id} message={message} />;
 
-          case 'generation':
-            return <GenerationMessage key={message.id} message={message} />;
+            case 'generation':
+              return <GenerationMessage key={message.id} message={message} />;
 
-          case 'result':
-            return <ResultMessage key={message.id} message={message} />;
+            case 'result':
+              return <ResultMessage key={message.id} message={message} />;
 
-          default:
-            return null;
-        }
-      })}
+            default:
+              return null;
+          }
+        })}
+      </div>
     </div>
   );
 }
