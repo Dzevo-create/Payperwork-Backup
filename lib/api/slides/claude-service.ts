@@ -13,11 +13,24 @@ import {
   emitGenerationCompleted,
   emitGenerationError,
 } from '@/lib/socket/server';
+import { createClient } from '@supabase/supabase-js';
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 });
+
+// Initialize Supabase client (admin)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
 
 export interface GenerateTopicsOptions {
   prompt: string;
@@ -234,7 +247,44 @@ Regeln:
 
     console.log('✅ Slides generation completed. Generated', slideCount, 'slides');
 
-    // Step 4: Emit completion
+    // Step 4: Save slides to database
+    if (slides.length > 0) {
+      const slidesData = slides.map((slide, index) => ({
+        presentation_id: presentationId,
+        order_index: slide.order || index + 1,
+        title: slide.title,
+        content: slide.content,
+        layout: slide.layout || 'title_content',
+      }));
+
+      const { error: slidesError } = await supabaseAdmin
+        .from('slides')
+        .insert(slidesData);
+
+      if (slidesError) {
+        console.error('Error saving slides to database:', slidesError);
+        // Don't throw - slides were generated successfully, just log the error
+      } else {
+        console.log('✅ Saved', slides.length, 'slides to database');
+      }
+
+      // Update presentation status and slide_count
+      const { error: updateError } = await supabaseAdmin
+        .from('presentations')
+        .update({
+          status: 'ready',
+          slide_count: slideCount,
+        })
+        .eq('id', presentationId);
+
+      if (updateError) {
+        console.error('Error updating presentation status:', updateError);
+      } else {
+        console.log('✅ Updated presentation status to ready');
+      }
+    }
+
+    // Step 5: Emit completion
     emitGenerationCompleted(userId, presentationId, slideCount);
 
     return slides;
