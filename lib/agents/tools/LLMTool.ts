@@ -31,7 +31,7 @@ export interface LLMToolInput {
   /** System prompt (optional) */
   systemPrompt?: string;
 
-  /** Model to use (default: claude-3-5-sonnet-20241022) */
+  /** Model to use (default: claude-sonnet-4-5-20250929) */
   model?: string;
 
   /** Temperature (0-1, default: 0.7) */
@@ -111,7 +111,7 @@ export class LLMTool extends BaseTool<LLMToolInput, LLMToolOutput> {
       const {
         prompt,
         systemPrompt,
-        model = 'claude-3-5-sonnet-20241022',
+        model = 'claude-sonnet-4-5-20250929',
         temperature = 0.7,
         maxTokens = 4096,
         stream = false,

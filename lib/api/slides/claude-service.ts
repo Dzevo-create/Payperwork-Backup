@@ -6,14 +6,25 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import {
-  emitThinkingMessage,
-  emitTopicsGenerated,
-  emitSlidePreviewUpdate,
-  emitGenerationCompleted,
-  emitGenerationError,
-} from '@/lib/socket/server';
 import { createClient } from '@supabase/supabase-js';
+
+// Safe Socket.IO imports (optional - won't crash if not available)
+let emitThinkingMessage: Function | undefined;
+let emitTopicsGenerated: Function | undefined;
+let emitSlidePreviewUpdate: Function | undefined;
+let emitGenerationCompleted: Function | undefined;
+let emitGenerationError: Function | undefined;
+
+try {
+  const socketServer = require('@/lib/socket/server');
+  emitThinkingMessage = socketServer.emitThinkingMessage;
+  emitTopicsGenerated = socketServer.emitTopicsGenerated;
+  emitSlidePreviewUpdate = socketServer.emitSlidePreviewUpdate;
+  emitGenerationCompleted = socketServer.emitGenerationCompleted;
+  emitGenerationError = socketServer.emitGenerationError;
+} catch (error) {
+  console.warn('Socket.IO server functions not available (this is OK for development)');
+}
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -63,14 +74,14 @@ export async function generateTopics(options: GenerateTopicsOptions) {
     console.log('Prompt:', prompt);
 
     // Step 1: Emit thinking step
-    emitThinkingMessage(userId, {
+    emitThinkingMessage?.(userId, {
       content: 'Analysiere dein Thema und plane die Präsentationsstruktur...',
       messageId: `thinking-topics-${Date.now()}`,
     });
 
     // Step 2: Call Claude API
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
       temperature: 0.7,
       messages: [{
@@ -133,7 +144,7 @@ Regeln:
     console.log('✅ Generated', topics.length, 'topics');
 
     // Step 4: Emit topics via WebSocket
-    emitTopicsGenerated(userId, {
+    emitTopicsGenerated?.(userId, {
       topics,
       messageId: `topics-${Date.now()}`,
     });
@@ -142,7 +153,7 @@ Regeln:
 
   } catch (error) {
     console.error('Error generating topics:', error);
-    emitGenerationError(userId, '', error instanceof Error ? error.message : 'Unknown error');
+    emitGenerationError?.(userId, '', error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 }
@@ -166,7 +177,7 @@ export async function generateSlides(options: GenerateSlidesOptions) {
     console.log('Topics:', topics.length);
 
     // Step 1: Emit thinking step
-    emitThinkingMessage(userId, {
+    emitThinkingMessage?.(userId, {
       content: 'Erstelle detaillierte Inhalte für jede Folie...',
       messageId: `thinking-slides-${Date.now()}`,
     });
@@ -232,7 +243,7 @@ Regeln:
           console.log(`✅ Generated slide ${slideCount}/${topics.length}: ${slide.title}`);
 
           // Emit slide preview via WebSocket
-          emitSlidePreviewUpdate(userId, presentationId, slide);
+          emitSlidePreviewUpdate?.(userId, presentationId, slide);
 
           currentSlide = '';
         } catch (error) {
@@ -285,13 +296,13 @@ Regeln:
     }
 
     // Step 5: Emit completion
-    emitGenerationCompleted(userId, presentationId, slideCount);
+    emitGenerationCompleted?.(userId, presentationId, slideCount);
 
     return slides;
 
   } catch (error) {
     console.error('Error generating slides:', error);
-    emitGenerationError(
+    emitGenerationError?.(
       userId,
       presentationId,
       error instanceof Error ? error.message : 'Unknown error'
