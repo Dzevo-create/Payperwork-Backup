@@ -14,7 +14,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
 import { useUser } from '@/hooks/useUser';
 import { SlidesWelcome } from './SlidesWelcome';
@@ -22,18 +22,7 @@ import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
 import { SlidesComputerPanel } from '../computer/SlidesComputerPanel';
 import { AgentStatusIndicator } from '../AgentStatusIndicator';
-import { Settings, Mic, Send, Plus, Monitor, Sparkles, Upload } from 'lucide-react';
-import { PromptGeneratorModal } from './PromptGeneratorModal';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { FORMAT_OPTIONS, THEME_OPTIONS } from '@/constants/slides';
-import { PresentationFormat, PresentationTheme } from '@/types/slides';
+import { SlidesInput } from './SlidesInput';
 
 export function SlidesWorkflowContainer() {
   const messages = useSlidesStore((state) => state.messages);
@@ -60,11 +49,6 @@ export function SlidesWorkflowContainer() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPromptGeneratorOpen, setIsPromptGeneratorOpen] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -188,39 +172,9 @@ export function SlidesWorkflowContainer() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const toggleDropdown = () => {
-    setShowDropdown(!showDropdown);
-  };
-
-  const handleMicClick = () => {
-    setIsRecording(!isRecording);
-    // TODO: Implement voice recording
-    console.log('Mic clicked');
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const hasMessages = messages.length > 0;
   const isGenerating =
     generationStatus === 'thinking' || generationStatus === 'generating';
-  const isDisabled = !currentPrompt.trim() || isGenerating;
 
   return (
     <div className="w-full h-full flex gap-6 overflow-hidden">
@@ -247,152 +201,20 @@ export function SlidesWorkflowContainer() {
           </div>
         )}
 
-        {/* ChatInput (1:1 EXACT COPY from Chat) */}
-        <div className="px-3 sm:px-4 md:px-6 py-4 bg-transparent">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex flex-col gap-2 px-3 py-2 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-lg border border-pw-black/10 rounded-2xl shadow-lg transition-all focus-within:ring-2 focus-within:ring-pw-accent/50 relative">
-
-              {/* Main Input Row */}
-              <div className="flex items-center gap-2">
-
-                {/* Plus Button (Settings Dropdown) */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={toggleDropdown}
-                    disabled={isGenerating}
-                    className="flex-shrink-0 p-2 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Einstellungen"
-                  >
-                    <Plus className="w-4 h-4 text-pw-black/60" />
-                  </button>
-
-                  {/* Settings Dropdown */}
-                  {showDropdown && (
-                    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-lg shadow-lg border border-pw-black/10 py-2 z-50">
-                      <div className="px-4 py-2 border-b border-pw-black/10">
-                        <h4 className="font-semibold text-sm text-pw-black">Einstellungen</h4>
-                      </div>
-
-                      <div className="px-4 py-3 space-y-3">
-                        {/* Format */}
-                        <div className="space-y-1.5">
-                          <Label htmlFor="format" className="text-xs text-pw-black/70">Format</Label>
-                          <Select
-                            value={format}
-                            onValueChange={(v) => {
-                              setFormat(v as PresentationFormat);
-                              setShowDropdown(false);
-                            }}
-                            disabled={isGenerating}
-                          >
-                            <SelectTrigger id="format" className="h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {FORMAT_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value} className="text-xs">
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Theme */}
-                        <div className="space-y-1.5">
-                          <Label htmlFor="theme" className="text-xs text-pw-black/70">Theme</Label>
-                          <Select
-                            value={theme}
-                            onValueChange={(v) => {
-                              setTheme(v as PresentationTheme);
-                              setShowDropdown(false);
-                            }}
-                            disabled={isGenerating}
-                          >
-                            <SelectTrigger id="theme" className="h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {THEME_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value} className="text-xs">
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Textarea */}
-                <textarea
-                  ref={textareaRef}
-                  value={currentPrompt}
-                  onChange={(e) => setCurrentPrompt(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Was soll deine Präsentation beinhalten?"
-                  className="flex-1 bg-transparent text-sm text-pw-black placeholder:text-pw-black/40 resize-none outline-none min-h-[20px] max-h-[150px] py-1.5"
-                  rows={1}
-                  disabled={isGenerating}
-                />
-
-                {/* Mic Button */}
-                <button
-                  onClick={handleMicClick}
-                  disabled={isGenerating}
-                  className={`flex-shrink-0 p-2 rounded-lg transition-all ${
-                    isRecording
-                      ? "bg-red-500 hover:bg-red-600 animate-pulse"
-                      : "hover:bg-pw-black/5"
-                  }`}
-                  aria-label={isRecording ? "Aufnahme stoppen" : "Spracheingabe"}
-                >
-                  <Mic className={`w-4 h-4 ${isRecording ? "text-white" : "text-pw-black/60"}`} />
-                </button>
-
-                {/* Settings Button (as Type button alternative) */}
-                <button
-                  onClick={toggleDropdown}
-                  disabled={isGenerating}
-                  className="flex-shrink-0 p-2 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-label="Einstellungen"
-                  title="Einstellungen"
-                >
-                  <Settings className="w-4 h-4 text-pw-black/60" />
-                </button>
-
-                {/* NEW: Phase 2 - Computer Panel Toggle Button */}
-                <button
-                  onClick={toggleComputerPanel}
-                  className={`flex-shrink-0 p-2 rounded-lg transition-all ${
-                    showComputerPanel
-                      ? "bg-pw-accent text-pw-black"
-                      : "hover:bg-pw-black/5 text-pw-black/60"
-                  }`}
-                  aria-label="Computer Panel"
-                  title={showComputerPanel ? "Computer Panel schließen" : "Computer Panel öffnen"}
-                >
-                  <Monitor className="w-4 h-4" />
-                  {toolHistory.length > 0 && (
-                    <span className="absolute top-0 right-0 w-2 h-2 bg-pw-accent rounded-full"></span>
-                  )}
-                </button>
-
-                {/* Send Button */}
-                <button
-                  onClick={handleSendMessage}
-                  disabled={isDisabled}
-                  className="flex-shrink-0 p-2 bg-pw-accent hover:bg-pw-accent/90 disabled:bg-pw-black/10 disabled:cursor-not-allowed rounded-lg transition-all hover:scale-105 disabled:hover:scale-100"
-                  aria-label="Senden"
-                >
-                  <Send className="w-4 h-4 text-pw-black" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Slides Input (2-Row Layout with Prompt Generator) */}
+        <SlidesInput
+          currentPrompt={currentPrompt}
+          setCurrentPrompt={setCurrentPrompt}
+          onSend={handleSendMessage}
+          isGenerating={isGenerating}
+          format={format}
+          setFormat={setFormat}
+          theme={theme}
+          setTheme={setTheme}
+          showComputerPanel={showComputerPanel}
+          toggleComputerPanel={toggleComputerPanel}
+          toolHistory={toolHistory}
+        />
       </div>
 
       {/* Preview Panel (right side, conditional) */}
