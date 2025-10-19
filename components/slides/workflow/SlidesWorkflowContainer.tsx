@@ -19,14 +19,7 @@ import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
 import { SlidesWelcome } from './SlidesWelcome';
 import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
-import { Settings, Paperclip, Mic, Send } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Settings, Mic, Send, Plus } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -53,9 +46,9 @@ export function SlidesWorkflowContainer() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [isUploading, setIsUploading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
@@ -136,18 +129,8 @@ export function SlidesWorkflowContainer() {
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setIsUploading(true);
-    // TODO: Implement file upload
-    console.log('Files selected:', files);
-    setTimeout(() => setIsUploading(false), 1000);
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
   };
 
   const handleMicClick = () => {
@@ -155,6 +138,18 @@ export function SlidesWorkflowContainer() {
     // TODO: Implement voice recording
     console.log('Mic clicked');
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const hasMessages = messages.length > 0;
   const isGenerating =
@@ -177,139 +172,133 @@ export function SlidesWorkflowContainer() {
           </div>
         )}
 
-        {/* ChatInput (1:1 wie im Chat) */}
-        <div className="flex-shrink-0 border-t bg-background p-4">
-          <div className="flex items-end gap-2 max-w-4xl mx-auto">
-            {/* Hidden File Input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.pdf"
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-            />
+        {/* ChatInput (1:1 EXACT COPY from Chat) */}
+        <div className="px-3 sm:px-4 md:px-6 py-4 bg-transparent">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex flex-col gap-2 px-3 py-2 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-lg border border-pw-black/10 rounded-2xl shadow-lg transition-all focus-within:ring-2 focus-within:ring-pw-accent/50 relative">
 
-            {/* Settings Button */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
+              {/* Main Input Row */}
+              <div className="flex items-center gap-2">
+
+                {/* Plus Button (Settings Dropdown) */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={toggleDropdown}
+                    disabled={isGenerating}
+                    className="flex-shrink-0 p-2 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Einstellungen"
+                  >
+                    <Plus className="w-4 h-4 text-pw-black/60" />
+                  </button>
+
+                  {/* Settings Dropdown */}
+                  {showDropdown && (
+                    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-lg shadow-lg border border-pw-black/10 py-2 z-50">
+                      <div className="px-4 py-2 border-b border-pw-black/10">
+                        <h4 className="font-semibold text-sm text-pw-black">Einstellungen</h4>
+                      </div>
+
+                      <div className="px-4 py-3 space-y-3">
+                        {/* Format */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="format" className="text-xs text-pw-black/70">Format</Label>
+                          <Select
+                            value={format}
+                            onValueChange={(v) => {
+                              setFormat(v as PresentationFormat);
+                              setShowDropdown(false);
+                            }}
+                            disabled={isGenerating}
+                          >
+                            <SelectTrigger id="format" className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FORMAT_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value} className="text-xs">
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Theme */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="theme" className="text-xs text-pw-black/70">Theme</Label>
+                          <Select
+                            value={theme}
+                            onValueChange={(v) => {
+                              setTheme(v as PresentationTheme);
+                              setShowDropdown(false);
+                            }}
+                            disabled={isGenerating}
+                          >
+                            <SelectTrigger id="theme" className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {THEME_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value} className="text-xs">
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Textarea */}
+                <textarea
+                  ref={textareaRef}
+                  value={currentPrompt}
+                  onChange={(e) => setCurrentPrompt(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Was soll deine Präsentation beinhalten?"
+                  className="flex-1 bg-transparent text-sm text-pw-black placeholder:text-pw-black/40 resize-none outline-none min-h-[20px] max-h-[150px] py-1.5"
+                  rows={1}
                   disabled={isGenerating}
-                  className="flex-shrink-0"
+                />
+
+                {/* Mic Button */}
+                <button
+                  onClick={handleMicClick}
+                  disabled={isGenerating}
+                  className={`flex-shrink-0 p-2 rounded-lg transition-all ${
+                    isRecording
+                      ? "bg-red-500 hover:bg-red-600 animate-pulse"
+                      : "hover:bg-pw-black/5"
+                  }`}
+                  aria-label={isRecording ? "Aufnahme stoppen" : "Spracheingabe"}
+                >
+                  <Mic className={`w-4 h-4 ${isRecording ? "text-white" : "text-pw-black/60"}`} />
+                </button>
+
+                {/* Settings Button (as Type button alternative) */}
+                <button
+                  onClick={toggleDropdown}
+                  disabled={isGenerating}
+                  className="flex-shrink-0 p-2 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Einstellungen"
                   title="Einstellungen"
                 >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" align="start">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Präsentations-Einstellungen</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Format und Theme anpassen
-                    </p>
-                  </div>
+                  <Settings className="w-4 h-4 text-pw-black/60" />
+                </button>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="format">Format</Label>
-                    <Select
-                      value={format}
-                      onValueChange={(v) => setFormat(v as PresentationFormat)}
-                      disabled={isGenerating}
-                    >
-                      <SelectTrigger id="format">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {FORMAT_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="theme">Theme</Label>
-                    <Select
-                      value={theme}
-                      onValueChange={(v) => setTheme(v as PresentationTheme)}
-                      disabled={isGenerating}
-                    >
-                      <SelectTrigger id="theme">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {THEME_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="pt-2 border-t">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Aktuell:</span>
-                      <span className="font-medium">
-                        {format} · {THEME_OPTIONS.find((t) => t.value === theme)?.label}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Upload Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleUploadClick}
-              disabled={isUploading || isGenerating}
-              className="flex-shrink-0"
-              title="Datei hochladen"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-
-            {/* Mic Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleMicClick}
-              disabled={isGenerating}
-              className={`flex-shrink-0 ${isRecording ? 'text-red-500' : ''}`}
-              title="Spracheingabe"
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
-
-            {/* Textarea */}
-            <Textarea
-              ref={textareaRef}
-              placeholder="Was soll deine Präsentation beinhalten?"
-              value={currentPrompt}
-              onChange={(e) => setCurrentPrompt(e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={1}
-              className="flex-1 resize-none min-h-[40px] max-h-[200px]"
-              disabled={isGenerating}
-            />
-
-            {/* Send Button */}
-            <Button
-              onClick={handleSendMessage}
-              disabled={isDisabled}
-              size="icon"
-              className="flex-shrink-0"
-              title="Senden"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+                {/* Send Button */}
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isDisabled}
+                  className="flex-shrink-0 p-2 bg-pw-accent hover:bg-pw-accent/90 disabled:bg-pw-black/10 disabled:cursor-not-allowed rounded-lg transition-all hover:scale-105 disabled:hover:scale-100"
+                  aria-label="Senden"
+                >
+                  <Send className="w-4 h-4 text-pw-black" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
