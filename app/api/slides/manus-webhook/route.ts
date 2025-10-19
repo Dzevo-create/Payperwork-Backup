@@ -1,12 +1,19 @@
 // ============================================
-// API Route: Manus Webhook
+// API Route: Manus Webhook (Phase 2 Enhanced)
 // POST /api/slides/manus-webhook
 // ============================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { parseManusSlidesResponse } from "@/lib/api/slides/slides-parser";
 import {
+  emitGenerationStatus,
+  emitGenerationProgress,
+  emitGenerationCompleted,
+  emitGenerationError,
+  emitThinkingStepUpdate,
+  emitThinkingActionAdd,
+  emitSlidePreviewUpdate,
   emitPresentationReady,
   emitPresentationError,
 } from "@/lib/socket/server";
@@ -15,85 +22,37 @@ import crypto from "crypto";
 /**
  * POST /api/slides/manus-webhook
  *
- * Receive webhook from Manus API when task completes
- *
- * Body:
- * {
- *   "event_type": "task_stopped",
- *   "stop_reason": "finish" | "error" | "user_stopped",
- *   "task_id": "manus_task_id",
- *   "created_at": "2024-01-01T00:00:00Z",
- *   "attachments": [...]
- * }
- *
- * Response:
- * {
- *   "success": true,
- *   "message": "Webhook processed successfully"
- * }
+ * Handles all Manus API webhook events:
+ * - task_started: Emit initial status
+ * - task_updated: Emit real-time progress
+ * - task_stopped: Process final results
  */
 export async function POST(request: NextRequest) {
   try {
-    // Parse webhook body
     const webhookData = await request.json();
 
-    // Verify webhook signature (if secret is configured)
+    // Verify webhook signature
     const webhookSecret = process.env.MANUS_WEBHOOK_SECRET;
     if (webhookSecret) {
       const signature = request.headers.get("x-manus-signature");
       if (!signature) {
-        console.error("Missing webhook signature");
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Missing signature",
-          },
-          { status: 401 }
-        );
+        return NextResponse.json({ success: false, error: "Missing signature" }, { status: 401 });
       }
 
-      // Verify signature
       const body = JSON.stringify(webhookData);
-      const expectedSignature = crypto
-        .createHmac("sha256", webhookSecret)
-        .update(body)
-        .digest("hex");
+      const expectedSignature = crypto.createHmac("sha256", webhookSecret).update(body).digest("hex");
 
       if (signature !== expectedSignature) {
-        console.error("Invalid webhook signature");
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Invalid signature",
-          },
-          { status: 401 }
-        );
+        return NextResponse.json({ success: false, error: "Invalid signature" }, { status: 401 });
       }
     }
 
-    // Validate webhook event type
-    if (webhookData.event_type !== "task_stopped") {
-      console.log(`Ignoring webhook event: ${webhookData.event_type}`);
-      return NextResponse.json({
-        success: true,
-        message: "Event acknowledged",
-      });
-    }
-
-    // Extract task_id
     const taskId = webhookData.task_id;
     if (!taskId) {
-      console.error("Missing task_id in webhook");
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Missing task_id",
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Missing task_id" }, { status: 400 });
     }
 
-    // Create Supabase admin client (bypass RLS)
+    // Create Supabase admin client
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -107,131 +66,151 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (taskError || !manusTask) {
-      console.error("Manus task not found:", taskId);
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Task not found",
-        },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 });
     }
 
-    // Update manus_task with webhook data
-    await supabase
-      .from("manus_tasks")
-      .update({
-        status: webhookData.stop_reason === "finish" ? "completed" : "failed",
-        webhook_data: webhookData,
-      })
-      .eq("task_id", taskId);
+    // Get presentation
+    const { data: presentation } = await supabase
+      .from("presentations")
+      .select("user_id, id")
+      .eq("id", manusTask.presentation_id)
+      .single();
 
-    // Handle based on stop reason
-    if (webhookData.stop_reason !== "finish") {
-      // Task failed or was stopped
-      console.error(`Task ${taskId} stopped with reason: ${webhookData.stop_reason}`);
-
-      // Update presentation status to error
-      await supabase
-        .from("presentations")
-        .update({ status: "error" })
-        .eq("id", manusTask.presentation_id);
-
-      // Get presentation to find user_id
-      const { data: presentation } = await supabase
-        .from("presentations")
-        .select("user_id")
-        .eq("id", manusTask.presentation_id)
-        .single();
-
-      // Emit error event via WebSocket
-      if (presentation) {
-        emitPresentationError(
-          presentation.user_id,
-          manusTask.presentation_id,
-          webhookData.stop_reason || "Unknown error"
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: "Task failure recorded",
-      });
+    if (!presentation) {
+      return NextResponse.json({ success: false, error: "Presentation not found" }, { status: 404 });
     }
 
-    // Task completed successfully - parse slides
-    try {
-      const parsedSlides = await parseManusSlidesResponse(webhookData);
+    const userId = presentation.user_id;
+    const presentationId = presentation.id;
 
-      // Insert slides into database
-      const slidesToInsert = parsedSlides.map((slide) => ({
-        presentation_id: manusTask.presentation_id,
-        ...slide,
-      }));
-
-      const { error: slidesError } = await supabase
-        .from("slides")
-        .insert(slidesToInsert);
-
-      if (slidesError) {
-        console.error("Error inserting slides:", slidesError);
-        throw new Error("Failed to save slides to database");
-      }
-
-      // Update presentation status to ready
-      await supabase
-        .from("presentations")
-        .update({ status: "ready" })
-        .eq("id", manusTask.presentation_id);
-
-      // Get presentation to find user_id
-      const { data: presentation } = await supabase
-        .from("presentations")
-        .select("user_id")
-        .eq("id", manusTask.presentation_id)
-        .single();
-
-      // Emit success event via WebSocket
-      if (presentation) {
-        emitPresentationReady(presentation.user_id, manusTask.presentation_id);
-      }
-
-      console.log(
-        `Successfully processed ${parsedSlides.length} slides for presentation ${manusTask.presentation_id}`
-      );
-
-      return NextResponse.json({
-        success: true,
-        message: "Webhook processed successfully",
-        data: {
-          slides_count: parsedSlides.length,
-        },
-      });
-    } catch (parseError: any) {
-      console.error("Error parsing slides:", parseError);
-
-      // Update presentation status to error
-      await supabase
-        .from("presentations")
-        .update({ status: "error" })
-        .eq("id", manusTask.presentation_id);
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Failed to parse slides: ${parseError.message}`,
-        },
-        { status: 500 }
-      );
+    // ========== Handle different event types ==========
+    switch (webhookData.event_type) {
+      case "task_started":
+        return handleTaskStarted(supabase, userId, presentationId, taskId, webhookData);
+      case "task_updated":
+        return handleTaskUpdated(supabase, userId, presentationId, taskId, webhookData);
+      case "task_stopped":
+        return handleTaskStopped(supabase, userId, presentationId, taskId, manusTask, webhookData);
+      default:
+        return NextResponse.json({ success: true, message: "Event acknowledged" });
     }
   } catch (error: any) {
     console.error("Error in webhook endpoint:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Internal server error",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// ============================================
+// Event Handlers
+// ============================================
+
+async function handleTaskStarted(
+  supabase: any,
+  userId: string,
+  presentationId: string,
+  taskId: string,
+  webhookData: any
+) {
+  console.log(`Task started: ${taskId}`);
+
+  await supabase.from("manus_tasks").update({ status: "running", webhook_data: webhookData }).eq("task_id", taskId);
+
+  emitGenerationStatus(userId, presentationId, "thinking", "AI is analyzing your request...");
+  emitThinkingStepUpdate(userId, {
+    id: "step-init",
+    title: "Initializing presentation generation",
+    status: "running",
+    description: "AI is starting to process your request...",
+    actions: [],
+    startedAt: new Date().toISOString(),
+  });
+
+  return NextResponse.json({ success: true, message: "Task started event processed" });
+}
+
+async function handleTaskUpdated(
+  supabase: any,
+  userId: string,
+  presentationId: string,
+  taskId: string,
+  webhookData: any
+) {
+  console.log(`Task updated: ${taskId}`, webhookData);
+
+  await supabase.from("manus_tasks").update({ webhook_data: webhookData }).eq("task_id", taskId);
+
+  if (webhookData.thinking_steps) {
+    for (const step of webhookData.thinking_steps) {
+      emitThinkingStepUpdate(userId, step);
+    }
+  }
+
+  if (webhookData.thinking_action) {
+    const action = webhookData.thinking_action;
+    emitThinkingActionAdd(userId, action.step_id, {
+      id: action.id,
+      type: action.type,
+      text: action.text,
+      timestamp: action.timestamp,
+    });
+  }
+
+  if (webhookData.slide_preview) {
+    const preview = webhookData.slide_preview;
+    emitSlidePreviewUpdate(userId, presentationId, {
+      order_index: preview.order_index,
+      title: preview.title,
+      content: preview.content,
+      layout: preview.layout,
+    });
+  }
+
+  if (webhookData.progress !== undefined) {
+    emitGenerationProgress(userId, presentationId, webhookData.progress, webhookData.current_step);
+  }
+
+  return NextResponse.json({ success: true, message: "Task updated event processed" });
+}
+
+async function handleTaskStopped(
+  supabase: any,
+  userId: string,
+  presentationId: string,
+  taskId: string,
+  manusTask: any,
+  webhookData: any
+) {
+  await supabase
+    .from("manus_tasks")
+    .update({ status: webhookData.stop_reason === "finish" ? "completed" : "failed", webhook_data: webhookData })
+    .eq("task_id", taskId);
+
+  if (webhookData.stop_reason !== "finish") {
+    await supabase.from("presentations").update({ status: "error" }).eq("id", presentationId);
+    emitGenerationStatus(userId, presentationId, "error", "Generation failed");
+    emitGenerationError(userId, presentationId, webhookData.stop_reason || "Unknown error");
+    emitPresentationError(userId, presentationId, webhookData.stop_reason || "Unknown error");
+    return NextResponse.json({ success: true, message: "Task failure recorded" });
+  }
+
+  try {
+    const parsedSlides = await parseManusSlidesResponse(webhookData);
+    const slidesToInsert = parsedSlides.map((slide) => ({ presentation_id: presentationId, ...slide }));
+
+    const { error: slidesError } = await supabase.from("slides").insert(slidesToInsert);
+    if (slidesError) throw new Error("Failed to save slides to database");
+
+    await supabase.from("presentations").update({ status: "ready" }).eq("id", presentationId);
+
+    emitGenerationStatus(userId, presentationId, "completed", "Presentation ready!");
+    emitGenerationProgress(userId, presentationId, 100, "Completed");
+    emitGenerationCompleted(userId, presentationId, parsedSlides.length);
+    emitPresentationReady(userId, presentationId);
+
+    return NextResponse.json({ success: true, message: "Webhook processed successfully", data: { slides_count: parsedSlides.length } });
+  } catch (parseError: any) {
+    await supabase.from("presentations").update({ status: "error" }).eq("id", presentationId);
+    emitGenerationError(userId, presentationId, parseError.message, "parsing");
+    return NextResponse.json({ success: false, error: `Failed to parse slides: ${parseError.message}` }, { status: 500 });
   }
 }

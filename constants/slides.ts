@@ -286,30 +286,38 @@ Wichtig:
 };
 
 // ============================================
-// WebSocket Events
+// WebSocket Events (UPDATED for Phase 2)
 // ============================================
 
 export const WEBSOCKET_EVENTS = {
-  // Client → Server
+  // ========== Client → Server ==========
   AUTHENTICATE: "authenticate",
 
-  // Server → Client (Legacy)
+  // ========== Server → Client (Existing/Legacy) ==========
   PRESENTATION_READY: "presentation_ready",
   PRESENTATION_ERROR: "presentation_error",
   SLIDE_UPDATED: "slide_updated",
 
-  // Server → Client (New Workflow Events)
-  THINKING_STEP_UPDATE: "thinking:step:update",
-  SLIDE_PREVIEW_UPDATE: "slide:preview:update",
-  GENERATION_STATUS_UPDATE: "generation:status:update",
-  GENERATION_ERROR: "generation:error",
-  GENERATION_COMPLETED: "generation:completed",
+  // ========== Server → Client (NEW: Phase 2 Workflow Events) ==========
 
-  // Connection
+  // Thinking Display Events
+  THINKING_STEP_UPDATE: "thinking:step:update",
+  THINKING_ACTION_ADD: "thinking:action:add",
+
+  // Live Preview Events
+  SLIDE_PREVIEW_UPDATE: "slide:preview:update",
+
+  // Generation Status Events
+  GENERATION_STATUS: "generation:status",
+  GENERATION_PROGRESS: "generation:progress",
+  GENERATION_COMPLETED: "generation:completed",
+  GENERATION_ERROR: "generation:error",
+
+  // ========== Connection ==========
   CONNECT: "connect",
   DISCONNECT: "disconnect",
   ERROR: "error",
-};
+} as const;
 
 // ============================================
 // Routes

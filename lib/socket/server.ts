@@ -150,39 +150,78 @@ export function emitSlideUpdated(
 }
 
 // ============================================
-// New Workflow Events (Phase 2)
+// NEW: Phase 2 - Thinking Display Events
 // ============================================
 
 /**
  * Emit thinking step update
  *
  * @param userId - User ID
- * @param presentationId - Presentation ID
  * @param step - Thinking step data
  */
 export function emitThinkingStepUpdate(
   userId: string,
-  presentationId: string,
-  step: any
+  step: {
+    id: string;
+    title: string;
+    status: "pending" | "running" | "completed" | "failed";
+    description?: string;
+    actions: any[];
+    result?: string;
+    startedAt?: string;
+    completedAt?: string;
+  }
 ): void {
   emitToUser(userId, WEBSOCKET_EVENTS.THINKING_STEP_UPDATE, {
-    presentationId,
     step,
     timestamp: new Date().toISOString(),
   });
 }
 
 /**
+ * Emit thinking action add
+ *
+ * @param userId - User ID
+ * @param stepId - Thinking step ID
+ * @param action - Thinking action data
+ */
+export function emitThinkingActionAdd(
+  userId: string,
+  stepId: string,
+  action: {
+    id: string;
+    type: string;
+    text: string;
+    timestamp?: string;
+  }
+): void {
+  emitToUser(userId, WEBSOCKET_EVENTS.THINKING_ACTION_ADD, {
+    stepId,
+    action,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+// ============================================
+// NEW: Phase 2 - Live Preview Events
+// ============================================
+
+/**
  * Emit slide preview update
  *
  * @param userId - User ID
  * @param presentationId - Presentation ID
- * @param slide - Preview slide data
+ * @param slide - Slide data for preview
  */
 export function emitSlidePreviewUpdate(
   userId: string,
   presentationId: string,
-  slide: any
+  slide: {
+    order_index: number;
+    title: string;
+    content: string;
+    layout: string;
+  }
 ): void {
   emitToUser(userId, WEBSOCKET_EVENTS.SLIDE_PREVIEW_UPDATE, {
     presentationId,
@@ -191,62 +230,91 @@ export function emitSlidePreviewUpdate(
   });
 }
 
+// ============================================
+// NEW: Phase 2 - Generation Status Events
+// ============================================
+
 /**
  * Emit generation status update
  *
  * @param userId - User ID
  * @param presentationId - Presentation ID
  * @param status - Generation status
+ * @param message - Optional status message
  */
-export function emitGenerationStatusUpdate(
+export function emitGenerationStatus(
   userId: string,
   presentationId: string,
-  status: string
+  status: "idle" | "thinking" | "generating" | "completed" | "error",
+  message?: string
 ): void {
-  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_STATUS_UPDATE, {
+  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_STATUS, {
     presentationId,
     status,
+    message,
     timestamp: new Date().toISOString(),
   });
 }
 
 /**
- * Emit generation error
+ * Emit generation progress update
  *
  * @param userId - User ID
  * @param presentationId - Presentation ID
- * @param error - Error message
+ * @param progress - Progress percentage (0-100)
+ * @param currentStep - Current step description
  */
-export function emitGenerationError(
+export function emitGenerationProgress(
   userId: string,
   presentationId: string,
-  error: string
+  progress: number,
+  currentStep?: string
 ): void {
-  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_ERROR, {
+  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_PROGRESS, {
     presentationId,
-    error,
+    progress: Math.min(100, Math.max(0, progress)), // Clamp 0-100
+    currentStep,
     timestamp: new Date().toISOString(),
   });
 }
 
 /**
- * Emit generation completed
+ * Emit generation completed event
  *
  * @param userId - User ID
  * @param presentationId - Presentation ID
- * @param presentation - Final presentation data
- * @param slides - Final slides data
+ * @param slidesCount - Number of slides generated
  */
 export function emitGenerationCompleted(
   userId: string,
   presentationId: string,
-  presentation: any,
-  slides: any[]
+  slidesCount: number
 ): void {
   emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_COMPLETED, {
     presentationId,
-    presentation,
-    slides,
+    slidesCount,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
+ * Emit generation error event
+ *
+ * @param userId - User ID
+ * @param presentationId - Presentation ID
+ * @param error - Error message
+ * @param step - Step where error occurred
+ */
+export function emitGenerationError(
+  userId: string,
+  presentationId: string,
+  error: string,
+  step?: string
+): void {
+  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_ERROR, {
+    presentationId,
+    error,
+    step,
     timestamp: new Date().toISOString(),
   });
 }
