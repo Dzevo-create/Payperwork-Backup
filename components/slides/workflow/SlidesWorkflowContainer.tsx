@@ -79,6 +79,11 @@ export function SlidesWorkflowContainer() {
     if (!currentPrompt.trim()) return;
 
     const message = currentPrompt.trim();
+
+    // Store prompt BEFORE clearing input
+    const setStoredCurrentPrompt = useSlidesStore.getState().setCurrentPrompt;
+    setStoredCurrentPrompt(message);
+
     setCurrentPrompt('');
 
     // Add user message
@@ -101,14 +106,12 @@ export function SlidesWorkflowContainer() {
 
     // Call API to generate topics
     try {
-      // Get userId from localStorage, fallback to dev user
-      let userId = localStorage.getItem('userId');
+      // Get userId from useUser hook
+      const { user } = useUser();
+      const userId = user?.id;
 
-      // Development fallback (wie bei anderen Features)
       if (!userId) {
-        userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('userId', userId);
-        console.log('🔧 Dev mode: Created temporary userId:', userId);
+        throw new Error('User not authenticated');
       }
 
       const response = await fetch('/api/slides/workflow/generate-topics', {
@@ -123,9 +126,12 @@ export function SlidesWorkflowContainer() {
 
       const data = await response.json();
 
-      if (data.success && data.data?.taskId) {
-        console.log('✅ Topic generation started, taskId:', data.data.taskId);
-        // Webhook will handle updates via WebSocket
+      // Store presentationId when we get it back
+      if (data.success && data.presentationId) {
+        const setStoredPresentationId = useSlidesStore.getState().setCurrentPresentationId;
+        setStoredPresentationId(data.presentationId);
+        console.log('✅ Topic generation started, presentationId:', data.presentationId);
+        // WebSocket will handle delivering topics
       }
     } catch (error) {
       console.error('Error generating topics:', error);
