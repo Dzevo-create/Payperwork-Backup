@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getManusClient } from '@/lib/api/slides/manus-client';
+import { startPolling } from '@/lib/api/slides/polling-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,6 +64,15 @@ export async function POST(request: NextRequest) {
       });
 
     console.log('💾 Task stored in database');
+
+    // Start polling for real-time updates (instead of relying on webhooks)
+    startPolling({
+      taskId,
+      userId,
+      taskType: 'topics',
+      interval: 2000, // Poll every 2 seconds
+    });
+    console.log('🔄 Started polling for task updates');
 
     // Emit generation status via WebSocket
     try {
