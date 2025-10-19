@@ -4,7 +4,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getManusClient } from '@/lib/api/slides/manus-client';
 import {
   emitGenerationStatusUpdate,
   emitThinkingStepUpdate,

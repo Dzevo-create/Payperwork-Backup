@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { getManusClient } from "@/lib/api/slides/manus-client";
 import { generateSlidesPrompt, validatePrompt } from "@/lib/api/slides/prompt-generator";
 import type {
   CreatePresentationRequest,
