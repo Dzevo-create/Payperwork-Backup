@@ -513,12 +513,15 @@ export type WSEvent =
  * Represents the type of message in the chat-based workflow
  */
 export type SlidesMessageType =
-  | "user"        // User's prompt/question
-  | "thinking"    // AI is thinking (loading state)
-  | "topics"      // AI generated slide topics (awaiting approval)
-  | "generation"  // AI is generating slides (progress updates)
-  | "result"      // Final result with actions
-  | "tool_action"; // AI tool usage (Search, Browse, Python, etc.)
+  | "user"             // User's prompt/question
+  | "thinking"         // AI is thinking (loading state)
+  | "topics"           // AI generated slide topics (awaiting approval)
+  | "generation"       // AI is generating slides (progress updates)
+  | "result"           // Final result with actions
+  | "tool_action"      // AI tool usage (Search, Browse, Python, etc.)
+  | "agent_thinking"   // Agent thinking step (Manus AI style)
+  | "agent_insight"    // Agent insight/finding
+  | "research_source"; // Research source found
 
 /**
  * Slides Message
@@ -766,4 +769,73 @@ export interface WSToolActionFailed {
     messageId: string;
     error: string;
   };
+}
+
+// ============================================
+// Agent System Types (Manus AI Integration)
+// Added: 2025-10-19
+// ============================================
+
+/**
+ * Agent Type
+ */
+export type AgentType =
+  | 'ResearchAgent'
+  | 'TopicAgent'
+  | 'ContentAgent'
+  | 'DesignerAgent'
+  | 'QualityAgent'
+  | 'OrchestratorAgent';
+
+/**
+ * Agent Status
+ */
+export type AgentStatus =
+  | 'idle'
+  | 'thinking'
+  | 'working'
+  | 'waiting'
+  | 'completed'
+  | 'error';
+
+/**
+ * Agent State
+ */
+export interface AgentState {
+  agent: AgentType;
+  status: AgentStatus;
+  currentAction?: string;
+  progress?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+/**
+ * Agent Insight
+ */
+export interface AgentInsight {
+  agent: AgentType;
+  insight: string;
+  confidence: number;
+  timestamp: string;
+}
+
+/**
+ * Research Source (from ResearchAgent)
+ */
+export interface ResearchSource {
+  title: string;
+  url: string;
+  snippet: string;
+  relevance: number;
+  timestamp: string;
+}
+
+/**
+ * Pipeline Progress (4 Phases)
+ */
+export interface PipelineProgress {
+  currentPhase: 'research' | 'topics' | 'content' | 'quality' | null;
+  completedPhases: Array<'research' | 'topics' | 'content' | 'quality'>;
+  overallProgress: number; // 0-100
 }

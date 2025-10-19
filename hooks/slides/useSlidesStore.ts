@@ -26,6 +26,11 @@ import {
   PresentationTheme,
   ToolAction,
   Topic,
+  AgentType,
+  AgentState,
+  AgentInsight,
+  ResearchSource,
+  PipelineProgress,
 } from '@/types/slides';
 import { slidesLogger } from '@/lib/logger';
 
@@ -80,6 +85,23 @@ interface SlidesStore {
 
   // Computer Panel Visibility
   showComputerPanel: boolean;
+
+  // ========== NEW: Agent System State (Manus AI) ==========
+
+  // Agent Status (all 6 agents)
+  agentStatus: Record<AgentType, AgentState>;
+
+  // Current Active Agent
+  currentAgent: AgentType | null;
+
+  // Agent Insights
+  agentInsights: AgentInsight[];
+
+  // Research Sources
+  researchSources: ResearchSource[];
+
+  // Pipeline Progress
+  pipelineProgress: PipelineProgress;
 
   // ========== Actions ==========
 
@@ -138,6 +160,29 @@ interface SlidesStore {
   setShowComputerPanel: (show: boolean) => void;
   toggleComputerPanel: () => void;
 
+  // ========== NEW: Agent System Actions ==========
+
+  // Update agent status
+  updateAgentStatus: (agent: AgentType, updates: Partial<AgentState>) => void;
+
+  // Set current agent
+  setCurrentAgent: (agent: AgentType | null) => void;
+
+  // Add agent insight
+  addAgentInsight: (insight: AgentInsight) => void;
+
+  // Add research source
+  addResearchSource: (source: ResearchSource) => void;
+
+  // Clear research sources
+  clearResearchSources: () => void;
+
+  // Update pipeline progress
+  updatePipelineProgress: (updates: Partial<PipelineProgress>) => void;
+
+  // Reset agent state
+  resetAgentState: () => void;
+
   // Reset
   resetWorkflow: () => void;
 }
@@ -169,6 +214,24 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
   // ========== NEW: Phase 2 - Computer Panel Initial State ==========
   toolHistory: [],
   showComputerPanel: false,
+
+  // ========== NEW: Agent System Initial State ==========
+  agentStatus: {
+    ResearchAgent: { agent: 'ResearchAgent', status: 'idle' },
+    TopicAgent: { agent: 'TopicAgent', status: 'idle' },
+    ContentAgent: { agent: 'ContentAgent', status: 'idle' },
+    DesignerAgent: { agent: 'DesignerAgent', status: 'idle' },
+    QualityAgent: { agent: 'QualityAgent', status: 'idle' },
+    OrchestratorAgent: { agent: 'OrchestratorAgent', status: 'idle' },
+  },
+  currentAgent: null,
+  agentInsights: [],
+  researchSources: [],
+  pipelineProgress: {
+    currentPhase: null,
+    completedPhases: [],
+    overallProgress: 0,
+  },
 
   // ========== Presentations Management ==========
 
@@ -465,6 +528,99 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
         newValue,
       });
       return { showComputerPanel: newValue };
+    });
+  },
+
+  // ========== NEW: Agent System Actions ==========
+
+  updateAgentStatus: (agent, updates) => {
+    slidesLogger.debug('Updating agent status', {
+      action: 'updateAgentStatus',
+      agent,
+      updates,
+    });
+    set((state) => ({
+      agentStatus: {
+        ...state.agentStatus,
+        [agent]: {
+          ...state.agentStatus[agent],
+          ...updates,
+        },
+      },
+    }));
+  },
+
+  setCurrentAgent: (agent) => {
+    slidesLogger.debug('Setting current agent', {
+      action: 'setCurrentAgent',
+      agent,
+    });
+    set({ currentAgent: agent });
+  },
+
+  addAgentInsight: (insight) => {
+    slidesLogger.debug('Adding agent insight', {
+      action: 'addAgentInsight',
+      agent: insight.agent,
+      confidence: insight.confidence,
+    });
+    set((state) => ({
+      agentInsights: [...state.agentInsights, insight],
+    }));
+  },
+
+  addResearchSource: (source) => {
+    slidesLogger.debug('Adding research source', {
+      action: 'addResearchSource',
+      title: source.title,
+      relevance: source.relevance,
+    });
+    set((state) => ({
+      researchSources: [...state.researchSources, source],
+    }));
+  },
+
+  clearResearchSources: () => {
+    slidesLogger.debug('Clearing research sources', {
+      action: 'clearResearchSources',
+    });
+    set({ researchSources: [] });
+  },
+
+  updatePipelineProgress: (updates) => {
+    slidesLogger.debug('Updating pipeline progress', {
+      action: 'updatePipelineProgress',
+      updates,
+    });
+    set((state) => ({
+      pipelineProgress: {
+        ...state.pipelineProgress,
+        ...updates,
+      },
+    }));
+  },
+
+  resetAgentState: () => {
+    slidesLogger.debug('Resetting agent state', {
+      action: 'resetAgentState',
+    });
+    set({
+      agentStatus: {
+        ResearchAgent: { agent: 'ResearchAgent', status: 'idle' },
+        TopicAgent: { agent: 'TopicAgent', status: 'idle' },
+        ContentAgent: { agent: 'ContentAgent', status: 'idle' },
+        DesignerAgent: { agent: 'DesignerAgent', status: 'idle' },
+        QualityAgent: { agent: 'QualityAgent', status: 'idle' },
+        OrchestratorAgent: { agent: 'OrchestratorAgent', status: 'idle' },
+      },
+      currentAgent: null,
+      agentInsights: [],
+      researchSources: [],
+      pipelineProgress: {
+        currentPhase: null,
+        completedPhases: [],
+        overallProgress: 0,
+      },
     });
   },
 
