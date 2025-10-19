@@ -30,6 +30,13 @@ export function useSlidesSocket(userId: string | null) {
   // NEW: Live slides for Computer Panel
   const addSlidePreview = useSlidesStore((state) => state.addSlidePreview);
 
+  // NEW: Agent System actions
+  const updateAgentStatus = useSlidesStore((state) => state.updateAgentStatus);
+  const setCurrentAgent = useSlidesStore((state) => state.setCurrentAgent);
+  const addAgentInsight = useSlidesStore((state) => state.addAgentInsight);
+  const addResearchSource = useSlidesStore((state) => state.addResearchSource);
+  const updatePipelineProgress = useSlidesStore((state) => state.updatePipelineProgress);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -164,6 +171,80 @@ export function useSlidesSocket(userId: string | null) {
       }
     });
 
+    // ============================================
+    // NEW: Agent System Event Listeners
+    // ============================================
+
+    // Agent: Status Change
+    socket.on('agent:status:change', (data: any) => {
+      console.log(`🤖 Agent status: ${data.agent} → ${data.status}`);
+      updateAgentStatus(data.agent, {
+        status: data.status,
+        currentAction: data.currentAction,
+        progress: data.progress,
+      });
+      if (data.status === 'working') {
+        setCurrentAgent(data.agent);
+      } else if (data.status === 'completed' || data.status === 'error') {
+        setCurrentAgent(null);
+      }
+    });
+
+    // Agent: Thinking Step
+    socket.on('agent:thinking:step', (data: any) => {
+      console.log(`💭 ${data.agent}: ${data.content}`);
+      addMessage({
+        id: data.messageId,
+        type: 'agent_thinking',
+        content: data.content,
+        timestamp: data.timestamp,
+      });
+    });
+
+    // Agent: Action Update
+    socket.on('agent:action:update', (data: any) => {
+      console.log(`⚡ ${data.agent} action: ${data.action} (${data.status})`);
+      updateAgentStatus(data.agent, {
+        currentAction: data.action,
+        progress: data.data?.progress,
+      });
+    });
+
+    // Agent: Insight Generated
+    socket.on('agent:insight:generated', (data: any) => {
+      console.log(`💡 ${data.agent} insight: ${data.insight} (${data.confidence}%)`);
+      addAgentInsight({
+        agent: data.agent,
+        insight: data.insight,
+        confidence: data.confidence,
+        timestamp: data.timestamp,
+      });
+      addMessage({
+        id: data.messageId,
+        type: 'agent_insight',
+        content: data.insight,
+        timestamp: data.timestamp,
+      });
+    });
+
+    // Agent: Research Source Found
+    socket.on('agent:source:found', (data: any) => {
+      console.log(`🔍 Research source: ${data.source.title} (${data.source.relevance * 100}%)`);
+      addResearchSource({
+        title: data.source.title,
+        url: data.source.url,
+        snippet: data.source.snippet,
+        relevance: data.source.relevance,
+        timestamp: data.timestamp,
+      });
+      addMessage({
+        id: data.messageId,
+        type: 'research_source',
+        content: data.source,
+        timestamp: data.timestamp,
+      });
+    });
+
     // Cleanup
     return () => {
       socket.off('topics:generated');
@@ -176,8 +257,14 @@ export function useSlidesSocket(userId: string | null) {
       socket.off(WEBSOCKET_EVENTS.SLIDE_PREVIEW_UPDATE);
       socket.off(WEBSOCKET_EVENTS.GENERATION_STATUS);
       socket.off(WEBSOCKET_EVENTS.GENERATION_COMPLETED);
+      // Agent events cleanup
+      socket.off('agent:status:change');
+      socket.off('agent:thinking:step');
+      socket.off('agent:action:update');
+      socket.off('agent:insight:generated');
+      socket.off('agent:source:found');
     };
-  }, [userId, addOrUpdateThinkingStep, setLivePreviewSlide, setGenerationStatus, setFinalPresentation, addMessage, setCurrentTopics, addToolAction, addSlidePreview]);
+  }, [userId, addOrUpdateThinkingStep, setLivePreviewSlide, setGenerationStatus, setFinalPresentation, addMessage, setCurrentTopics, addToolAction, addSlidePreview, updateAgentStatus, setCurrentAgent, addAgentInsight, addResearchSource, updatePipelineProgress]);
 
   return { socket: getSocketClient() };
 }

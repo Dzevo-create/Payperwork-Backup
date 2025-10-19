@@ -21,6 +21,7 @@ import { SlidesWelcome } from './SlidesWelcome';
 import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
 import { SlidesComputerPanel } from '../computer/SlidesComputerPanel';
+import { AgentStatusIndicator } from '../AgentStatusIndicator';
 import { Settings, Mic, Send, Plus, Monitor } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
@@ -198,6 +199,15 @@ export function SlidesWorkflowContainer() {
           <div className="flex-1 overflow-y-auto">
             <SlidesMessages />
             <div ref={messagesEndRef} />
+          </div>
+        )}
+
+        {/* Agent Status Indicator */}
+        {hasMessages && (
+          <div className="px-3 sm:px-4 md:px-6">
+            <div className="max-w-3xl mx-auto">
+              <AgentStatusIndicator />
+            </div>
           </div>
         )}
 
