@@ -5,6 +5,7 @@ import { SlidesMessage, SlidesMessageContent, Topic } from '@/types/slides';
 import { CheckCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
+import { useUser } from '@/hooks/useUser';
 
 interface TopicsMessageProps {
   message: SlidesMessage;
@@ -14,6 +15,10 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const [isApproving, setIsApproving] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
+  // User Auth
+  const { user } = useUser();
+
+  // Store
   const addMessage = useSlidesStore((state) => state.addMessage);
   const updateMessage = useSlidesStore((state) => state.updateMessage);
   const setCurrentTopics = useSlidesStore((state) => state.setCurrentTopics);
@@ -59,11 +64,11 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       if (!currentPresentationId) {
         throw new Error('Presentation ID is missing');
       }
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
 
-      // TODO: Get userId from auth context
-      // For now, we'll need to pass it when creating topics
-      // This should be fixed when proper auth is integrated
-      const userId = 'temp-user-id'; // FIXME: Get from auth
+      const userId = user.id;
 
       // Call API to start generation
       const response = await fetch('/api/slides/workflow/generate-slides', {
