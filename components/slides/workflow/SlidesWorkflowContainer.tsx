@@ -16,6 +16,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
+import { useUser } from '@/hooks/useUser';
 import { SlidesWelcome } from './SlidesWelcome';
 import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
