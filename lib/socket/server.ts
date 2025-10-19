@@ -148,3 +148,105 @@ export function emitSlideUpdated(
     timestamp: new Date().toISOString(),
   });
 }
+
+// ============================================
+// New Workflow Events (Phase 2)
+// ============================================
+
+/**
+ * Emit thinking step update
+ *
+ * @param userId - User ID
+ * @param presentationId - Presentation ID
+ * @param step - Thinking step data
+ */
+export function emitThinkingStepUpdate(
+  userId: string,
+  presentationId: string,
+  step: any
+): void {
+  emitToUser(userId, WEBSOCKET_EVENTS.THINKING_STEP_UPDATE, {
+    presentationId,
+    step,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
+ * Emit slide preview update
+ *
+ * @param userId - User ID
+ * @param presentationId - Presentation ID
+ * @param slide - Preview slide data
+ */
+export function emitSlidePreviewUpdate(
+  userId: string,
+  presentationId: string,
+  slide: any
+): void {
+  emitToUser(userId, WEBSOCKET_EVENTS.SLIDE_PREVIEW_UPDATE, {
+    presentationId,
+    slide,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
+ * Emit generation status update
+ *
+ * @param userId - User ID
+ * @param presentationId - Presentation ID
+ * @param status - Generation status
+ */
+export function emitGenerationStatusUpdate(
+  userId: string,
+  presentationId: string,
+  status: string
+): void {
+  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_STATUS_UPDATE, {
+    presentationId,
+    status,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
+ * Emit generation error
+ *
+ * @param userId - User ID
+ * @param presentationId - Presentation ID
+ * @param error - Error message
+ */
+export function emitGenerationError(
+  userId: string,
+  presentationId: string,
+  error: string
+): void {
+  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_ERROR, {
+    presentationId,
+    error,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
+ * Emit generation completed
+ *
+ * @param userId - User ID
+ * @param presentationId - Presentation ID
+ * @param presentation - Final presentation data
+ * @param slides - Final slides data
+ */
+export function emitGenerationCompleted(
+  userId: string,
+  presentationId: string,
+  presentation: any,
+  slides: any[]
+): void {
+  emitToUser(userId, WEBSOCKET_EVENTS.GENERATION_COMPLETED, {
+    presentationId,
+    presentation,
+    slides,
+    timestamp: new Date().toISOString(),
+  });
+}

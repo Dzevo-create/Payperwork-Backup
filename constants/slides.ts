@@ -293,10 +293,17 @@ export const WEBSOCKET_EVENTS = {
   // Client → Server
   AUTHENTICATE: "authenticate",
 
-  // Server → Client
+  // Server → Client (Legacy)
   PRESENTATION_READY: "presentation_ready",
   PRESENTATION_ERROR: "presentation_error",
   SLIDE_UPDATED: "slide_updated",
+
+  // Server → Client (New Workflow Events)
+  THINKING_STEP_UPDATE: "thinking:step:update",
+  SLIDE_PREVIEW_UPDATE: "slide:preview:update",
+  GENERATION_STATUS_UPDATE: "generation:status:update",
+  GENERATION_ERROR: "generation:error",
+  GENERATION_COMPLETED: "generation:completed",
 
   // Connection
   CONNECT: "connect",
