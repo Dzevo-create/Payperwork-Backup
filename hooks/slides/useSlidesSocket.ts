@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { useSlidesStore } from './useSlidesStore';
 import { initializeSocketClient, getSocketClient } from '@/lib/socket/client';
 import { WEBSOCKET_EVENTS } from '@/constants/slides';
+import { Topic, Slide } from '@/types/slides';
 
 export function useSlidesSocket(userId: string | null) {
   const addOrUpdateThinkingStep = useSlidesStore((state) => state.addOrUpdateThinkingStep);
@@ -26,13 +27,16 @@ export function useSlidesSocket(userId: string | null) {
   // NEW: Phase 2 - Computer Panel actions
   const addToolAction = useSlidesStore((state) => state.addToolAction);
 
+  // NEW: Live slides for Computer Panel
+  const addSlidePreview = useSlidesStore((state) => state.addSlidePreview);
+
   useEffect(() => {
     if (!userId) return;
 
     const socket = initializeSocketClient(userId);
 
     // NEW: Listen to topics generated
-    socket.on('topics:generated', (data: { topics: string[]; messageId: string }) => {
+    socket.on('topics:generated', (data: { topics: Topic[]; messageId: string }) => {
       console.log('📨 Received topics:generated:', data);
 
       // Remove thinking message and add topics message
@@ -46,6 +50,23 @@ export function useSlidesSocket(userId: string | null) {
 
       setCurrentTopics(data.topics);
       setGenerationStatus('idle'); // Ready for approval
+    });
+
+    // NEW: Listen to slide preview updates (individual slides during generation)
+    socket.on('slide:preview:update', (data: { slide: Slide; presentationId: string }) => {
+      console.log('📨 Received slide:preview:update:', data.slide.title);
+
+      // Add slide to slides array (for Computer Panel)
+      addSlidePreview(data.slide);
+
+      // Also update live preview slide (for main preview)
+      setLivePreviewSlide({
+        id: data.slide.id,
+        order_index: data.slide.order_index,
+        title: data.slide.title,
+        content: data.slide.content,
+        layout: data.slide.layout || 'title_content',
+      });
     });
 
     // NEW: Phase 1 - Tool Use Display - Listen to tool action events
@@ -134,6 +155,7 @@ export function useSlidesSocket(userId: string | null) {
     // Cleanup
     return () => {
       socket.off('topics:generated');
+      socket.off('slide:preview:update');
       socket.off('tool:action:started');
       socket.off('tool:action:completed');
       socket.off('tool:action:failed');
@@ -142,7 +164,7 @@ export function useSlidesSocket(userId: string | null) {
       socket.off(WEBSOCKET_EVENTS.GENERATION_STATUS);
       socket.off(WEBSOCKET_EVENTS.GENERATION_COMPLETED);
     };
-  }, [userId, addOrUpdateThinkingStep, setLivePreviewSlide, setGenerationStatus, setFinalPresentation, addMessage, setCurrentTopics, addToolAction]);
+  }, [userId, addOrUpdateThinkingStep, setLivePreviewSlide, setGenerationStatus, setFinalPresentation, addMessage, setCurrentTopics, addToolAction, addSlidePreview]);
 
   return { socket: getSocketClient() };
 }
