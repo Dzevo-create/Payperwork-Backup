@@ -36,7 +36,7 @@ export function ThinkingMessage({ message }: ThinkingMessageProps) {
         {/* Header with spinner */}
         <div className="flex items-center gap-2 mb-2">
           <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
-          <span className="text-xs font-medium text-purple-700">Manus AI denkt nach...</span>
+          <span className="text-xs font-medium text-purple-700">Payperwork API denkt nach...</span>
         </div>
 
         {/* Tool Usage Indicators */}
