@@ -16,6 +16,7 @@ import type {
   PresentationPipelineInput,
   ResearchServiceOutput,
   ProgressCallback,
+  AgentServiceContext,
 } from '../types';
 
 export class TopicGenerationPhase {
@@ -23,14 +24,9 @@ export class TopicGenerationPhase {
   private progressEmitter: ProgressEmitter;
   private agentEmitter?: AgentEventEmitter;
 
-  constructor(onProgress?: ProgressCallback, private userId?: string) {
+  constructor(onProgress?: ProgressCallback) {
     this.llmTool = new LLMTool();
     this.progressEmitter = new ProgressEmitter(onProgress);
-
-    // Initialize agent emitter if userId provided
-    if (userId) {
-      this.agentEmitter = new AgentEventEmitter(userId);
-    }
   }
 
   /**
@@ -38,29 +34,28 @@ export class TopicGenerationPhase {
    */
   async execute(
     input: PresentationPipelineInput,
-    research?: ResearchServiceOutput
+    research?: ResearchServiceOutput,
+    context?: AgentServiceContext
   ): Promise<TopicGenerationPhaseResult> {
     const { topic, slideCount = 10 } = input;
     const startTime = Date.now();
 
+    // Initialize agent emitter
+    if (context) {
+      this.agentEmitter = new AgentEventEmitter(context.userId);
+    }
+
     try {
-      // Agent Events: Status change to working
-      this.agentEmitter?.status('TopicAgent', 'working', 'planning');
-
-      // Agent Events: Thinking
-      this.agentEmitter?.thinking(
-        'TopicAgent',
-        `Creating structured outline for "${topic}" with ${slideCount} slides${
-          research ? ` based on ${research.sources?.length || 0} research sources` : ''
-        }...`
-      );
-
-      // Agent Events: Action started
-      this.agentEmitter?.actionStarted('TopicAgent', 'planning', {
-        topic,
-        slideCount,
-        hasResearch: !!research,
-      });
+      // Emit agent thinking
+      if (this.agentEmitter) {
+        this.agentEmitter.thinking(
+          'TopicAgent',
+          research
+            ? `Creating structured outline based on ${research.sources.length} research sources...`
+            : `Planning presentation structure for "${topic}"...`
+        );
+        this.agentEmitter.status('TopicAgent', 'working', 'planning', 0);
+      }
 
       this.progressEmitter.phaseStarted('topic_generation', {
         topic,
@@ -68,8 +63,15 @@ export class TopicGenerationPhase {
         hasResearch: !!research,
       });
 
-      // Generate topics
       const prompt = this.buildPrompt(topic, slideCount, research);
+
+      if (this.agentEmitter) {
+        this.agentEmitter.thinking(
+          'TopicAgent',
+          `Analyzing ${slideCount} potential topics and organizing them logically...`
+        );
+      }
+
       const topics = await this.llmTool.generateJSON<TopicWithResearch[]>(prompt);
 
       // Validate topics
@@ -77,21 +79,17 @@ export class TopicGenerationPhase {
 
       const duration = Date.now() - startTime;
 
-      // Agent Events: Action completed
-      this.agentEmitter?.actionCompleted('TopicAgent', 'planning', {
-        topicCount: topics.length,
-        duration,
-      });
-
-      // Agent Events: Insight
-      this.agentEmitter?.insight(
-        'TopicAgent',
-        `Created presentation outline with ${topics.length} well-structured topics covering all essential aspects.`,
-        95
-      );
-
-      // Agent Events: Status change to completed
-      this.agentEmitter?.status('TopicAgent', 'completed');
+      // Emit agent completion
+      if (this.agentEmitter) {
+        this.agentEmitter.thinking(
+          'TopicAgent',
+          `Created presentation outline with ${topics.length} topics covering key aspects.`
+        );
+        this.agentEmitter.status('TopicAgent', 'completed');
+        this.agentEmitter.actionCompleted('TopicAgent', 'planning', {
+          topicCount: topics.length,
+        });
+      }
 
       this.progressEmitter.phaseCompleted('topic_generation', {
         topicCount: topics.length,
@@ -103,16 +101,6 @@ export class TopicGenerationPhase {
         duration,
       };
     } catch (error) {
-      // Agent Events: Action failed
-      this.agentEmitter?.actionFailed(
-        'TopicAgent',
-        'planning',
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-
-      // Agent Events: Status change to error
-      this.agentEmitter?.status('TopicAgent', 'error');
-
       this.progressEmitter.phaseFailed(
         'topic_generation',
         error instanceof Error ? error : new Error(String(error))

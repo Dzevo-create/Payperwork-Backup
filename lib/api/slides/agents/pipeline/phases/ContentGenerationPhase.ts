@@ -22,9 +22,10 @@ export class ContentGenerationPhase {
   private llmTool: LLMTool;
   private progressEmitter: ProgressEmitter;
 
-  constructor(onProgress?: ProgressCallback) {
+  constructor(onProgress?: ProgressCallback, private userId?: string) {
     this.llmTool = new LLMTool();
     this.progressEmitter = new ProgressEmitter(onProgress);
+    // Agent events can be added here in future
   }
 
   /**

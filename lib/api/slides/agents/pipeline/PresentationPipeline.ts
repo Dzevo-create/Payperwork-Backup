@@ -54,7 +54,7 @@ export class PresentationPipeline {
       // ============================================
       // PHASE 1: RESEARCH
       // ============================================
-      const researchPhase = new ResearchPhase(this.onProgress);
+      const researchPhase = new ResearchPhase(this.onProgress, context.userId);
       const researchResult = await researchPhase.execute(input, context);
 
       if (researchResult) {
@@ -64,14 +64,14 @@ export class PresentationPipeline {
       // ============================================
       // PHASE 2: TOPIC GENERATION
       // ============================================
-      const topicPhase = new TopicGenerationPhase(this.onProgress);
+      const topicPhase = new TopicGenerationPhase(this.onProgress, context.userId);
       const topicResult = await topicPhase.execute(input, researchResult?.research);
       phaseTimes.topicGeneration = topicResult.duration;
 
       // ============================================
       // PHASE 3: CONTENT GENERATION
       // ============================================
-      const contentPhase = new ContentGenerationPhase(this.onProgress);
+      const contentPhase = new ContentGenerationPhase(this.onProgress, context.userId);
       const contentResult = await contentPhase.execute(
         topicResult.topics,
         researchResult?.research
@@ -81,7 +81,7 @@ export class PresentationPipeline {
       // ============================================
       // PHASE 4: PRE-PRODUCTION
       // ============================================
-      const preProductionPhase = new PreProductionPhase(this.onProgress);
+      const preProductionPhase = new PreProductionPhase(this.onProgress, context.userId);
       const preProductionResult = await preProductionPhase.execute(
         contentResult.slides,
         researchResult?.research

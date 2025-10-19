@@ -19,8 +19,9 @@ import type {
 export class PreProductionPhase {
   private progressEmitter: ProgressEmitter;
 
-  constructor(onProgress?: ProgressCallback) {
+  constructor(onProgress?: ProgressCallback, private userId?: string) {
     this.progressEmitter = new ProgressEmitter(onProgress);
+    // Agent events can be added here in future
   }
 
   /**
