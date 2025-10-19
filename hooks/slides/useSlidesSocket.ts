@@ -52,6 +52,18 @@ export function useSlidesSocket(userId: string | null) {
       setGenerationStatus('idle'); // Ready for approval
     });
 
+    // Listen to thinking messages
+    socket.on('thinking:message', (data: { content: string; messageId: string }) => {
+      console.log('💭 Received thinking:message:', data.content);
+
+      addMessage({
+        id: data.messageId,
+        type: 'thinking',
+        content: data.content,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
     // NEW: Listen to slide preview updates (individual slides during generation)
     socket.on('slide:preview:update', (data: { slide: Slide; presentationId: string }) => {
       console.log('📨 Received slide:preview:update:', data.slide.title);
@@ -155,6 +167,7 @@ export function useSlidesSocket(userId: string | null) {
     // Cleanup
     return () => {
       socket.off('topics:generated');
+      socket.off('thinking:message');
       socket.off('slide:preview:update');
       socket.off('tool:action:started');
       socket.off('tool:action:completed');

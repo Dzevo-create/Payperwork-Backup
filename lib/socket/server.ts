@@ -435,3 +435,25 @@ export function emitToolActionFailed(
 
   console.log(`⚠️ Emitted tool:action:failed to user:${userId} - ${data.toolAction.type}: ${data.toolAction.error}`);
 }
+
+/**
+ * Emit thinking message event
+ *
+ * @param userId - User ID
+ * @param data - Thinking message data
+ */
+export function emitThinkingMessage(
+  userId: string,
+  data: {
+    content: string;
+    messageId: string;
+  }
+): void {
+  emitToUser(userId, 'thinking:message', {
+    content: data.content,
+    messageId: data.messageId,
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`✅ Emitted thinking:message to user:${userId}`);
+}
