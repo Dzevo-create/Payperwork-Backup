@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTopics } from '@/lib/api/slides/claude-service';
+import { createServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +34,29 @@ export async function POST(request: NextRequest) {
     console.log('Prompt:', prompt);
     console.log('Format:', format, 'Theme:', theme);
 
-    // Generate topics with Claude API
+    // Step 1: Create presentation in DB
+    const supabase = await createServerClient();
+    const { data: presentation, error: createError } = await supabase
+      .from('presentations')
+      .insert({
+        user_id: userId,
+        title: prompt.substring(0, 100), // First 100 chars as title
+        prompt,
+        format: format || '16:9',
+        theme: theme || 'default',
+        status: 'planning',
+      })
+      .select()
+      .single();
+
+    if (createError || !presentation) {
+      console.error('Error creating presentation:', createError);
+      throw new Error('Failed to create presentation in database');
+    }
+
+    console.log('✅ Created presentation:', presentation.id);
+
+    // Step 2: Generate topics with Claude API
     const topics = await generateTopics({
       prompt,
       userId,
@@ -41,8 +64,25 @@ export async function POST(request: NextRequest) {
       theme: theme || 'default',
     });
 
+    // Step 3: Save topics to presentation
+    const { error: updateError } = await supabase
+      .from('presentations')
+      .update({
+        topics: topics,
+        status: 'topics_generated',
+      })
+      .eq('id', presentation.id);
+
+    if (updateError) {
+      console.error('Error updating presentation with topics:', updateError);
+    }
+
+    console.log('✅ Saved topics to presentation:', presentation.id);
+
+    // Step 4: Return presentation ID and topics
     return NextResponse.json({
       success: true,
+      presentationId: presentation.id,
       topics,
     });
 

@@ -22,6 +22,8 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const setGenerationStatus = useSlidesStore((state) => state.setGenerationStatus);
   const format = useSlidesStore((state) => state.format);
   const theme = useSlidesStore((state) => state.theme);
+  const currentPrompt = useSlidesStore((state) => state.currentPrompt);
+  const currentPresentationId = useSlidesStore((state) => state.currentPresentationId);
 
   // Extract topics from message content
   const topics: string[] = Array.isArray(message.content)
@@ -50,11 +52,31 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       setShowPreview(true);
       setGenerationStatus('generating');
 
+      // Validate we have the required data
+      if (!currentPrompt) {
+        throw new Error('Prompt is missing');
+      }
+      if (!currentPresentationId) {
+        throw new Error('Presentation ID is missing');
+      }
+
+      // TODO: Get userId from auth context
+      // For now, we'll need to pass it when creating topics
+      // This should be fixed when proper auth is integrated
+      const userId = 'temp-user-id'; // FIXME: Get from auth
+
       // Call API to start generation
-      const response = await fetch('/api/slides/workflow/generate', {
+      const response = await fetch('/api/slides/workflow/generate-slides', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topics, format, theme }),
+        body: JSON.stringify({
+          prompt: currentPrompt,
+          topics,
+          presentationId: currentPresentationId,
+          userId,
+          format,
+          theme,
+        }),
       });
 
       if (!response.ok) {

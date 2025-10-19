@@ -52,6 +52,9 @@ interface SlidesStore {
   finalPresentation: Presentation | null;
   finalSlides: Slide[];
 
+  // Live Slides (for Computer Panel - during generation)
+  slides: Slide[];
+
   // ========== NEW: Chat-based Workflow State ==========
 
   // Messages (Chat history)
@@ -100,6 +103,10 @@ interface SlidesStore {
   // Final Result
   setFinalPresentation: (presentation: Presentation, slides: Slide[]) => void;
 
+  // Live Slides Management
+  addSlidePreview: (slide: Slide) => void;
+  clearSlides: () => void;
+
   // ========== NEW: Chat-based Workflow Actions ==========
 
   // Messages Management
@@ -147,6 +154,7 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
   livePreviewSlide: null,
   finalPresentation: null,
   finalSlides: [],
+  slides: [],
 
   // ========== NEW: Chat-based Workflow Initial State ==========
   messages: [],
@@ -291,6 +299,26 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
       finalSlides: slides,
       generationStatus: 'completed',
     });
+  },
+
+  // ========== Live Slides Management ==========
+
+  addSlidePreview: (slide) => {
+    slidesLogger.debug('Adding slide preview', {
+      action: 'addSlidePreview',
+      slideId: slide.id,
+      order: slide.order_index,
+    });
+    set((state) => ({
+      slides: [...state.slides, slide],
+    }));
+  },
+
+  clearSlides: () => {
+    slidesLogger.debug('Clearing slides', {
+      action: 'clearSlides',
+    });
+    set({ slides: [] });
   },
 
   // ========== NEW: Chat-based Workflow Actions ==========
@@ -452,6 +480,7 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
       livePreviewSlide: null,
       finalPresentation: null,
       finalSlides: [],
+      slides: [],
       messages: [],
       currentTopics: [],
       topicsApproved: false,
