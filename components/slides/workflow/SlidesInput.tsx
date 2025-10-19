@@ -144,7 +144,7 @@ export function SlidesInput({
     <>
       {/* Input Container (2 Rows) */}
       <div className="px-3 sm:px-4 md:px-6 py-4 bg-transparent">
-        <div className="max-w-3xl mx-auto">
+        <div className={showComputerPanel ? "w-full" : "max-w-3xl mx-auto"}>
           <div className="bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-lg border border-pw-black/10 rounded-2xl shadow-sm focus-within:ring-2 focus-within:ring-pw-accent/50 transition-all p-3 space-y-3">
 
             {/* Row 1: Prompt Textarea */}
@@ -298,7 +298,7 @@ export function SlidesInput({
                 )}
               </div>
 
-              {/* Monitor Button */}
+              {/* Computer Button (Payperwork) */}
               <button
                 onClick={toggleComputerPanel}
                 className={`flex-shrink-0 p-2 rounded-lg transition-all ${
@@ -306,8 +306,8 @@ export function SlidesInput({
                     ? "bg-pw-accent text-pw-black"
                     : "hover:bg-pw-black/5 text-pw-black/60"
                 }`}
-                aria-label="Computer Panel"
-                title={showComputerPanel ? "Computer Panel schließen" : "Computer Panel öffnen"}
+                aria-label="Payperwork"
+                title={showComputerPanel ? "Payperwork schließen" : "Payperwork öffnen"}
               >
                 <Monitor className="w-4 h-4" />
                 {toolHistory.length > 0 && (

@@ -5,11 +5,18 @@
  *
  * @author Payperwork Team
  * @date 2025-10-19
+ * @refactored 2025-10-20 - Added panel type support for modular panels
  */
 
 import { StateCreator } from 'zustand';
 import { ToolAction } from '@/types/slides';
 import { slidesLogger } from '@/lib/logger';
+
+// ============================================
+// Panel Types
+// ============================================
+
+export type PanelType = 'slides' | 'tools' | 'thinking' | null;
 
 // ============================================
 // Tool Slice State
@@ -19,6 +26,7 @@ export interface ToolSlice {
   // State
   toolHistory: ToolAction[];
   showComputerPanel: boolean;
+  currentPanelType: PanelType; // NEW: Determines which panel to show
 
   // Actions
   addToolAction: (action: ToolAction) => void;
@@ -26,6 +34,7 @@ export interface ToolSlice {
   clearToolHistory: () => void;
   setShowComputerPanel: (show: boolean) => void;
   toggleComputerPanel: () => void;
+  setPanelType: (type: PanelType) => void; // NEW: Set panel type
 }
 
 // ============================================
@@ -38,6 +47,7 @@ export const createToolSlice: StateCreator<ToolSlice, [], [], ToolSlice> = (
   // Initial State
   toolHistory: [],
   showComputerPanel: false,
+  currentPanelType: null, // NEW: Default to no panel
 
   // Actions
   addToolAction: (action) => {
@@ -99,5 +109,13 @@ export const createToolSlice: StateCreator<ToolSlice, [], [], ToolSlice> = (
       });
       return { showComputerPanel: newValue };
     });
+  },
+
+  setPanelType: (type) => {
+    slidesLogger.debug('Setting panel type', {
+      action: 'setPanelType',
+      type,
+    });
+    set({ currentPanelType: type });
   },
 });

@@ -58,14 +58,14 @@ export function SlidesComputerPanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white border-l border-pw-black/10">
+    <div className="flex flex-col h-full bg-white border border-pw-black/10 rounded-2xl shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-pw-black/10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-pw-black/10 bg-gradient-to-r from-pw-black/5 to-transparent">
         <div className="flex items-center gap-2">
-          <Monitor className="w-4 h-4 text-pw-black/60" />
-          <h3 className="text-sm font-medium text-pw-black">
-            Payperwork Computer
-          </h3>
+          <Monitor className="w-5 h-5 text-pw-accent" />
+          <h2 className="text-lg font-semibold text-pw-black">
+            Payperwork
+          </h2>
         </div>
         {isGenerating && (
           <div className="flex items-center gap-2">

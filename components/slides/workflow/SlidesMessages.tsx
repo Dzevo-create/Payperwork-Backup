@@ -19,10 +19,11 @@ import { ResultMessage } from './messages/ResultMessage';
 
 export function SlidesMessages() {
   const messages = useSlidesStore((state) => state.messages);
+  const showComputerPanel = useSlidesStore((state) => state.showComputerPanel);
 
   return (
     <div className="px-3 sm:px-4 md:px-6 py-6">
-      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+      <div className={`${showComputerPanel ? 'w-full' : 'max-w-5xl mx-auto'} space-y-4 sm:space-y-6`}>
         {messages.map((message) => {
           switch (message.type) {
             case 'user':

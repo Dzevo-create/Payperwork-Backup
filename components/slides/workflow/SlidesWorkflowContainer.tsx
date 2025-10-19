@@ -20,7 +20,7 @@ import { useUser } from '@/hooks/useUser';
 import { SlidesWelcome } from './SlidesWelcome';
 import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
-import { SlidesComputerPanel } from '../computer/SlidesComputerPanel';
+import { PayperworkPanel } from '../panel/PayperworkPanel';
 import { AgentStatusIndicator } from '../AgentStatusIndicator';
 import { SlidesInput } from './SlidesInput';
 
@@ -39,12 +39,12 @@ export function SlidesWorkflowContainer() {
   const setCurrentTopics = useSlidesStore((state) => state.setCurrentTopics);
   const addPresentation = useSlidesStore((state) => state.addPresentation);
 
-  // NEW: Phase 2 - Computer Panel
+  // NEW: Phase 2 - Payperwork Panel (ONE panel only)
   const toolHistory = useSlidesStore((state) => state.toolHistory);
   const showComputerPanel = useSlidesStore((state) => state.showComputerPanel);
   const toggleComputerPanel = useSlidesStore((state) => state.toggleComputerPanel);
 
-  // Final Slides (for Computer Panel)
+  // Final Slides (for Computer Panel Preview)
   const finalSlides = useSlidesStore((state) => state.finalSlides);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -177,7 +177,7 @@ export function SlidesWorkflowContainer() {
     generationStatus === 'thinking' || generationStatus === 'generating';
 
   return (
-    <div className="w-full h-full flex gap-6 overflow-hidden">
+    <div className="w-full h-full flex gap-2 overflow-hidden">
       {/* Messages Area (left/center) */}
       <div
         className={`flex flex-col ${showPreview || showComputerPanel ? 'flex-1' : 'w-full'} overflow-hidden`}
@@ -195,7 +195,7 @@ export function SlidesWorkflowContainer() {
         {/* Agent Status Indicator */}
         {hasMessages && (
           <div className="px-3 sm:px-4 md:px-6">
-            <div className="max-w-3xl mx-auto">
+            <div className={showComputerPanel ? "w-full" : "max-w-3xl mx-auto"}>
               <AgentStatusIndicator />
             </div>
           </div>
@@ -224,16 +224,11 @@ export function SlidesWorkflowContainer() {
         </div>
       )}
 
-      {/* Slides Computer Panel (right side, conditional) - Toggled by Monitor Button */}
+      {/* Payperwork Panel (right side, conditional) - Modular dynamic panel */}
       {showComputerPanel && (
-        <div className="flex-1 min-w-[500px] max-w-[700px] flex-shrink-0 px-3 sm:px-4 md:px-6 py-4">
-          <div className="h-full max-w-3xl mx-auto">
-            <SlidesComputerPanel
-              slides={finalSlides}
-              isGenerating={isGenerating}
-              format={format}
-              theme={theme}
-            />
+        <div className="flex-1 min-w-[500px] max-w-[700px] flex-shrink-0 py-4 pr-3 sm:pr-4 md:pr-6">
+          <div className="h-full">
+            <PayperworkPanel isGenerating={isGenerating} />
           </div>
         </div>
       )}
