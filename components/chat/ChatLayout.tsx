@@ -111,7 +111,8 @@ export function ChatLayout() {
       if (conv) {
         hasRestoredRef.current = true; // Prevent duplicate restore
         hasLoadedFromUrlRef.current = true; // Mark as loaded from URL
-        setCurrentConversationId(conv.id); // This automatically loads messages from store
+        // LAZY LOAD: Messages will be loaded asynchronously
+        setCurrentConversationId(conv.id);
         // Clean up URL parameter
         window.history.replaceState({}, '', '/chat');
         chatLogger.info('Conversation loaded from URL:');
@@ -122,7 +123,7 @@ export function ChatLayout() {
         window.history.replaceState({}, '', '/chat');
       }
     }
-  }, [isHydrated, conversations, setCurrentConversationId]);
+  }, [isHydrated, conversations, setCurrentConversationId, currentConversationId]);
 
   useEffect(() => {
     // Mark as restored if we have a currentConversationId after hydration

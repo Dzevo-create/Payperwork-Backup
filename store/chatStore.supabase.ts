@@ -15,6 +15,7 @@ import { Message, Conversation, ChatError, Attachment } from '@/types/chat';
 import { chatLogger } from '@/lib/logger';
 import {
   fetchConversations,
+  fetchConversationMessages,
   createConversation as createConvSupabase,
   updateConversation as updateConvSupabase,
   deleteConversation as deleteConvSupabase,
@@ -53,7 +54,7 @@ interface ChatStore {
   updateConversation: (id: string, updates: Partial<Conversation>) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
 
-  setCurrentConversationId: (id: string | null) => void;
+  setCurrentConversationId: (id: string | null) => Promise<void>;
   setIsGenerating: (isGenerating: boolean) => void;
   setError: (error: ChatError | null) => void;
 
@@ -416,10 +417,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   },
 
   // UI State
-  setCurrentConversationId: (id) => {
-    // When switching conversation, load messages from that conversation
+  setCurrentConversationId: async (id) => {
     const state = get();
-    const conversation = state.conversations.find(c => c.id === id);
 
     // Persist to localStorage for page reload recovery
     if (typeof window !== 'undefined') {
@@ -440,19 +439,39 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     // 🎯 UX FIX: Clear messages immediately when switching conversations
     // This prevents the flash of old messages from the previous conversation
     if (id !== state.currentConversationId) {
-      set({ messages: [] });
+      set({ messages: [], currentConversationId: id });
     }
 
-    if (conversation && conversation.messages) {
-      chatLogger.info('Loading ${conversation.messages.length} messages for conversation ${id}');
-      set({
-        currentConversationId: id,
-        messages: conversation.messages
-      });
+    // LAZY LOADING: Fetch messages from Supabase only when needed
+    if (id) {
+      try {
+        chatLogger.info(`🔄 Lazy loading messages for conversation: ${id}`);
+        const messages = await fetchConversationMessages(id);
+
+        // Update conversation with loaded messages
+        const conversations = state.conversations.map(conv =>
+          conv.id === id ? { ...conv, messages } : conv
+        );
+
+        chatLogger.info(`✅ Loaded ${messages.length} messages for conversation ${id}`);
+        set({
+          currentConversationId: id,
+          messages,
+          conversations
+        });
+      } catch (error) {
+        chatLogger.error('Failed to load conversation messages:', error instanceof Error ? error : undefined);
+        set({
+          error: {
+            message: 'Failed to load conversation messages',
+            retryable: true
+          }
+        });
+      }
     } else {
-      chatLogger.info('Switching to conversation ${id} (no messages yet)');
+      // New conversation - no messages yet
       set({
-        currentConversationId: id,
+        currentConversationId: null,
         messages: []
       });
     }

@@ -18,23 +18,22 @@ export async function fetchConversations(): Promise<Conversation[]> {
     return [];
   }
 
-  // Fetch messages for each conversation
-  const conversationsWithMessages = await Promise.all(
-    (data || []).map(async (conv) => {
-      const messages = await fetchMessages(conv.id);
-      return {
-        id: conv.id,
-        title: conv.title,
-        messages,
-        createdAt: new Date(conv.created_at),
-        updatedAt: new Date(conv.updated_at),
-        isPinned: conv.is_pinned,
-        isSuperChatEnabled: conv.is_superchat_enabled,
-      };
-    })
-  );
+  // Return conversations WITHOUT messages (lazy loading)
+  // Messages will be loaded on-demand when conversation is opened
+  return (data || []).map((conv) => ({
+    id: conv.id,
+    title: conv.title,
+    messages: [], // Empty - messages loaded lazily
+    createdAt: new Date(conv.created_at),
+    updatedAt: new Date(conv.updated_at),
+    isPinned: conv.is_pinned,
+    isSuperChatEnabled: conv.is_superchat_enabled,
+  }));
+}
 
-  return conversationsWithMessages;
+// NEW: Load messages for a specific conversation (lazy loading)
+export async function fetchConversationMessages(conversationId: string): Promise<Message[]> {
+  return fetchMessages(conversationId);
 }
 
 export async function createConversation(conversation: Conversation): Promise<Conversation | null> {
