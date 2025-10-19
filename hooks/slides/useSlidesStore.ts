@@ -25,6 +25,7 @@ import {
   PresentationFormat,
   PresentationTheme,
   ToolAction,
+  Topic,
 } from '@/types/slides';
 import { slidesLogger } from '@/lib/logger';
 
@@ -61,7 +62,7 @@ interface SlidesStore {
   messages: SlidesMessage[];
 
   // Topics State
-  currentTopics: string[];
+  currentTopics: Topic[];
   topicsApproved: boolean;
 
   // Preview Panel Visibility
@@ -115,7 +116,7 @@ interface SlidesStore {
   clearMessages: () => void;
 
   // Topics Management
-  setCurrentTopics: (topics: string[]) => void;
+  setCurrentTopics: (topics: Topic[]) => void;
   setTopicsApproved: (approved: boolean) => void;
 
   // Preview Panel

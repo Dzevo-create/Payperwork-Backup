@@ -547,6 +547,17 @@ export interface SlidesMessageContent {
 }
 
 /**
+ * Topic
+ *
+ * Represents a single slide topic with order, title, and description
+ */
+export interface Topic {
+  order: number;
+  title: string;
+  description: string;
+}
+
+/**
  * Topics Generation Request
  *
  * Request payload for generating slide topics
@@ -564,7 +575,7 @@ export interface GenerateTopicsRequest {
  */
 export interface GenerateTopicsResponse {
   success: boolean;
-  topics: string[];
+  topics: Topic[];
   messageId: string;
 }
 
@@ -574,7 +585,7 @@ export interface GenerateTopicsResponse {
  * Request payload for approving topics and starting generation
  */
 export interface ApproveTopicsRequest {
-  topics: string[];
+  topics: Topic[];
   format: PresentationFormat;
   theme: PresentationTheme;
   presentationId?: string;
@@ -599,7 +610,7 @@ export interface RegenerateTopicsRequest {
 export interface WSTopicsGenerated {
   event: "topics:generated";
   data: {
-    topics: string[];
+    topics: Topic[];
     messageId: string;
   };
 }

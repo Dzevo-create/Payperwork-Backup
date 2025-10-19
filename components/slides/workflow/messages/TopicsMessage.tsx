@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SlidesMessage, SlidesMessageContent } from '@/types/slides';
+import { SlidesMessage, SlidesMessageContent, Topic } from '@/types/slides';
 import { CheckCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
@@ -26,7 +26,7 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const currentPresentationId = useSlidesStore((state) => state.currentPresentationId);
 
   // Extract topics from message content
-  const topics: string[] = Array.isArray(message.content)
+  const topics: Topic[] = Array.isArray(message.content)
     ? message.content
     : (message.content as SlidesMessageContent)?.topics || [];
 
@@ -165,10 +165,13 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       <div className="max-w-3xl w-full px-4 sm:px-6 py-4 sm:py-5 bg-white/90 border border-pw-black/10 text-pw-black shadow-sm rounded-2xl">
         <h3 className="font-semibold mb-3 text-sm">Vorgeschlagene Folien:</h3>
 
-        <ol className="list-decimal list-inside space-y-2 mb-4">
+        <ol className="list-decimal list-inside space-y-3 mb-4">
           {topics.map((topic, index) => (
-            <li key={index} className="text-sm text-pw-black leading-relaxed">
-              {topic}
+            <li key={topic.order || index} className="text-sm text-pw-black leading-relaxed">
+              <div className="inline-block ml-2">
+                <div className="font-medium">{topic.title}</div>
+                <div className="text-xs text-pw-black/60 mt-0.5">{topic.description}</div>
+              </div>
             </li>
           ))}
         </ol>
