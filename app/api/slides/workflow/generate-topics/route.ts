@@ -9,7 +9,19 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTopics } from '@/lib/api/slides/claude-service';
-import { createServerClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client (admin)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +47,6 @@ export async function POST(request: NextRequest) {
     console.log('Format:', format, 'Theme:', theme);
 
     // Step 1: Create presentation in DB
-    const supabase = await createServerClient();
     const { data: presentation, error: createError } = await supabase
       .from('presentations')
       .insert({
