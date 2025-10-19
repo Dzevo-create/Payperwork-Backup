@@ -135,7 +135,12 @@ async function handleTaskUpdated(
   taskId: string,
   webhookData: any
 ) {
-  console.log(`Task updated: ${taskId}`, webhookData);
+  console.log(`Task updated: ${taskId}`);
+
+  // ========== DETAILED LOGGING ==========
+  console.log("=== WEBHOOK PAYLOAD ===");
+  console.log(JSON.stringify(webhookData, null, 2));
+  console.log("======================");
 
   await supabase.from("manus_tasks").update({ webhook_data: webhookData }).eq("task_id", taskId);
 
@@ -177,7 +182,7 @@ async function handleTaskStopped(
   userId: string,
   presentationId: string,
   taskId: string,
-  manusTask: any,
+  _manusTask: any,
   webhookData: any
 ) {
   await supabase
