@@ -501,3 +501,104 @@ export type WSEvent =
   | WSGenerationStatusUpdate
   | WSGenerationError
   | WSGenerationCompleted;
+
+// ============================================
+// NEW: Chat-based Workflow Types
+// Added: 2025-10-19
+// ============================================
+
+/**
+ * Slides Message Type
+ *
+ * Represents the type of message in the chat-based workflow
+ */
+export type SlidesMessageType =
+  | "user"        // User's prompt/question
+  | "thinking"    // AI is thinking (loading state)
+  | "topics"      // AI generated slide topics (awaiting approval)
+  | "generation"  // AI is generating slides (progress updates)
+  | "result";     // Final result with actions
+
+/**
+ * Slides Message
+ *
+ * Represents a single message in the slides workflow chat interface
+ */
+export interface SlidesMessage {
+  id: string;
+  type: SlidesMessageType;
+  content: string | string[] | SlidesMessageContent;
+  timestamp: string;
+  approved?: boolean;  // For topics messages
+}
+
+/**
+ * Slides Message Content
+ *
+ * Extended content for result messages
+ */
+export interface SlidesMessageContent {
+  presentationId?: string;
+  slideCount?: number;
+  topics?: string[];
+  progress?: number;
+  error?: string;
+}
+
+/**
+ * Topics Generation Request
+ *
+ * Request payload for generating slide topics
+ */
+export interface GenerateTopicsRequest {
+  prompt: string;
+  format: PresentationFormat;
+  theme: PresentationTheme;
+}
+
+/**
+ * Topics Generation Response
+ *
+ * Response from topic generation API
+ */
+export interface GenerateTopicsResponse {
+  success: boolean;
+  topics: string[];
+  messageId: string;
+}
+
+/**
+ * Approve Topics Request
+ *
+ * Request payload for approving topics and starting generation
+ */
+export interface ApproveTopicsRequest {
+  topics: string[];
+  format: PresentationFormat;
+  theme: PresentationTheme;
+  presentationId?: string;
+}
+
+/**
+ * Regenerate Topics Request
+ *
+ * Request payload for regenerating topics
+ */
+export interface RegenerateTopicsRequest {
+  prompt: string;
+  format: PresentationFormat;
+  theme: PresentationTheme;
+}
+
+/**
+ * WebSocket Event: Topics Generated
+ *
+ * Sent from server when topics are ready
+ */
+export interface WSTopicsGenerated {
+  event: "topics:generated";
+  data: {
+    topics: string[];
+    messageId: string;
+  };
+}

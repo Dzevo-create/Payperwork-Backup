@@ -21,6 +21,9 @@ import {
   ThinkingStep,
   GenerationStatus,
   LivePreviewSlide,
+  SlidesMessage,
+  PresentationFormat,
+  PresentationTheme,
 } from '@/types/slides';
 import { slidesLogger } from '@/lib/logger';
 
@@ -48,6 +51,23 @@ interface SlidesStore {
   finalPresentation: Presentation | null;
   finalSlides: Slide[];
 
+  // ========== NEW: Chat-based Workflow State ==========
+
+  // Messages (Chat history)
+  messages: SlidesMessage[];
+
+  // Topics State
+  currentTopics: string[];
+  topicsApproved: boolean;
+
+  // Preview Panel Visibility
+  showPreview: boolean;
+
+  // Settings
+  format: PresentationFormat;
+  theme: PresentationTheme;
+  currentPrompt: string;
+
   // ========== Actions ==========
 
   // Presentations Management
@@ -71,6 +91,25 @@ interface SlidesStore {
   // Final Result
   setFinalPresentation: (presentation: Presentation, slides: Slide[]) => void;
 
+  // ========== NEW: Chat-based Workflow Actions ==========
+
+  // Messages Management
+  addMessage: (message: SlidesMessage) => void;
+  updateMessage: (id: string, updates: Partial<SlidesMessage>) => void;
+  clearMessages: () => void;
+
+  // Topics Management
+  setCurrentTopics: (topics: string[]) => void;
+  setTopicsApproved: (approved: boolean) => void;
+
+  // Preview Panel
+  setShowPreview: (show: boolean) => void;
+
+  // Settings
+  setFormat: (format: PresentationFormat) => void;
+  setTheme: (theme: PresentationTheme) => void;
+  setCurrentPrompt: (prompt: string) => void;
+
   // Reset
   resetWorkflow: () => void;
 }
@@ -88,6 +127,15 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
   livePreviewSlide: null,
   finalPresentation: null,
   finalSlides: [],
+
+  // ========== NEW: Chat-based Workflow Initial State ==========
+  messages: [],
+  currentTopics: [],
+  topicsApproved: false,
+  showPreview: false,
+  format: '16:9',
+  theme: 'default',
+  currentPrompt: '',
 
   // ========== Presentations Management ==========
 
@@ -221,6 +269,87 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
     });
   },
 
+  // ========== NEW: Chat-based Workflow Actions ==========
+
+  // Messages Management
+  addMessage: (message) => {
+    slidesLogger.debug('Adding message', {
+      action: 'addMessage',
+      messageId: message.id,
+      type: message.type,
+    });
+    set((state) => ({
+      messages: [...state.messages, message],
+    }));
+  },
+
+  updateMessage: (id, updates) => {
+    slidesLogger.debug('Updating message', {
+      action: 'updateMessage',
+      messageId: id,
+      updates: Object.keys(updates),
+    });
+    set((state) => ({
+      messages: state.messages.map((m) =>
+        m.id === id ? { ...m, ...updates } : m
+      ),
+    }));
+  },
+
+  clearMessages: () => {
+    slidesLogger.debug('Clearing messages', {
+      action: 'clearMessages',
+    });
+    set({ messages: [] });
+  },
+
+  // Topics Management
+  setCurrentTopics: (topics) => {
+    slidesLogger.debug('Setting current topics', {
+      action: 'setCurrentTopics',
+      count: topics.length,
+    });
+    set({ currentTopics: topics });
+  },
+
+  setTopicsApproved: (approved) => {
+    slidesLogger.debug('Setting topics approved', {
+      action: 'setTopicsApproved',
+      approved,
+    });
+    set({ topicsApproved: approved });
+  },
+
+  // Preview Panel
+  setShowPreview: (show) => {
+    slidesLogger.debug('Setting show preview', {
+      action: 'setShowPreview',
+      show,
+    });
+    set({ showPreview: show });
+  },
+
+  // Settings
+  setFormat: (format) => {
+    slidesLogger.debug('Setting format', {
+      action: 'setFormat',
+      format,
+    });
+    set({ format });
+  },
+
+  setTheme: (theme) => {
+    slidesLogger.debug('Setting theme', {
+      action: 'setTheme',
+      theme,
+    });
+    set({ theme });
+  },
+
+  setCurrentPrompt: (prompt) => {
+    set({ currentPrompt: prompt });
+  },
+
   // ========== Reset ==========
 
   resetWorkflow: () => {
@@ -234,6 +363,11 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
       livePreviewSlide: null,
       finalPresentation: null,
       finalSlides: [],
+      messages: [],
+      currentTopics: [],
+      topicsApproved: false,
+      showPreview: false,
+      currentPrompt: '',
     });
   },
 }));
