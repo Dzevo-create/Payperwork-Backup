@@ -100,7 +100,7 @@ export function SlidesWorkflowContainer() {
     addMessage({
       id: `msg-thinking-${Date.now()}`,
       type: 'thinking',
-      content: 'Connecting to Payperwork AI...',
+      content: 'Okay, ich recherchiere und erstelle dir einen Vorschlag für den Content.',
       timestamp: new Date().toISOString(),
     });
 
