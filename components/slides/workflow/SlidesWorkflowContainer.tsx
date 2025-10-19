@@ -50,6 +50,9 @@ export function SlidesWorkflowContainer() {
   const showComputerPanel = useSlidesStore((state) => state.showComputerPanel);
   const toggleComputerPanel = useSlidesStore((state) => state.toggleComputerPanel);
 
+  // Final Slides (for Computer Panel)
+  const finalSlides = useSlidesStore((state) => state.finalSlides);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
