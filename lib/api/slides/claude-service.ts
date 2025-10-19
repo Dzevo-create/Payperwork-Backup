@@ -64,6 +64,47 @@ export interface GenerateSlidesOptions {
 }
 
 /**
+ * Generate AI acknowledgment message using Claude
+ * Returns a friendly, contextual response based on user prompt
+ */
+export async function generateAcknowledgment(prompt: string): Promise<string> {
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 100,
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'user',
+          content: `Du bist ein freundlicher AI-Assistent. Der User möchte eine Präsentation erstellen mit folgendem Thema:
+
+"${prompt}"
+
+Schreibe eine kurze, freundliche Bestätigung (1 Satz), dass du die Anfrage verstanden hast und jetzt die Präsentation vorbereitest. Sei natürlich und professionell.
+
+Beispiele:
+- "Perfekt! Ich erstelle dir eine professionelle Präsentation über [Thema]."
+- "Verstanden! Ich recherchiere die wichtigsten Aspekte zu [Thema] und bereite dir die Folien vor."
+- "Alles klar! Ich stelle dir eine informative Präsentation zu [Thema] zusammen."
+
+Antworte NUR mit der Bestätigung, ohne zusätzliche Erklärungen.`,
+        },
+      ],
+    });
+
+    const textContent = message.content.find((c) => c.type === 'text');
+    if (textContent && textContent.type === 'text') {
+      return textContent.text.trim();
+    }
+
+    return 'Okay, ich erstelle dir einen Vorschlag für die Präsentation.';
+  } catch (error) {
+    console.error('Error generating acknowledgment:', error);
+    return 'Okay, ich erstelle dir einen Vorschlag für die Präsentation.';
+  }
+}
+
+/**
  * Generate 10 slide topics using Claude API
  */
 export async function generateTopics(options: GenerateTopicsOptions) {

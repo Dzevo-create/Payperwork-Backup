@@ -96,14 +96,6 @@ export function SlidesWorkflowContainer() {
       timestamp: new Date().toISOString(),
     });
 
-    // Add thinking message
-    addMessage({
-      id: `msg-thinking-${Date.now()}`,
-      type: 'thinking',
-      content: 'Okay, ich recherchiere und erstelle dir einen Vorschlag für den Content.',
-      timestamp: new Date().toISOString(),
-    });
-
     setGenerationStatus('thinking');
 
     // Call API to generate topics
@@ -116,6 +108,25 @@ export function SlidesWorkflowContainer() {
         throw new Error('User not authenticated');
       }
 
+      // Step 1: Generate AI acknowledgment message
+      const ackResponse = await fetch('/api/slides/workflow/generate-acknowledgment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: message }),
+      });
+
+      const ackData = await ackResponse.json();
+      const acknowledgment = ackData.acknowledgment || 'Okay, ich erstelle dir einen Vorschlag für die Präsentation.';
+
+      // Add AI-generated thinking message
+      addMessage({
+        id: `msg-thinking-${Date.now()}`,
+        type: 'thinking',
+        content: acknowledgment,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Step 2: Generate topics
       const response = await fetch('/api/slides/workflow/generate-topics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
