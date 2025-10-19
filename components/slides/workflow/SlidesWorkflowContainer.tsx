@@ -19,7 +19,8 @@ import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
 import { SlidesWelcome } from './SlidesWelcome';
 import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
-import { Settings, Mic, Send, Plus } from 'lucide-react';
+import { ComputerPanel } from '../computer/ComputerPanel';
+import { Settings, Mic, Send, Plus, Monitor } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -43,6 +44,11 @@ export function SlidesWorkflowContainer() {
   const setFormat = useSlidesStore((state) => state.setFormat);
   const theme = useSlidesStore((state) => state.theme);
   const setTheme = useSlidesStore((state) => state.setTheme);
+
+  // NEW: Phase 2 - Computer Panel
+  const toolHistory = useSlidesStore((state) => state.toolHistory);
+  const showComputerPanel = useSlidesStore((state) => state.showComputerPanel);
+  const toggleComputerPanel = useSlidesStore((state) => state.toggleComputerPanel);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -301,6 +307,23 @@ export function SlidesWorkflowContainer() {
                   <Settings className="w-4 h-4 text-pw-black/60" />
                 </button>
 
+                {/* NEW: Phase 2 - Computer Panel Toggle Button */}
+                <button
+                  onClick={toggleComputerPanel}
+                  className={`flex-shrink-0 p-2 rounded-lg transition-all ${
+                    showComputerPanel
+                      ? "bg-pw-accent text-pw-black"
+                      : "hover:bg-pw-black/5 text-pw-black/60"
+                  }`}
+                  aria-label="Computer Panel"
+                  title={showComputerPanel ? "Computer Panel schließen" : "Computer Panel öffnen"}
+                >
+                  <Monitor className="w-4 h-4" />
+                  {toolHistory.length > 0 && (
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-pw-accent rounded-full"></span>
+                  )}
+                </button>
+
                 {/* Send Button */}
                 <button
                   onClick={handleSendMessage}
@@ -320,6 +343,13 @@ export function SlidesWorkflowContainer() {
       {showPreview && (
         <div className="w-96 flex-shrink-0">
           <SlidesPreviewPanel />
+        </div>
+      )}
+
+      {/* NEW: Phase 2 - Computer Panel (right side, conditional) */}
+      {showComputerPanel && (
+        <div className="w-96 flex-shrink-0">
+          <ComputerPanel toolActions={toolHistory} isOpen={showComputerPanel} />
         </div>
       )}
     </div>

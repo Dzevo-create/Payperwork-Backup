@@ -7,6 +7,8 @@ import { ThinkingMessage } from './messages/ThinkingMessage';
 import { TopicsMessage } from './messages/TopicsMessage';
 import { GenerationMessage } from './messages/GenerationMessage';
 import { ResultMessage } from './messages/ResultMessage';
+import { ToolActionMessage } from './messages/ToolActionMessage';
+import { ToolAction } from '@/types/slides';
 import { Presentation } from 'lucide-react';
 
 export function SlidesMessageList() {
@@ -47,6 +49,8 @@ export function SlidesMessageList() {
               return <GenerationMessage key={message.id} message={message} />;
             case 'result':
               return <ResultMessage key={message.id} message={message} />;
+            case 'tool_action':
+              return <ToolActionMessage key={message.id} toolAction={message.content as ToolAction} />;
             default:
               return null;
           }

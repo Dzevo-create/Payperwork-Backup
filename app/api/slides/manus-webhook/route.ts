@@ -17,6 +17,9 @@ import {
   emitPresentationReady,
   emitPresentationError,
   emitTopicsGenerated,
+  emitToolActionStarted,
+  emitToolActionCompleted,
+  emitToolActionFailed,
 } from "@/lib/socket/server";
 import crypto from "crypto";
 
@@ -170,14 +173,63 @@ async function handleTaskUpdated(
     }
   }
 
+  // NEW: Phase 1 - Tool Use Display - Emit tool action events
   if (webhookData.thinking_action) {
     const action = webhookData.thinking_action;
+
+    // Keep existing thinking action emit for compatibility
     emitThinkingActionAdd(userId, action.step_id, {
       id: action.id,
       type: action.type,
       text: action.text,
       timestamp: action.timestamp,
     });
+
+    // NEW: Emit tool action events for tool use display
+    // Detect if this is a tool use action (search, browse, python)
+    const toolTypes = ['search', 'browse', 'python', 'bash', 'file'];
+    if (toolTypes.includes(action.type?.toLowerCase())) {
+      const messageId = `tool-${action.id}`;
+
+      // Determine status based on action data
+      if (action.error) {
+        emitToolActionFailed(userId, {
+          toolAction: {
+            id: action.id,
+            type: action.type.toLowerCase(),
+            status: 'failed',
+            input: action.text || action.input || '',
+            error: action.error,
+            timestamp: action.timestamp || new Date().toISOString(),
+          },
+          messageId,
+        });
+      } else if (action.result || action.output) {
+        emitToolActionCompleted(userId, {
+          toolAction: {
+            id: action.id,
+            type: action.type.toLowerCase(),
+            status: 'completed',
+            input: action.text || action.input || '',
+            result: action.result || action.output,
+            duration: action.duration,
+            timestamp: action.timestamp || new Date().toISOString(),
+          },
+          messageId,
+        });
+      } else {
+        emitToolActionStarted(userId, {
+          toolAction: {
+            id: action.id,
+            type: action.type.toLowerCase(),
+            status: 'running',
+            input: action.text || action.input || '',
+            timestamp: action.timestamp || new Date().toISOString(),
+          },
+          messageId,
+        });
+      }
+    }
   }
 
   if (webhookData.slide_preview) {
@@ -300,14 +352,63 @@ async function handleTopicsTaskUpdated(
   }
 
   // Emit tool use (search, browse, python)
+  // NEW: Phase 1 - Tool Use Display - Emit tool action events
   if (webhookData.thinking_action) {
     const action = webhookData.thinking_action;
+
+    // Keep existing thinking action emit for compatibility
     emitThinkingActionAdd(userId, action.step_id, {
       id: action.id,
       type: action.type,
       text: action.text,
       timestamp: action.timestamp,
     });
+
+    // NEW: Emit tool action events for tool use display
+    // Detect if this is a tool use action (search, browse, python)
+    const toolTypes = ['search', 'browse', 'python', 'bash', 'file'];
+    if (toolTypes.includes(action.type?.toLowerCase())) {
+      const messageId = `tool-${action.id}`;
+
+      // Determine status based on action data
+      if (action.error) {
+        emitToolActionFailed(userId, {
+          toolAction: {
+            id: action.id,
+            type: action.type.toLowerCase(),
+            status: 'failed',
+            input: action.text || action.input || '',
+            error: action.error,
+            timestamp: action.timestamp || new Date().toISOString(),
+          },
+          messageId,
+        });
+      } else if (action.result || action.output) {
+        emitToolActionCompleted(userId, {
+          toolAction: {
+            id: action.id,
+            type: action.type.toLowerCase(),
+            status: 'completed',
+            input: action.text || action.input || '',
+            result: action.result || action.output,
+            duration: action.duration,
+            timestamp: action.timestamp || new Date().toISOString(),
+          },
+          messageId,
+        });
+      } else {
+        emitToolActionStarted(userId, {
+          toolAction: {
+            id: action.id,
+            type: action.type.toLowerCase(),
+            status: 'running',
+            input: action.text || action.input || '',
+            timestamp: action.timestamp || new Date().toISOString(),
+          },
+          messageId,
+        });
+      }
+    }
   }
 
   // Emit progress updates

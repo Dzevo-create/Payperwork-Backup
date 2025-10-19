@@ -24,6 +24,7 @@ import {
   SlidesMessage,
   PresentationFormat,
   PresentationTheme,
+  ToolAction,
 } from '@/types/slides';
 import { slidesLogger } from '@/lib/logger';
 
@@ -68,6 +69,14 @@ interface SlidesStore {
   theme: PresentationTheme;
   currentPrompt: string;
 
+  // ========== NEW: Phase 2 - Computer Panel State ==========
+
+  // Tool History (for Computer Panel)
+  toolHistory: ToolAction[];
+
+  // Computer Panel Visibility
+  showComputerPanel: boolean;
+
   // ========== Actions ==========
 
   // Presentations Management
@@ -110,6 +119,17 @@ interface SlidesStore {
   setTheme: (theme: PresentationTheme) => void;
   setCurrentPrompt: (prompt: string) => void;
 
+  // ========== NEW: Phase 2 - Computer Panel Actions ==========
+
+  // Tool History Management
+  addToolAction: (action: ToolAction) => void;
+  updateToolAction: (id: string, updates: Partial<ToolAction>) => void;
+  clearToolHistory: () => void;
+
+  // Computer Panel
+  setShowComputerPanel: (show: boolean) => void;
+  toggleComputerPanel: () => void;
+
   // Reset
   resetWorkflow: () => void;
 }
@@ -136,6 +156,10 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
   format: '16:9',
   theme: 'default',
   currentPrompt: '',
+
+  // ========== NEW: Phase 2 - Computer Panel Initial State ==========
+  toolHistory: [],
+  showComputerPanel: false,
 
   // ========== Presentations Management ==========
 
@@ -350,6 +374,71 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
     set({ currentPrompt: prompt });
   },
 
+  // ========== NEW: Phase 2 - Computer Panel Actions ==========
+
+  // Tool History Management
+  addToolAction: (action) => {
+    slidesLogger.debug('Adding tool action', {
+      action: 'addToolAction',
+      toolId: action.id,
+      toolType: action.type,
+      status: action.status,
+    });
+    set((state) => {
+      // Check if tool already exists (for updates)
+      const existingIndex = state.toolHistory.findIndex((t) => t.id === action.id);
+      if (existingIndex !== -1) {
+        // Update existing
+        const newHistory = [...state.toolHistory];
+        newHistory[existingIndex] = action;
+        return { toolHistory: newHistory };
+      } else {
+        // Add new
+        return { toolHistory: [...state.toolHistory, action] };
+      }
+    });
+  },
+
+  updateToolAction: (id, updates) => {
+    slidesLogger.debug('Updating tool action', {
+      action: 'updateToolAction',
+      toolId: id,
+      updates: Object.keys(updates),
+    });
+    set((state) => ({
+      toolHistory: state.toolHistory.map((t) =>
+        t.id === id ? { ...t, ...updates } : t
+      ),
+    }));
+  },
+
+  clearToolHistory: () => {
+    slidesLogger.debug('Clearing tool history', {
+      action: 'clearToolHistory',
+    });
+    set({ toolHistory: [] });
+  },
+
+  // Computer Panel
+  setShowComputerPanel: (show) => {
+    slidesLogger.debug('Setting show computer panel', {
+      action: 'setShowComputerPanel',
+      show,
+    });
+    set({ showComputerPanel: show });
+  },
+
+  toggleComputerPanel: () => {
+    set((state) => {
+      const newValue = !state.showComputerPanel;
+      slidesLogger.debug('Toggling computer panel', {
+        action: 'toggleComputerPanel',
+        newValue,
+      });
+      return { showComputerPanel: newValue };
+    });
+  },
+
   // ========== Reset ==========
 
   resetWorkflow: () => {
@@ -368,6 +457,8 @@ export const useSlidesStore = create<SlidesStore>()((set, get) => ({
       topicsApproved: false,
       showPreview: false,
       currentPrompt: '',
+      toolHistory: [],
+      showComputerPanel: false,
     });
   },
 }));

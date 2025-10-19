@@ -23,6 +23,9 @@ export function useSlidesSocket(userId: string | null) {
   const addMessage = useSlidesStore((state) => state.addMessage);
   const setCurrentTopics = useSlidesStore((state) => state.setCurrentTopics);
 
+  // NEW: Phase 2 - Computer Panel actions
+  const addToolAction = useSlidesStore((state) => state.addToolAction);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -43,6 +46,52 @@ export function useSlidesSocket(userId: string | null) {
 
       setCurrentTopics(data.topics);
       setGenerationStatus('idle'); // Ready for approval
+    });
+
+    // NEW: Phase 1 - Tool Use Display - Listen to tool action events
+    socket.on('tool:action:started', (data: { toolAction: any; messageId: string }) => {
+      console.log('🔧 Tool action started:', data.toolAction.type);
+
+      // Add to message list (inline display)
+      addMessage({
+        id: data.messageId,
+        type: 'tool_action',
+        content: data.toolAction,
+        timestamp: new Date().toISOString(),
+      });
+
+      // NEW: Phase 2 - Also add to tool history (Computer Panel)
+      addToolAction(data.toolAction);
+    });
+
+    socket.on('tool:action:completed', (data: { toolAction: any; messageId: string }) => {
+      console.log('✅ Tool action completed:', data.toolAction.type);
+
+      // Update existing message
+      addMessage({
+        id: data.messageId,
+        type: 'tool_action',
+        content: data.toolAction,
+        timestamp: new Date().toISOString(),
+      });
+
+      // NEW: Phase 2 - Update tool history
+      addToolAction(data.toolAction);
+    });
+
+    socket.on('tool:action:failed', (data: { toolAction: any; messageId: string }) => {
+      console.log('❌ Tool action failed:', data.toolAction.type, data.toolAction.error);
+
+      // Update existing message with error
+      addMessage({
+        id: data.messageId,
+        type: 'tool_action',
+        content: data.toolAction,
+        timestamp: new Date().toISOString(),
+      });
+
+      // NEW: Phase 2 - Update tool history
+      addToolAction(data.toolAction);
     });
 
     // Listen to thinking step updates
@@ -85,12 +134,15 @@ export function useSlidesSocket(userId: string | null) {
     // Cleanup
     return () => {
       socket.off('topics:generated');
+      socket.off('tool:action:started');
+      socket.off('tool:action:completed');
+      socket.off('tool:action:failed');
       socket.off(WEBSOCKET_EVENTS.THINKING_STEP_UPDATE);
       socket.off(WEBSOCKET_EVENTS.SLIDE_PREVIEW_UPDATE);
       socket.off(WEBSOCKET_EVENTS.GENERATION_STATUS);
       socket.off(WEBSOCKET_EVENTS.GENERATION_COMPLETED);
     };
-  }, [userId, addOrUpdateThinkingStep, setLivePreviewSlide, setGenerationStatus, setFinalPresentation, addMessage, setCurrentTopics]);
+  }, [userId, addOrUpdateThinkingStep, setLivePreviewSlide, setGenerationStatus, setFinalPresentation, addMessage, setCurrentTopics, addToolAction]);
 
   return { socket: getSocketClient() };
 }

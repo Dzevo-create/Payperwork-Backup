@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  // Allow ngrok tunnel for development (webhooks)
+  allowedDevOrigins: [
+    'subdistichous-reynalda-bivoltine.ngrok-free.dev'
+  ],
   serverExternalPackages: ["pdf.js-extract"],
   images: {
     remotePatterns: [

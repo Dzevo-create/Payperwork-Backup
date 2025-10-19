@@ -517,7 +517,8 @@ export type SlidesMessageType =
   | "thinking"    // AI is thinking (loading state)
   | "topics"      // AI generated slide topics (awaiting approval)
   | "generation"  // AI is generating slides (progress updates)
-  | "result";     // Final result with actions
+  | "result"      // Final result with actions
+  | "tool_action"; // AI tool usage (Search, Browse, Python, etc.)
 
 /**
  * Slides Message
@@ -527,7 +528,7 @@ export type SlidesMessageType =
 export interface SlidesMessage {
   id: string;
   type: SlidesMessageType;
-  content: string | string[] | SlidesMessageContent;
+  content: string | string[] | SlidesMessageContent | ToolAction;
   timestamp: string;
   approved?: boolean;  // For topics messages
 }
@@ -600,5 +601,158 @@ export interface WSTopicsGenerated {
   data: {
     topics: string[];
     messageId: string;
+  };
+}
+
+// ============================================
+// NEW: Tool Use Display Types (Phase 1 - Manus Mirroring)
+// Added: 2025-10-19
+// ============================================
+
+/**
+ * Tool Type
+ *
+ * The type of tool the AI is using
+ */
+export type ToolType =
+  | "search"      // Google Search
+  | "browse"      // Web browsing
+  | "python"      // Python execution
+  | "bash"        // Bash command
+  | "file";       // File operations
+
+/**
+ * Tool Action Status
+ *
+ * Status of a tool action
+ */
+export type ToolActionStatus =
+  | "running"     // Tool is executing
+  | "completed"   // Tool finished successfully
+  | "failed";     // Tool failed with error
+
+/**
+ * Tool Search Result
+ *
+ * Result from a search tool
+ */
+export interface ToolSearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+  favicon?: string;
+}
+
+/**
+ * Tool Browse Result
+ *
+ * Result from browsing a webpage
+ */
+export interface ToolBrowseResult {
+  url: string;
+  title: string;
+  content: string;  // Extracted text content
+  html?: string;    // Optional: full HTML
+  screenshot?: string;  // Optional: screenshot URL
+}
+
+/**
+ * Tool Python Result
+ *
+ * Result from Python code execution
+ */
+export interface ToolPythonResult {
+  code: string;
+  output: string;
+  error?: string;
+  stdout?: string;
+  stderr?: string;
+}
+
+/**
+ * Tool File Result
+ *
+ * Result from file operations
+ */
+export interface ToolFileResult {
+  filename: string;
+  content: string;
+  operation: "read" | "write" | "create" | "delete";
+}
+
+/**
+ * Tool Action Result
+ *
+ * Generic result from any tool action
+ */
+export type ToolActionResult =
+  | ToolSearchResult[]
+  | ToolBrowseResult
+  | ToolPythonResult
+  | ToolFileResult;
+
+/**
+ * Tool Action
+ *
+ * Represents a tool being used by the AI
+ */
+export interface ToolAction {
+  id: string;
+  type: ToolType;
+  status: ToolActionStatus;
+  input: string;  // Input to the tool (e.g., search query, URL, code)
+  result?: ToolActionResult;  // Result from the tool
+  error?: string;  // Error message if failed
+  timestamp: string;  // ISO timestamp
+  duration?: number;  // Execution time in milliseconds
+}
+
+/**
+ * Tool Action Message
+ *
+ * Message type for displaying tool usage in the chat
+ */
+export interface ToolActionMessage extends SlidesMessage {
+  type: "tool_action";
+  content: ToolAction;
+}
+
+/**
+ * WebSocket Event: Tool Action Started
+ *
+ * Sent when AI starts using a tool
+ */
+export interface WSToolActionStarted {
+  event: "tool:action:started";
+  data: {
+    toolAction: ToolAction;
+    messageId: string;
+  };
+}
+
+/**
+ * WebSocket Event: Tool Action Completed
+ *
+ * Sent when tool finishes execution
+ */
+export interface WSToolActionCompleted {
+  event: "tool:action:completed";
+  data: {
+    toolAction: ToolAction;
+    messageId: string;
+  };
+}
+
+/**
+ * WebSocket Event: Tool Action Failed
+ *
+ * Sent when tool fails
+ */
+export interface WSToolActionFailed {
+  event: "tool:action:failed";
+  data: {
+    toolAction: ToolAction;
+    messageId: string;
+    error: string;
   };
 }

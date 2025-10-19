@@ -344,3 +344,94 @@ export function emitTopicsGenerated(
 
   console.log(`✅ Emitted topics:generated to user:${userId} with ${data.topics.length} topics`);
 }
+
+// ============================================
+// NEW: Phase 5 - Tool Use Display Events
+// ============================================
+
+/**
+ * Emit tool action started event
+ *
+ * @param userId - User ID
+ * @param data - Tool action data
+ */
+export function emitToolActionStarted(
+  userId: string,
+  data: {
+    toolAction: {
+      id: string;
+      type: string;
+      status: string;
+      input: string;
+      timestamp: string;
+    };
+    messageId: string;
+  }
+): void {
+  emitToUser(userId, 'tool:action:started', {
+    toolAction: data.toolAction,
+    messageId: data.messageId,
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`✅ Emitted tool:action:started to user:${userId} - ${data.toolAction.type}`);
+}
+
+/**
+ * Emit tool action completed event
+ *
+ * @param userId - User ID
+ * @param data - Tool action data
+ */
+export function emitToolActionCompleted(
+  userId: string,
+  data: {
+    toolAction: {
+      id: string;
+      type: string;
+      status: string;
+      input: string;
+      result?: any;
+      duration?: number;
+      timestamp: string;
+    };
+    messageId: string;
+  }
+): void {
+  emitToUser(userId, 'tool:action:completed', {
+    toolAction: data.toolAction,
+    messageId: data.messageId,
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`✅ Emitted tool:action:completed to user:${userId} - ${data.toolAction.type}`);
+}
+
+/**
+ * Emit tool action failed event
+ *
+ * @param userId - User ID
+ * @param data - Tool action data
+ */
+export function emitToolActionFailed(
+  userId: string,
+  data: {
+    toolAction: {
+      id: string;
+      type: string;
+      status: string;
+      input: string;
+      error: string;
+      timestamp: string;
+    };
+    messageId: string;
+  }
+): void {
+  emitToUser(userId, 'tool:action:failed', {
+    toolAction: data.toolAction,
+    messageId: data.messageId,
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`⚠️ Emitted tool:action:failed to user:${userId} - ${data.toolAction.type}: ${data.toolAction.error}`);
+}

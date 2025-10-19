@@ -22,7 +22,7 @@ function getAllowedOrigins(): string[] {
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
   if (isDevelopment) {
-    // Development: Allow localhost
+    // Development: Allow localhost and ngrok tunnels
     return [
       'http://localhost:3000',
       'http://localhost:3001',
@@ -34,6 +34,8 @@ function getAllowedOrigins(): string[] {
       'http://127.0.0.1:3002',
       'http://127.0.0.1:3003',
       'http://127.0.0.1:3004',
+      // ngrok tunnel for webhooks
+      'https://subdistichous-reynalda-bivoltine.ngrok-free.dev',
     ];
   }
 
