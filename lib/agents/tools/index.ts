@@ -5,7 +5,7 @@
  *
  * Usage:
  * ```typescript
- * import { LLMTool, SearchTool, BrowserTool } from '@/lib/agents/tools';
+ * import { LLMTool, SearchTool, BrowserTool, PlaywrightBrowserTool } from '@/lib/agents/tools';
  * ```
  *
  * @author Payperwork Team
@@ -20,6 +20,7 @@
 export { LLMTool } from './LLMTool';
 export { SearchTool } from './SearchTool';
 export { BrowserTool } from './BrowserTool';
+export { PlaywrightBrowserTool } from './PlaywrightBrowserTool';
 
 // ============================================
 // Type Exports
@@ -41,3 +42,8 @@ export type {
   BrowserToolOutput,
   PageMetadata,
 } from './BrowserTool';
+
+export type {
+  PlaywrightBrowserToolInput,
+  PlaywrightBrowserToolOutput,
+} from './PlaywrightBrowserTool';
