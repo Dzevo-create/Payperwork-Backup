@@ -3,7 +3,7 @@
  *
  * Two-row input design:
  * - Row 1 (top): Prompt textarea
- * - Row 2 (bottom): Buttons - Upload, Mic, Send, Settings, Monitor, Prompt Enhancer (T)
+ * - Row 2 (bottom): Buttons - Upload, Mic, Type (T), Design, Aspect Ratio, Monitor, Send
  *
  * @author Payperwork Team
  * @date 2025-10-20
@@ -12,8 +12,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Settings, Mic, Send, Monitor, Loader2 } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Mic, Send, Monitor, Loader2, Type, Palette, Maximize2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -52,10 +51,12 @@ export function SlidesInput({
   toolHistory,
 }: SlidesInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const designDropdownRef = useRef<HTMLDivElement>(null);
+  const formatDropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showDesignDropdown, setShowDesignDropdown] = useState(false);
+  const [showFormatDropdown, setShowFormatDropdown] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
 
@@ -69,11 +70,14 @@ export function SlidesInput({
     }
   }, [currentPrompt]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+      if (designDropdownRef.current && !designDropdownRef.current.contains(event.target as Node)) {
+        setShowDesignDropdown(false);
+      }
+      if (formatDropdownRef.current && !formatDropdownRef.current.contains(event.target as Node)) {
+        setShowFormatDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -136,10 +140,6 @@ export function SlidesInput({
     }
   };
 
-  const toggleDropdown = () => {
-    setShowDropdown(!showDropdown);
-  };
-
   return (
     <>
       {/* Input Container (2 Rows) */}
@@ -197,88 +197,102 @@ export function SlidesInput({
               {/* Spacer */}
               <div className="flex-1" />
 
-              {/* Prompt Enhancer Button */}
+              {/* Prompt Enhancer Button (T) */}
               <button
                 onClick={handleEnhancePrompt}
-                disabled={isGenerating || isEnhancing || !currentPrompt.trim()}
-                className="flex-shrink-0 px-2.5 py-1.5 hover:bg-pw-accent/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={!currentPrompt.trim() || isEnhancing}
+                className="flex-shrink-0 p-2 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 aria-label="Prompt verbessern"
                 title="Prompt verbessern"
               >
                 {isEnhancing ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-pw-accent" />
+                  <Loader2 className="w-4 h-4 text-pw-accent animate-spin" />
                 ) : (
-                  <span className="text-sm font-semibold text-pw-accent">T</span>
+                  <Type className="w-4 h-4 text-pw-black/60" />
                 )}
               </button>
 
-              {/* Settings Button */}
-              <div className="relative" ref={dropdownRef}>
+              {/* Design/Theme Button */}
+              <div className="relative" ref={designDropdownRef}>
                 <button
-                  onClick={toggleDropdown}
+                  onClick={() => setShowDesignDropdown(!showDesignDropdown)}
                   disabled={isGenerating}
                   className="flex-shrink-0 p-2 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-label="Einstellungen"
-                  title="Einstellungen"
+                  aria-label="Design"
+                  title="Design"
                 >
-                  <Settings className="w-4 h-4 text-pw-black/60" />
+                  <Palette className="w-4 h-4 text-pw-black/60" />
                 </button>
 
-                {/* Settings Dropdown */}
-                {showDropdown && (
-                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-white rounded-lg shadow-lg border border-pw-black/10 py-2 z-50">
-                    <div className="px-4 py-2 border-b border-pw-black/10">
-                      <h4 className="font-semibold text-sm text-pw-black">Einstellungen</h4>
+                {/* Design Dropdown */}
+                {showDesignDropdown && (
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-lg border border-pw-black/10 py-2 z-50">
+                    <div className="px-3 py-2 border-b border-pw-black/10">
+                      <h4 className="font-semibold text-xs text-pw-black">Design</h4>
                     </div>
+                    <div className="px-3 py-2">
+                      <Select
+                        value={theme}
+                        onValueChange={(v) => {
+                          setTheme(v as PresentationTheme);
+                          setShowDesignDropdown(false);
+                        }}
+                        disabled={isGenerating}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {THEME_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value} className="text-xs">
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                    <div className="px-4 py-3 space-y-3">
-                      {/* Format */}
-                      <div className="space-y-1.5">
-                        <Label htmlFor="format" className="text-xs text-pw-black/70">Format</Label>
-                        <Select
-                          value={format}
-                          onValueChange={(v) => {
-                            setFormat(v as PresentationFormat);
-                            setShowDropdown(false);
-                          }}
-                          disabled={isGenerating}
-                        >
-                          <SelectTrigger id="format" className="h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FORMAT_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value} className="text-xs">
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+              {/* Aspect Ratio Button */}
+              <div className="relative" ref={formatDropdownRef}>
+                <button
+                  onClick={() => setShowFormatDropdown(!showFormatDropdown)}
+                  disabled={isGenerating}
+                  className="flex-shrink-0 p-2 hover:bg-pw-black/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Aspect Ratio"
+                  title="Aspect Ratio"
+                >
+                  <Maximize2 className="w-4 h-4 text-pw-black/60" />
+                </button>
 
-                      {/* Theme */}
-                      <div className="space-y-1.5">
-                        <Label htmlFor="theme" className="text-xs text-pw-black/70">Theme</Label>
-                        <Select
-                          value={theme}
-                          onValueChange={(v) => {
-                            setTheme(v as PresentationTheme);
-                            setShowDropdown(false);
-                          }}
-                          disabled={isGenerating}
-                        >
-                          <SelectTrigger id="theme" className="h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {THEME_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value} className="text-xs">
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                {/* Aspect Ratio Dropdown */}
+                {showFormatDropdown && (
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-lg border border-pw-black/10 py-2 z-50">
+                    <div className="px-3 py-2 border-b border-pw-black/10">
+                      <h4 className="font-semibold text-xs text-pw-black">Aspect Ratio</h4>
+                    </div>
+                    <div className="px-3 py-2">
+                      <Select
+                        value={format}
+                        onValueChange={(v) => {
+                          setFormat(v as PresentationFormat);
+                          setShowFormatDropdown(false);
+                        }}
+                        disabled={isGenerating}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FORMAT_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value} className="text-xs">
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 )}
