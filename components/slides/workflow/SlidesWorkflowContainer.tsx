@@ -47,6 +47,7 @@ export function SlidesWorkflowContainer() {
   const theme = useSlidesStore((state) => state.theme);
   const setTheme = useSlidesStore((state) => state.setTheme);
   const setCurrentTopics = useSlidesStore((state) => state.setCurrentTopics);
+  const addPresentation = useSlidesStore((state) => state.addPresentation);
 
   // NEW: Phase 2 - Computer Panel
   const toolHistory = useSlidesStore((state) => state.toolHistory);
@@ -145,6 +146,14 @@ export function SlidesWorkflowContainer() {
         const setStoredPresentationId = useSlidesStore.getState().setCurrentPresentationId;
         setStoredPresentationId(data.presentationId);
         console.log('✅ Topic generation started, presentationId:', data.presentationId);
+
+        // Add new presentation to sidebar
+        addPresentation({
+          id: data.presentationId,
+          prompt: message,
+          status: 'topics_generated',
+          created_at: new Date().toISOString(),
+        });
 
         // Display topics immediately (no WebSocket needed)
         if (data.topics && Array.isArray(data.topics) && data.topics.length > 0) {
