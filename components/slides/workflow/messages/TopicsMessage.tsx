@@ -58,9 +58,6 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       setGenerationStatus('generating');
 
       // Validate we have the required data
-      if (!currentPrompt) {
-        throw new Error('Prompt is missing');
-      }
       if (!currentPresentationId) {
         throw new Error('Presentation ID is missing');
       }
@@ -70,12 +67,25 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
 
       const userId = user.id;
 
+      // Fetch prompt from presentation (it's saved in DB)
+      let promptToUse = currentPrompt;
+      if (!promptToUse) {
+        // Fetch from DB
+        const presentationResponse = await fetch(`/api/slides/${currentPresentationId}`);
+        const presentationData = await presentationResponse.json();
+        if (presentationData.success && presentationData.data.presentation.prompt) {
+          promptToUse = presentationData.data.presentation.prompt;
+        } else {
+          throw new Error('Could not retrieve prompt from presentation');
+        }
+      }
+
       // Call API to start generation
       const response = await fetch('/api/slides/workflow/generate-slides', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: currentPrompt,
+          prompt: promptToUse,
           topics,
           presentationId: currentPresentationId,
           userId,

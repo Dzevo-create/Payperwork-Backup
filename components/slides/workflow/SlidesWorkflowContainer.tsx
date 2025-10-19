@@ -133,7 +133,20 @@ export function SlidesWorkflowContainer() {
         const setStoredPresentationId = useSlidesStore.getState().setCurrentPresentationId;
         setStoredPresentationId(data.presentationId);
         console.log('✅ Topic generation started, presentationId:', data.presentationId);
-        // WebSocket will handle delivering topics
+
+        // Display topics immediately (no WebSocket needed)
+        if (data.topics && Array.isArray(data.topics) && data.topics.length > 0) {
+          // Store topics in store (for TopicsMessage to access)
+          setCurrentTopics(data.topics);
+
+          addMessage({
+            id: `msg-topics-${Date.now()}`,
+            type: 'topics',
+            content: data.topics,
+            timestamp: new Date().toISOString(),
+          });
+          setGenerationStatus('idle');
+        }
       }
     } catch (error) {
       console.error('Error generating topics:', error);

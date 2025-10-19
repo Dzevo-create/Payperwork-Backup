@@ -90,7 +90,19 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Saved topics to presentation:', presentation.id);
 
-    // Step 4: Return presentation ID and topics
+    // Step 4: Emit topics via WebSocket
+    try {
+      const { emitTopicsGenerated } = require('@/lib/socket/server');
+      console.log('📡 Emitting topics via WebSocket to user:', userId);
+      emitTopicsGenerated(userId, {
+        topics,
+        messageId: `topics-${Date.now()}`,
+      });
+    } catch (socketError) {
+      console.error('❌ Socket emit error (non-fatal):', socketError);
+    }
+
+    // Step 5: Return presentation ID and topics
     return NextResponse.json({
       success: true,
       presentationId: presentation.id,
