@@ -287,6 +287,17 @@ export const imageLogger = {
     logger.error(message, error, { component: 'Image', ...context }),
 };
 
+export const slidesLogger = {
+  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.debug(message, { component: 'Slides', ...context }),
+  info: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.info(message, { component: 'Slides', ...context }),
+  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
+    logger.warn(message, { component: 'Slides', ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
+    logger.error(message, error, { component: 'Slides', ...context }),
+};
+
 // Legacy compatibility - for gradual migration
 // These allow console.log replacement without changing call signature
 export const createLogger = (component: string) => ({

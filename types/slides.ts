@@ -342,3 +342,162 @@ export interface PresentationWithSlides extends Presentation {
 export interface SlideWithPresentation extends Slide {
   presentation: Presentation;
 }
+
+// ============================================
+// NEW: Thinking Display Types (Phase 1)
+// Added: 2025-10-19
+// ============================================
+
+/**
+ * Thinking Action Type
+ *
+ * Represents the type of action the AI is performing during slide generation
+ */
+export type ThinkingActionType =
+  | "searching"           // AI is searching for information
+  | "browsing"            // AI is browsing a webpage
+  | "creating_file"       // AI is creating a file
+  | "executing_command"   // AI is executing a command
+  | "knowledge_recalled"  // AI is recalling knowledge
+  | "generating_slides"   // AI is generating slides
+  | "analyzing_content";  // AI is analyzing content
+
+/**
+ * Thinking Step Status
+ *
+ * Represents the current status of a thinking step
+ */
+export type ThinkingStepStatus =
+  | "pending"    // Step is waiting to start
+  | "running"    // Step is currently executing
+  | "completed"  // Step finished successfully
+  | "failed";    // Step failed with error
+
+/**
+ * Thinking Action
+ *
+ * Represents a single action within a thinking step (e.g., a search query, file creation)
+ */
+export interface ThinkingAction {
+  id: string;
+  type: ThinkingActionType;
+  text: string;  // Description of the action (e.g., "Searching for Apple's history...")
+  timestamp?: string;  // Optional: ISO timestamp when the action occurred
+}
+
+/**
+ * Thinking Step
+ *
+ * Represents a major step in the AI's reasoning process
+ * Each step can contain multiple actions and has its own status
+ */
+export interface ThinkingStep {
+  id: string;
+  title: string;  // e.g., "Research Apple information and gather content"
+  status: ThinkingStepStatus;
+  description?: string;  // e.g., "Currently researching to gather content..."
+  actions: ThinkingAction[];  // Sub-actions within this step
+  result?: string;  // Summary after completion (e.g., "Reviewed Wikipedia and recent sources...")
+  startedAt?: string;  // ISO timestamp when step started
+  completedAt?: string;  // ISO timestamp when step completed
+}
+
+// ============================================
+// NEW: Generation Status Types (Phase 1)
+// ============================================
+
+/**
+ * Generation Status
+ *
+ * Overall status of the slide generation workflow
+ */
+export type GenerationStatus =
+  | "idle"        // No generation in progress
+  | "thinking"    // AI is in reasoning/planning phase
+  | "generating"  // AI is actively generating slides
+  | "completed"   // Generation finished successfully
+  | "error";      // Generation failed
+
+/**
+ * Live Preview Slide
+ *
+ * Type alias for slides shown in the live preview panel
+ * (Same as Slide, but kept separate for semantic clarity)
+ */
+export type LivePreviewSlide = Slide;
+
+// ============================================
+// NEW: WebSocket Event Types (Phase 1)
+// ============================================
+
+/**
+ * WebSocket Event: Thinking Step Update
+ *
+ * Sent from server when a thinking step is created or updated
+ */
+export interface WSThinkingStepUpdate {
+  event: "thinking:step:update";
+  data: ThinkingStep;
+}
+
+/**
+ * WebSocket Event: Slide Preview Update
+ *
+ * Sent from server when a new slide is generated and ready for preview
+ */
+export interface WSSlidePreviewUpdate {
+  event: "slide:preview:update";
+  data: LivePreviewSlide;
+}
+
+/**
+ * WebSocket Event: Generation Status Update
+ *
+ * Sent from server when the overall generation status changes
+ */
+export interface WSGenerationStatusUpdate {
+  event: "generation:status";
+  data: {
+    presentationId: string;
+    status: GenerationStatus;
+    message?: string;
+  };
+}
+
+/**
+ * WebSocket Event: Generation Error
+ *
+ * Sent from server when generation fails
+ */
+export interface WSGenerationError {
+  event: "generation:error";
+  data: {
+    presentationId: string;
+    error: string;
+    step?: string;  // Which step failed
+  };
+}
+
+/**
+ * WebSocket Event: Generation Completed
+ *
+ * Sent from server when slide generation is fully complete
+ */
+export interface WSGenerationCompleted {
+  event: "generation:completed";
+  data: {
+    presentationId: string;
+    presentation: Presentation;
+    slides: Slide[];
+  };
+}
+
+/**
+ * Union type for all WebSocket events related to slides workflow
+ */
+export type WSEvent =
+  | WSThinkingStepUpdate
+  | WSSlidePreviewUpdate
+  | WSGenerationStatusUpdate
+  | WSGenerationError
+  | WSGenerationCompleted;
