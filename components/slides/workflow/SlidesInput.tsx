@@ -12,7 +12,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Mic, Send, Monitor, Loader2, Type, Palette, Maximize2 } from 'lucide-react';
+import { Mic, Send, Monitor, Loader2, Type, Palette, Maximize2, Plus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -160,7 +160,7 @@ export function SlidesInput({
             />
 
             {/* Row 2: Buttons */}
-            <div className="flex items-center gap-2 pt-2 border-t border-pw-black/10">
+            <div className="flex items-center gap-2">
               {/* Upload Button */}
               <input
                 ref={fileInputRef}
@@ -177,7 +177,7 @@ export function SlidesInput({
                 aria-label="Datei hochladen"
                 title="Datei hochladen"
               >
-                <span className="text-lg font-bold text-pw-black/60">+</span>
+                <Plus className="w-4 h-4 text-pw-black/60" />
               </button>
 
               {/* Mic Button */}
