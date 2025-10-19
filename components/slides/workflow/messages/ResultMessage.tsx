@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SlidesMessage, SlidesMessageContent } from '@/types/slides';
-import { Bot, CheckCircle, Download, Edit, Share2, AlertCircle } from 'lucide-react';
+import { CheckCircle, Download, Edit, Share2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface ResultMessageProps {
@@ -47,57 +47,64 @@ export function ResultMessage({ message }: ResultMessageProps) {
     console.log('Share presentation:', content.presentationId);
   };
 
+  const timeString = new Date(message.timestamp || Date.now()).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   if (isError) {
     return (
-      <div className="flex gap-3 items-start">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
-          <AlertCircle className="w-4 h-4 text-destructive" />
+      <div className="group flex flex-col items-start pl-12 sm:pl-16 md:pl-24 lg:pl-32">
+        {/* Timestamp */}
+        <div className="text-[10px] text-pw-black/40 mb-1 px-1 text-left">
+          {timeString}
         </div>
-        <div className="flex-1">
-          <div className="bg-destructive/10 rounded-lg p-4 border border-destructive/20">
-            <h3 className="font-semibold mb-2 text-sm text-destructive">Generation Failed</h3>
-            <p className="text-sm text-destructive/80">{content.error}</p>
+
+        {/* Error Message Bubble */}
+        <div className="max-w-3xl w-full px-4 sm:px-6 py-4 sm:py-5 bg-red-50 border border-red-200 text-pw-black shadow-sm rounded-2xl">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <h3 className="font-semibold text-sm text-red-900">Fehler bei der Erstellung</h3>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {new Date(message.timestamp).toLocaleTimeString()}
-          </p>
+          <p className="text-sm text-red-800">{content.error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-3 items-start">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-        <CheckCircle className="w-4 h-4 text-white" />
+    <div className="group flex flex-col items-start pl-12 sm:pl-16 md:pl-24 lg:pl-32">
+      {/* Timestamp */}
+      <div className="text-[10px] text-pw-black/40 mb-1 px-1 text-left">
+        {timeString}
       </div>
-      <div className="flex-1">
-        <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-          <h3 className="font-semibold mb-2 text-sm text-green-900 dark:text-green-100">
-            Presentation Complete!
-          </h3>
-          <p className="text-sm text-green-800 dark:text-green-200 mb-4">
-            Your presentation with {content?.slideCount || 0} slides is ready.
-          </p>
 
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleDownload} size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Download
-            </Button>
-            <Button onClick={handleEdit} size="sm" variant="outline">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-            <Button onClick={handleShare} size="sm" variant="outline">
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </Button>
-          </div>
+      {/* Success Message Bubble */}
+      <div className="max-w-3xl w-full px-4 sm:px-6 py-4 sm:py-5 bg-white/90 border border-pw-black/10 text-pw-black shadow-sm rounded-2xl">
+        <div className="flex items-center gap-2 mb-2">
+          <CheckCircle className="w-5 h-5 text-green-600" />
+          <h3 className="font-semibold text-sm text-pw-black">
+            Präsentation fertiggestellt!
+          </h3>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {new Date(message.timestamp).toLocaleTimeString()}
+        <p className="text-sm text-pw-black/80 mb-4">
+          Deine Präsentation mit {content?.slideCount || 0} Folien ist bereit.
         </p>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleDownload} size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Herunterladen
+          </Button>
+          <Button onClick={handleEdit} size="sm" variant="outline">
+            <Edit className="w-4 h-4 mr-2" />
+            Bearbeiten
+          </Button>
+          <Button onClick={handleShare} size="sm" variant="outline">
+            <Share2 className="w-4 h-4 mr-2" />
+            Teilen
+          </Button>
+        </div>
       </div>
     </div>
   );

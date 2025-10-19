@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { SlidesMessage, SlidesMessageContent } from '@/types/slides';
-import { Bot, CheckCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
 
@@ -127,54 +127,57 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
     }
   };
 
+  const timeString = new Date(message.timestamp || Date.now()).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
-    <div className="flex gap-3 items-start">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-        <Bot className="w-4 h-4 text-primary-foreground" />
+    <div className="group flex flex-col items-start pl-12 sm:pl-16 md:pl-24 lg:pl-32">
+      {/* Timestamp */}
+      <div className="text-[10px] text-pw-black/40 mb-1 px-1 text-left">
+        {timeString}
       </div>
-      <div className="flex-1">
-        <div className="bg-muted rounded-lg p-4">
-          <h3 className="font-semibold mb-3 text-sm">Proposed Slide Topics:</h3>
 
-          <ol className="list-decimal list-inside space-y-2 mb-4">
-            {topics.map((topic, index) => (
-              <li key={index} className="text-sm text-foreground">
-                {topic}
-              </li>
-            ))}
-          </ol>
+      {/* Message Bubble */}
+      <div className="max-w-3xl w-full px-4 sm:px-6 py-4 sm:py-5 bg-white/90 border border-pw-black/10 text-pw-black shadow-sm rounded-2xl">
+        <h3 className="font-semibold mb-3 text-sm">Vorgeschlagene Folien:</h3>
 
-          {!message.approved && (
-            <div className="flex gap-2 pt-2 border-t">
-              <Button
-                onClick={handleApprove}
-                className="flex-1"
-                disabled={isApproving || isRegenerating}
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {isApproving ? 'Starting...' : 'Approve & Generate'}
-              </Button>
-              <Button
-                onClick={handleRegenerate}
-                variant="outline"
-                disabled={isApproving || isRegenerating}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
-                Regenerate
-              </Button>
-            </div>
-          )}
+        <ol className="list-decimal list-inside space-y-2 mb-4">
+          {topics.map((topic, index) => (
+            <li key={index} className="text-sm text-pw-black leading-relaxed">
+              {topic}
+            </li>
+          ))}
+        </ol>
 
-          {message.approved && (
-            <div className="flex items-center gap-2 pt-2 border-t text-green-600">
-              <CheckCircle className="w-4 h-4" />
-              <p className="text-sm font-medium">Approved - Generation started</p>
-            </div>
-          )}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {new Date(message.timestamp).toLocaleTimeString()}
-        </p>
+        {!message.approved && (
+          <div className="flex gap-2 pt-2 border-t border-pw-black/10">
+            <Button
+              onClick={handleApprove}
+              className="flex-1"
+              disabled={isApproving || isRegenerating}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {isApproving ? 'Wird gestartet...' : 'Bestätigen & Erstellen'}
+            </Button>
+            <Button
+              onClick={handleRegenerate}
+              variant="outline"
+              disabled={isApproving || isRegenerating}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+              Neu generieren
+            </Button>
+          </div>
+        )}
+
+        {message.approved && (
+          <div className="flex items-center gap-2 pt-2 border-t border-pw-black/10 text-green-600">
+            <CheckCircle className="w-4 h-4" />
+            <p className="text-sm font-medium">Bestätigt - Erstellung gestartet</p>
+          </div>
+        )}
       </div>
     </div>
   );
