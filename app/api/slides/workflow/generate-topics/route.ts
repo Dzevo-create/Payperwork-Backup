@@ -5,11 +5,10 @@
  * Topics will be delivered via WebSocket with real-time updates.
  *
  * @route POST /api/slides/workflow/generate-topics
- *
- * TODO: Implement with Claude API (Phase 2)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { generateTopics } from '@/lib/api/slides/claude-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,16 +33,18 @@ export async function POST(request: NextRequest) {
     console.log('Prompt:', prompt);
     console.log('Format:', format, 'Theme:', theme);
 
-    // TODO: Implement Claude API integration in Phase 2
-    // This will be replaced with:
-    // import { generateTopics } from '@/lib/api/slides/claude-service';
-    // const topics = await generateTopics({ prompt, userId, format, theme });
+    // Generate topics with Claude API
+    const topics = await generateTopics({
+      prompt,
+      userId,
+      format: format || '16:9',
+      theme: theme || 'default',
+    });
 
-    // Temporary placeholder response
     return NextResponse.json({
-      success: false,
-      error: 'Topics generation not yet implemented (Manus removed, Claude API pending)',
-    }, { status: 501 });
+      success: true,
+      topics,
+    });
 
   } catch (error) {
     console.error('Error generating topics:', error);
