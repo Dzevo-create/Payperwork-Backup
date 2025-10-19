@@ -19,7 +19,7 @@ import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
 import { SlidesWelcome } from './SlidesWelcome';
 import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
-import { ComputerPanel } from '../computer/ComputerPanel';
+import { SlidesComputerPanel } from '../computer/SlidesComputerPanel';
 import { Settings, Mic, Send, Plus, Monitor } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
