@@ -12,7 +12,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Settings, Mic, Send, Upload, Monitor } from 'lucide-react';
+import { Settings, Mic, Send, Monitor } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -151,7 +151,7 @@ export function SlidesInput({
                 aria-label="Datei hochladen"
                 title="Datei hochladen"
               >
-                <Upload className="w-4 h-4 text-pw-black/60" />
+                <span className="text-lg font-bold text-pw-black/60">+</span>
               </button>
 
               {/* Mic Button */}
