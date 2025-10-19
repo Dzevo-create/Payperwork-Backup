@@ -196,7 +196,7 @@ export function useMessageOrchestrator({
     if (!targetConversationId && messages.length === 0) {
       const newConvId = createConversationId();
       chatLogger.debug('Creating new conversation BEFORE first message:');
-      setCurrentConversationId(newConvId);
+      await setCurrentConversationId(newConvId);
       await addConversation(buildNewConversation(newConvId, DEFAULT_CHAT_NAME, isSuperChatEnabled));
       chatLogger.info('Conversation created in Supabase with SuperChat:');
       targetConversationId = newConvId;

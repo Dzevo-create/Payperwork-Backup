@@ -22,7 +22,8 @@ import { SlidesMessages } from './SlidesMessages';
 import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
 import { SlidesComputerPanel } from '../computer/SlidesComputerPanel';
 import { AgentStatusIndicator } from '../AgentStatusIndicator';
-import { Settings, Mic, Send, Plus, Monitor } from 'lucide-react';
+import { Settings, Mic, Send, Plus, Monitor, Sparkles, Upload } from 'lucide-react';
+import { PromptGeneratorModal } from './PromptGeneratorModal';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -63,6 +64,7 @@ export function SlidesWorkflowContainer() {
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isPromptGeneratorOpen, setIsPromptGeneratorOpen] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
