@@ -88,39 +88,50 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Initialize pipeline with progress callbacks
     const pipeline = new PresentationPipeline((event) => {
-      const { type, data, timestamp } = event;
+      const { type, data } = event;
 
-      // Map pipeline events to WebSocket events
-      if (type === 'agent:progress' && data.phase) {
-        const phase = data.phase as string;
+      // Optional: Try to emit WebSocket events, but don't fail if they don't work
+      try {
+        if (type === 'agent:progress' && data.phase) {
+          const phase = data.phase as string;
 
-        if (phase === 'pipeline:started') {
-          emitThinkingMessage(userId, {
-            content: 'Pipeline gestartet: Analysiere dein Thema...',
-            messageId: `pipeline-start-${Date.now()}`,
-          });
-        } else if (phase === 'research' && data.status === 'completed') {
-          emitThinkingMessage(userId, {
-            content: `Research abgeschlossen: ${data.sourceCount} Quellen gefunden, ${data.findingCount} wichtige Erkenntnisse`,
-            messageId: `research-complete-${Date.now()}`,
-          });
-        } else if (phase === 'topic_generation' && data.status === 'completed') {
-          emitThinkingMessage(userId, {
-            content: `${data.topicCount} Themen generiert`,
-            messageId: `topics-complete-${Date.now()}`,
-          });
-        } else if (phase === 'content_generation' && data.status === 'in_progress') {
-          const progress = data.progress || 0;
-          emitThinkingMessage(userId, {
-            content: `Erstelle Folien: ${data.slideNumber}/${data.totalSlides} (${Math.round(progress)}%)`,
-            messageId: `slides-progress-${data.slideNumber}`,
-          });
-        } else if (phase === 'pre_production' && data.status === 'completed') {
-          emitThinkingMessage(userId, {
-            content: `Qualitätsprüfung: ${data.qualityScore}/100 (${data.qualityLevel})`,
-            messageId: `quality-check-${Date.now()}`,
-          });
+          // Just log progress - WebSocket events are optional
+          console.log(`[Pipeline Progress] ${phase}:`, data);
+
+          // Try to emit if functions are available
+          if (typeof emitThinkingMessage === 'function') {
+            if (phase === 'pipeline:started') {
+              emitThinkingMessage(userId, {
+                content: 'Pipeline gestartet: Analysiere dein Thema...',
+                messageId: `pipeline-start-${Date.now()}`,
+              });
+            } else if (phase === 'research' && data.status === 'completed') {
+              emitThinkingMessage(userId, {
+                content: `Research abgeschlossen: ${data.sourceCount} Quellen gefunden, ${data.findingCount} wichtige Erkenntnisse`,
+                messageId: `research-complete-${Date.now()}`,
+              });
+            } else if (phase === 'topic_generation' && data.status === 'completed') {
+              emitThinkingMessage(userId, {
+                content: `${data.topicCount} Themen generiert`,
+                messageId: `topics-complete-${Date.now()}`,
+              });
+            } else if (phase === 'content_generation' && data.status === 'in_progress') {
+              const progress = data.progress || 0;
+              emitThinkingMessage(userId, {
+                content: `Erstelle Folien: ${data.slideNumber}/${data.totalSlides} (${Math.round(progress)}%)`,
+                messageId: `slides-progress-${data.slideNumber}`,
+              });
+            } else if (phase === 'pre_production' && data.status === 'completed') {
+              emitThinkingMessage(userId, {
+                content: `Qualitätsprüfung: ${data.qualityScore}/100 (${data.qualityLevel})`,
+                messageId: `quality-check-${Date.now()}`,
+              });
+            }
+          }
         }
+      } catch (error) {
+        // WebSocket events failed, but that's OK - just log and continue
+        console.warn('[Pipeline] WebSocket emit failed (non-critical):', error);
       }
     });
 
@@ -146,15 +157,21 @@ export async function POST(request: NextRequest) {
     console.log('Quality Score:', result.metadata.qualityScore);
     console.log('Total Time:', result.metadata.totalTime, 'ms');
 
-    // Step 5: Emit topics to frontend
-    emitTopicsGenerated(userId, {
-      topics: result.topics.map((t) => ({
-        order: t.order,
-        title: t.title,
-        description: t.description,
-      })),
-      messageId: `topics-${presentationId}`,
-    });
+    // Step 5: Emit topics via WebSocket (optional)
+    try {
+      if (typeof emitTopicsGenerated === 'function') {
+        emitTopicsGenerated(userId, {
+          topics: result.topics.map((t) => ({
+            order: t.order,
+            title: t.title,
+            description: t.description,
+          })),
+          messageId: `topics-${presentationId}`,
+        });
+      }
+    } catch (error) {
+      console.warn('[Pipeline] emitTopicsGenerated failed (non-critical):', error);
+    }
 
     // Step 6: Save slides to database
     const slidesData = result.slides.map((slide, index) => ({
@@ -192,8 +209,14 @@ export async function POST(request: NextRequest) {
       console.error('Error updating presentation:', updateError);
     }
 
-    // Step 8: Emit completion
-    emitGenerationCompleted(userId, presentationId, result.slides.length);
+    // Step 8: Emit completion (optional)
+    try {
+      if (typeof emitGenerationCompleted === 'function') {
+        emitGenerationCompleted(userId, presentationId, result.slides.length);
+      }
+    } catch (error) {
+      console.warn('[Pipeline] emitGenerationCompleted failed (non-critical):', error);
+    }
 
     // Step 9: Return response
     return NextResponse.json({
@@ -215,7 +238,7 @@ export async function POST(request: NextRequest) {
     // Try to get userId from body for error emission
     try {
       const body = await request.json();
-      if (body.userId) {
+      if (body.userId && typeof emitGenerationError === 'function') {
         emitGenerationError(
           body.userId,
           '',
