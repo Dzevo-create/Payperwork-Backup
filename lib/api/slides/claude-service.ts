@@ -156,7 +156,7 @@ Regeln:
 
     // Step 3: Parse response
     const content = message.content[0];
-    if (content.type !== 'text') {
+    if (!content || content.type !== 'text') {
       throw new Error('Invalid response from Claude');
     }
 
@@ -320,7 +320,7 @@ Regeln:
     const slides: any[] = [];
 
     // Step 3: Process stream
-    stream.on('text', (text, snapshot) => {
+    stream.on('text', (text) => {
       currentSlide += text;
 
       // Check if slide is complete
