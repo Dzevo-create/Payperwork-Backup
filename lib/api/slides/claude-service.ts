@@ -351,10 +351,14 @@ Regeln:
           .substring(startIndex + startMarker.length, endIndex)
           .trim();
 
+        // CRITICAL: Preserve any content AFTER the [SLIDE_END] marker for next slide
+        const remainingContent = currentSlide.substring(endIndex + endMarker.length);
+
         console.log('EXTRACTED RAW CONTENT:');
         console.log(rawContent);
         console.log('First 50 chars:', rawContent.substring(0, 50));
         console.log('Last 50 chars:', rawContent.substring(Math.max(0, rawContent.length - 50)));
+        console.log('Remaining content for next slide:', remainingContent.substring(0, 100));
 
         try {
           // Extract only the JSON object (from first { to matching closing })
@@ -393,7 +397,8 @@ Regeln:
                 layout: slide.layout,
               });
 
-              currentSlide = '';
+              // Reset currentSlide to remaining content (not empty string)
+              currentSlide = remainingContent;
               return;
             } catch (fixError) {
               throw new Error('No JSON object found in slide content. Prepending { did not fix it.');
@@ -448,7 +453,8 @@ Regeln:
             layout: slide.layout,
           });
 
-          currentSlide = '';
+          // Reset currentSlide to remaining content (not empty string)
+          currentSlide = remainingContent;
         } catch (error) {
           console.error('========================================');
           console.error('ERROR PARSING SLIDE JSON');
@@ -462,8 +468,8 @@ Regeln:
           }
           console.error('========================================');
 
-          // Reset currentSlide to avoid processing the same broken slide again
-          currentSlide = '';
+          // Reset currentSlide to remaining content to avoid losing next slide data
+          currentSlide = remainingContent;
         }
       }
     });
