@@ -31,10 +31,13 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const currentPrompt = useSlidesStore((state) => state.currentPrompt);
   const currentPresentationId = useSlidesStore((state) => state.currentPresentationId);
 
-  // Extract topics from message content
+  // Extract topics and originalPrompt from message content
+  // Handle both old format (array) and new format (object with topics + originalPrompt)
+  const messageContent = message.content as SlidesMessageContent;
   const topics: Topic[] = Array.isArray(message.content)
     ? message.content
-    : (message.content as SlidesMessageContent)?.topics || [];
+    : messageContent?.topics || [];
+  const originalPrompt = !Array.isArray(message.content) ? messageContent?.originalPrompt : undefined;
 
   const handleApprove = async () => {
     setIsApproving(true);
@@ -70,17 +73,11 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
 
       const userId = user.id;
 
-      // Fetch prompt from presentation (it's saved in DB)
-      let promptToUse = currentPrompt;
+      // Use originalPrompt from message content, fallback to currentPrompt if needed
+      const promptToUse = originalPrompt || currentPrompt;
+
       if (!promptToUse) {
-        // Fetch from DB
-        const presentationResponse = await fetch(`/api/slides/${currentPresentationId}`);
-        const presentationData = await presentationResponse.json();
-        if (presentationData.success && presentationData.data.presentation.prompt) {
-          promptToUse = presentationData.data.presentation.prompt;
-        } else {
-          throw new Error('Could not retrieve prompt from presentation');
-        }
+        throw new Error('Prompt is missing - cannot generate slides');
       }
 
       // Call API to start generation

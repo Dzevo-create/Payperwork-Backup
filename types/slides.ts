@@ -544,9 +544,11 @@ export interface SlidesMessage {
 export interface SlidesMessageContent {
   presentationId?: string;
   slideCount?: number;
-  topics?: string[];
+  topics?: Topic[];
   progress?: number;
   error?: string;
+  message?: string;
+  originalPrompt?: string;  // Store original user prompt for later use
 }
 
 /**

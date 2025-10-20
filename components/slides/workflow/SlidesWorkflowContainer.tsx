@@ -164,7 +164,10 @@ export function SlidesWorkflowContainer() {
           addMessage({
             id: `msg-topics-${Date.now()}`,
             type: 'topics',
-            content: data.topics,
+            content: {
+              topics: data.topics,
+              originalPrompt: message,  // Store original prompt for later use
+            },
             timestamp: new Date().toISOString(),
           });
           setGenerationStatus('idle');
