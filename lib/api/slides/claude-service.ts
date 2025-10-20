@@ -271,12 +271,40 @@ Regeln:
 
       // Check if slide is complete
       if (currentSlide.includes('[SLIDE_END]')) {
-        const slideJson = currentSlide
+        const rawContent = currentSlide
           .replace('[SLIDE_START]', '')
           .replace('[SLIDE_END]', '')
           .trim();
 
         try {
+          // Extract only the JSON object (from first { to matching closing })
+          const firstBrace = rawContent.indexOf('{');
+          if (firstBrace === -1) {
+            throw new Error('No JSON object found in slide content');
+          }
+
+          // Find the matching closing brace
+          let braceCount = 0;
+          let lastBrace = -1;
+          for (let i = firstBrace; i < rawContent.length; i++) {
+            if (rawContent[i] === '{') {
+              braceCount++;
+            } else if (rawContent[i] === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                lastBrace = i;
+                break;
+              }
+            }
+          }
+
+          if (lastBrace === -1) {
+            throw new Error('No matching closing brace found in slide content');
+          }
+
+          // Extract the clean JSON string
+          const slideJson = rawContent.substring(firstBrace, lastBrace + 1);
+
           const slide = JSON.parse(slideJson);
           slideCount++;
           slides.push(slide);
@@ -295,7 +323,10 @@ Regeln:
           currentSlide = '';
         } catch (error) {
           console.error('Error parsing slide JSON:', error);
-          console.error('Slide JSON:', slideJson);
+          console.error('Raw content:', rawContent);
+          if (error instanceof Error) {
+            console.error('Error message:', error.message);
+          }
         }
       }
     });
