@@ -128,23 +128,21 @@ export async function deleteWorkflowGeneration(
 
     // For string IDs, determine if UUID or numeric
     if (typeof generationId === 'string') {
-      // If it's a pure numeric string, convert to number (legacy BIGINT support)
+      // If it's a pure numeric string, use it as BIGINT (don't convert to number)
       if (/^\d+$/.test(generationId)) {
-        const numericId = parseInt(generationId, 10);
-        if (!isNaN(numericId)) {
-          const { error } = await supabaseAdmin
-            .from(tableName)
-            .delete()
-            .eq("id", numericId)
-            .eq("user_id", userId);
+        logger.info(`[${tableName} DB] Deleting generation with numeric ID:`, generationId);
+        const { error } = await supabaseAdmin
+          .from(tableName)
+          .delete()
+          .eq("id", generationId)  // Keep as string for BIGINT support
+          .eq("user_id", userId);
 
-          if (error) {
-            logger.error(`[${tableName} DB] Error deleting generation (numeric):`, error);
-            return false;
-          }
-          logger.info(`[${tableName} DB] Successfully deleted generation (numeric):`, numericId);
-          return true;
+        if (error) {
+          logger.error(`[${tableName} DB] Error deleting generation (numeric):`, error);
+          return false;
         }
+        logger.info(`[${tableName} DB] Successfully deleted generation (numeric):`, generationId);
+        return true;
       }
 
       // Validate UUID format
