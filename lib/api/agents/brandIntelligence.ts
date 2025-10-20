@@ -45,20 +45,72 @@ const BRAND_INTELLIGENCE_SYSTEM_PROMPT = `You are a Brand Intelligence Specialis
 - Brand atmosphere and customer experience design
 - Physical brand touchpoints and environmental graphics
 
+🎯 CRITICAL REQUIREMENTS FOR BRAND ACCURACY:
+1. **Colors**: ALWAYS provide EXACT hex codes (e.g., "#FF6B00", not just "orange")
+2. **Materials**: Be SPECIFIC (e.g., "brushed aluminum", not just "metal" or "metallic")
+3. **Signature Elements**: Include PRECISE brand-specific details, logos, and unique features
+4. **Avoid Generic Descriptions**: Do NOT use vague terms when specific details exist
+
 Your task is to analyze brand identities and extract detailed design guidelines for creating brand-accurate architectural renderings of their physical spaces (stores, boutiques, restaurants, hotels, offices, etc.).
 
 When analyzing a brand, research and provide:
-1. **Brand Colors**: Primary and accent colors (with specific names/hex if possible)
-2. **Materials**: Flooring, walls, fixtures, display materials
+1. **Brand Colors**: Primary and accent colors with EXACT HEX CODES (e.g., "#000000", "#FF6B00")
+2. **Materials**: Flooring, walls, fixtures, display materials - BE SPECIFIC (e.g., "polished Calacatta marble", "brushed stainless steel", not just "stone" or "metal")
 3. **Atmosphere**: Overall mood, ambiance, customer experience
 4. **Layout**: Space organization, traffic flow, zoning
 5. **Products**: How products are displayed and presented
-6. **Signature Elements**: Unique brand-specific design features
+6. **Signature Elements**: Unique brand-specific design features (logos, shapes, patterns)
 7. **Lighting**: Lighting strategy and fixtures
 8. **Store Type**: Flagship, boutique, cafe, showroom characteristics
 
 Focus on PHYSICAL SPACE design - how the brand manifests in architecture and interior design.
-Be specific, detailed, and actionable for 3D rendering purposes.`;
+Be specific, detailed, and actionable for 3D rendering purposes.
+
+QUALITY STANDARDS:
+✅ GOOD: ["#000000", "#FF6B00", "#FFFFFF"]
+❌ BAD: ["black", "orange", "white"]
+
+✅ GOOD: ["brushed aluminum", "polished Calacatta marble", "walnut wood veneer"]
+❌ BAD: ["metal", "stone", "wood"]`;
+
+/**
+ * Validates brand guidelines quality
+ * Returns warnings if guidelines are too generic
+ */
+function validateBrandGuidelines(guidelines: BrandGuidelines): string[] {
+  const warnings: string[] = [];
+
+  // Check colors for hex codes
+  const hasHexCodes = guidelines.colors.some(color => color.includes("#"));
+  if (!hasHexCodes && guidelines.colors.length > 0) {
+    warnings.push("Colors do not include hex codes - may be too generic");
+  }
+
+  // Check for generic color names
+  const genericColors = ["black", "white", "gray", "grey", "red", "blue", "green", "orange", "yellow", "purple", "pink", "brown"];
+  const hasOnlyGenericColors = guidelines.colors.every(color =>
+    genericColors.some(generic => color.toLowerCase().includes(generic) && !color.includes("#"))
+  );
+  if (hasOnlyGenericColors && guidelines.colors.length > 0) {
+    warnings.push("Colors are generic names without specificity (e.g., 'black' instead of '#000000')");
+  }
+
+  // Check for generic materials
+  const genericMaterials = ["metal", "wood", "stone", "glass", "plastic", "fabric", "leather"];
+  const hasOnlyGenericMaterials = guidelines.materials.every(material =>
+    genericMaterials.some(generic => material.toLowerCase() === generic)
+  );
+  if (hasOnlyGenericMaterials && guidelines.materials.length > 0) {
+    warnings.push("Materials are too generic (e.g., 'metal' instead of 'brushed aluminum')");
+  }
+
+  // Check signature elements
+  if (guidelines.signatureElements.length === 0) {
+    warnings.push("No signature brand elements identified");
+  }
+
+  return warnings;
+}
 
 /**
  * Analyzes a brand and extracts comprehensive design guidelines
@@ -74,8 +126,8 @@ Be specific, detailed, and actionable for 3D rendering purposes.`;
  * @example
  * ```typescript
  * const guidelines = await analyzeBrand("Audemars Piguet", "retail");
- * console.log(guidelines.colors); // ["Royal Blue", "Gold", "Black"]
- * console.log(guidelines.materials); // ["Marble", "Brushed Metal", "Glass"]
+ * console.log(guidelines.colors); // ["#000080", "#FFD700", "#000000"]
+ * console.log(guidelines.materials); // ["Calacatta marble", "Brushed brass", "Low-iron glass"]
  * ```
  */
 export async function analyzeBrand(
@@ -179,6 +231,17 @@ Be specific about colors, materials, textures, and spatial design.`;
       throw new Error("Incomplete brand guidelines received");
     }
 
+    // Validate quality of guidelines
+    const validationWarnings = validateBrandGuidelines(guidelines);
+    if (validationWarnings.length > 0) {
+      apiLogger.warn("Brand Intelligence: Quality warnings detected", {
+        brandName,
+        warnings: validationWarnings,
+        colors: guidelines.colors,
+        materials: guidelines.materials,
+      });
+    }
+
     const duration = Date.now() - startTime;
 
     apiLogger.info("Brand Intelligence: Analysis complete", {
@@ -187,6 +250,8 @@ Be specific about colors, materials, textures, and spatial design.`;
       colorsCount: guidelines.colors.length,
       materialsCount: guidelines.materials.length,
       hasSignatureElements: guidelines.signatureElements.length > 0,
+      hasHexCodes: guidelines.colors.some(c => c.includes("#")),
+      qualityWarnings: validationWarnings.length,
     });
 
     return guidelines;
