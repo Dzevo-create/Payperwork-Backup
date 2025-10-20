@@ -3,8 +3,7 @@ import { getClientId } from "@/lib/rate-limit";
 import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
-import { generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender";
-import { enhanceBrandingPrompt } from "@/lib/api/workflows/common/universalGptEnhancer";
+import { generateBrandingPrompt, enhanceBrandingPrompt } from "@/lib/api/workflows/sketchToRender/branding";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
 import { perfMonitor } from "@/lib/performance/monitor";
@@ -101,11 +100,11 @@ export async function POST(req: NextRequest) {
       cacheHit: false,
     });
 
-    // Generate prompt using universal GPT-4 Vision enhancer
+    // Generate prompt using TWO-STAGE enhancement
     let generatedPrompt: string;
 
     try {
-      // Use universal branding prompt enhancer with GPT-4 Vision
+      // Use Two-Stage enhancement (Stage 1: Structure, Stage 2: Brand)
       generatedPrompt = await enhanceBrandingPrompt({
         userPrompt: userPrompt || "",
         sourceImage,
@@ -113,15 +112,15 @@ export async function POST(req: NextRequest) {
         referenceImages: referenceImage ? [referenceImage] : undefined
       });
 
-      apiLogger.info("Branding T-Button: Universal GPT-4 Vision prompt generated", {
+      apiLogger.info("Branding T-Button: Two-Stage enhancement complete", {
         clientId,
         workflow: 'branding',
         promptLength: generatedPrompt.length,
         brand: settings?.brandingText,
       });
     } catch (gptError) {
-      // Fallback to static prompt generator if GPT-4 fails
-      apiLogger.warn("Branding T-Button: Universal GPT-4 Vision failed, using static generator", {
+      // Fallback to generateBrandingPrompt (also uses Two-Stage internally)
+      apiLogger.warn("Branding T-Button: enhanceBrandingPrompt failed, using generateBrandingPrompt", {
         clientId,
         workflow: 'branding',
         error: gptError instanceof Error ? gptError.message : String(gptError),
