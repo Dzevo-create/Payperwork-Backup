@@ -85,6 +85,13 @@ export async function POST(req: NextRequest) {
     // Step 1: Enhance prompt with Brand Intelligence + GPT-4o Vision
     let enhancedPrompt: string;
 
+    apiLogger.info("Branding: Step 1 - Starting prompt enhancement", {
+      clientId,
+      hasPrompt: !!prompt,
+      hasSourceImage: !!sourceImage,
+      hasReferenceImage: !!referenceImage,
+    });
+
     try {
       enhancedPrompt = await enhanceBrandingPrompt({
         userPrompt: prompt || "Transform this space into a branded environment",
@@ -236,21 +243,31 @@ REMINDER: Fully photorealistic branded space with ZERO visible sketch lines.`;
       ...images.map(img => img)
     ];
 
-    apiLogger.info("Branding: Generating with Nano Banana", {
+    apiLogger.info("Branding: Step 6 - Generating with Nano Banana (Gemini)", {
       clientId,
       promptLength: geminiPrompt.length,
       imageCount: images.length,
     });
 
     // Step 6: Generate rendering with Nano Banana
-    const result = await generateSingleImage(
-      model,
-      parts,
-      generationConfig,
-      0,
-      1,
-      clientId
-    );
+    let result;
+    try {
+      result = await generateSingleImage(
+        model,
+        parts,
+        generationConfig,
+        0,
+        1,
+        clientId
+      );
+      apiLogger.info("Branding: Gemini API call successful", { clientId });
+    } catch (geminiError) {
+      apiLogger.error("Branding: Gemini API call failed", geminiError instanceof Error ? geminiError : undefined, {
+        clientId,
+        errorMessage: geminiError instanceof Error ? geminiError.message : String(geminiError),
+      });
+      throw geminiError;
+    }
 
     // Step 7: Parse generated image
     const generatedImage = parseImageFromResponse(result, 0, 1, clientId);
@@ -278,9 +295,27 @@ REMINDER: Fully photorealistic branded space with ZERO visible sketch lines.`;
     });
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     apiLogger.error("Branding: Generation failed", error instanceof Error ? error : undefined, {
       clientId,
+      errorMessage,
+      errorStack,
     });
-    return handleApiError(error, "branding-api");
+
+    // Return detailed error for debugging
+    return NextResponse.json(
+      {
+        error: errorMessage,
+        details: {
+          message: errorMessage,
+          stack: errorStack?.split('\n').slice(0, 5).join('\n'), // First 5 lines of stack
+          timestamp: new Date().toISOString(),
+          clientId,
+        }
+      },
+      { status: 500 }
+    );
   }
 }
