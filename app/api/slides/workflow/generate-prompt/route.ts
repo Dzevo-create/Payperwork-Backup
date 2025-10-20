@@ -76,27 +76,68 @@ Generiere einen klaren, strukturierten Prompt (2-4 Sätze), der alle wichtigen I
 
 Antworte NUR mit dem generierten Prompt, ohne zusätzliche Erklärungen oder Formatierung.`;
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 300,
-      temperature: 0.7,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userPrompt,
-        },
-      ],
-    });
+    let generatedPrompt: string;
 
-    const textContent = message.content.find((c) => c.type === 'text');
-    if (!textContent || textContent.type !== 'text') {
-      throw new Error('No text content in response');
+    try {
+      // Try Claude API first
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 300,
+        temperature: 0.7,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userPrompt,
+          },
+        ],
+      });
+
+      const textContent = message.content.find((c) => c.type === 'text');
+      if (!textContent || textContent.type !== 'text') {
+        throw new Error('No text content in response');
+      }
+
+      generatedPrompt = textContent.text.trim();
+
+      console.log('✅ Generated optimized prompt:', generatedPrompt);
+    } catch (claudeError) {
+      // Fallback: Build prompt from settings
+      const errorMessage = claudeError instanceof Error ? claudeError.message : String(claudeError);
+      const isQuotaError = errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('rate_limit');
+
+      console.warn('⚠️ Claude API failed, using intelligent fallback', {
+        error: errorMessage,
+        isQuotaError,
+      });
+
+      // Build intelligent fallback prompt
+      const parts: string[] = [];
+      parts.push(`Create a professional presentation about: ${topic}`);
+
+      if (targetAudience) {
+        parts.push(`Tailored for ${targetAudience} audience.`);
+      }
+
+      if (designGuidelines) {
+        parts.push(`Design guidelines: ${designGuidelines}`);
+      }
+
+      if (brandColors) {
+        parts.push(`Use brand colors: ${brandColors}`);
+      }
+
+      if (additionalNotes) {
+        parts.push(additionalNotes);
+      }
+
+      parts.push(`Format: ${format}, Theme: ${theme}`);
+      parts.push('Include engaging visuals, clear structure, and professional layout.');
+
+      generatedPrompt = parts.join(' ');
+
+      console.log('✅ Generated fallback prompt:', generatedPrompt);
     }
-
-    const generatedPrompt = textContent.text.trim();
-
-    console.log('✅ Generated optimized prompt:', generatedPrompt);
 
     return NextResponse.json({
       success: true,

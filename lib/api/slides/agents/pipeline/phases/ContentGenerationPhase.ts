@@ -103,7 +103,7 @@ export class ContentGenerationPhase {
     const prompt = this.buildContentPrompt(topic, slideContext);
 
     // Generate content
-    const content = await this.llmTool.generate(prompt);
+    const content = await this.llmTool.generateText(prompt);
 
     return {
       title: topic.title,
