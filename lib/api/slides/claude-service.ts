@@ -283,8 +283,14 @@ Regeln:
 
           console.log(`✅ Generated slide ${slideCount}/${topics.length}: ${slide.title}`);
 
-          // Emit slide preview via WebSocket
-          emitSlidePreviewUpdate?.(userId, presentationId, slide);
+          // Emit slide preview via WebSocket with correct structure
+          emitSlidePreviewUpdate?.(userId, presentationId, {
+            id: `slide-temp-${slideCount}`,
+            order_index: slide.order || slideCount,
+            title: slide.title,
+            content: slide.content,
+            layout: slide.layout || 'title_content',
+          });
 
           currentSlide = '';
         } catch (error) {

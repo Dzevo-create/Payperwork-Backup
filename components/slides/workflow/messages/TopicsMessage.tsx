@@ -26,6 +26,8 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const toggleComputerPanel = useSlidesStore((state) => state.toggleComputerPanel);
   const showComputerPanel = useSlidesStore((state) => state.showComputerPanel);
   const setGenerationStatus = useSlidesStore((state) => state.setGenerationStatus);
+  const setPanelType = useSlidesStore((state) => state.setPanelType);
+  const clearSlides = useSlidesStore((state) => state.clearSlides);
   const format = useSlidesStore((state) => state.format);
   const theme = useSlidesStore((state) => state.theme);
   const currentPrompt = useSlidesStore((state) => state.currentPrompt);
@@ -56,6 +58,10 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
         content: 'Creating your presentation...',
         timestamp: new Date().toISOString(),
       });
+
+      // Clear previous slides and set panel to 'slides' type
+      clearSlides();
+      setPanelType('slides');
 
       // Show Payperwork Panel if not already shown
       if (!showComputerPanel) {

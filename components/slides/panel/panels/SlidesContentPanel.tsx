@@ -93,11 +93,11 @@ export function SlidesContentPanel({
           // All Slides Vertical
           <div className="space-y-6">
             {slides.map((slide, index) => (
-              <div key={index} className="space-y-2">
+              <div key={slide.id || index} className="space-y-2">
                 {/* Slide Number */}
                 <div className="flex items-center gap-2">
                   <div className="px-2 py-1 bg-pw-accent/10 text-pw-accent text-xs font-semibold rounded-md">
-                    Slide {slide.order || index + 1}
+                    Slide {slide.order_index || index + 1}
                   </div>
                   <div className="text-xs text-pw-black/40">{slide.title}</div>
                 </div>

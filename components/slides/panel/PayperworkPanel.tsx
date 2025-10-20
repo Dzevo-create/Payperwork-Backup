@@ -33,7 +33,8 @@ interface PayperworkPanelProps {
 export function PayperworkPanel({ isGenerating = false }: PayperworkPanelProps) {
   const currentPanelType = useSlidesStore((state) => state.currentPanelType);
   const toolHistory = useSlidesStore((state) => state.toolHistory);
-  const finalSlides = useSlidesStore((state) => state.finalSlides);
+  const slides = useSlidesStore((state) => state.slides);
+  const generationStatus = useSlidesStore((state) => state.generationStatus);
   const format = useSlidesStore((state) => state.format);
   const theme = useSlidesStore((state) => state.theme);
   const thinkingSteps = useSlidesStore((state) => state.thinkingSteps);
@@ -58,10 +59,10 @@ export function PayperworkPanel({ isGenerating = false }: PayperworkPanelProps) 
       case 'slides':
         return (
           <SlidesContentPanel
-            slides={finalSlides}
+            slides={slides}
             format={format}
             theme={theme}
-            isGenerating={isGenerating}
+            isGenerating={generationStatus === 'generating'}
           />
         );
       case 'tools':

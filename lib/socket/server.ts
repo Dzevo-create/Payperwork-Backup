@@ -217,6 +217,7 @@ export function emitSlidePreviewUpdate(
   userId: string,
   presentationId: string,
   slide: {
+    id: string;
     order_index: number;
     title: string;
     content: string;

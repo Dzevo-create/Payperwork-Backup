@@ -139,11 +139,6 @@ export function useSlidesSocket(userId: string | null) {
       addOrUpdateThinkingStep(data.step);
     });
 
-    // Listen to slide preview updates
-    socket.on(WEBSOCKET_EVENTS.SLIDE_PREVIEW_UPDATE, (data: any) => {
-      setLivePreviewSlide(data.slide);
-    });
-
     // Listen to generation status updates
     socket.on(WEBSOCKET_EVENTS.GENERATION_STATUS, (data: any) => {
       setGenerationStatus(data.status);
@@ -254,7 +249,6 @@ export function useSlidesSocket(userId: string | null) {
       socket.off('tool:action:completed');
       socket.off('tool:action:failed');
       socket.off(WEBSOCKET_EVENTS.THINKING_STEP_UPDATE);
-      socket.off(WEBSOCKET_EVENTS.SLIDE_PREVIEW_UPDATE);
       socket.off(WEBSOCKET_EVENTS.GENERATION_STATUS);
       socket.off(WEBSOCKET_EVENTS.GENERATION_COMPLETED);
       // Agent events cleanup
