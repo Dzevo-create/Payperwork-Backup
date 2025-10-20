@@ -14,6 +14,15 @@ import { WEBSOCKET_EVENTS } from "@/constants/slides";
 let io: SocketIOServer | null = null;
 
 /**
+ * Get Socket.IO server instance
+ *
+ * @returns Socket.IO server instance or null
+ */
+export function getSocketServer(): SocketIOServer | null {
+  return io;
+}
+
+/**
  * Initialize Socket.IO server
  *
  * @param httpServer - HTTP server instance

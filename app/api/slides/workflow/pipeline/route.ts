@@ -18,7 +18,7 @@ import {
   emitSlidePreviewUpdate,
   emitGenerationCompleted,
   emitGenerationError,
-} from '@/lib/socket/server';
+} from '@/lib/socket/emitHelper';
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
