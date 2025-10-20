@@ -200,6 +200,59 @@ Regeln:
 }
 
 /**
+ * Valid layout types for slides (from database schema)
+ */
+const VALID_LAYOUTS = ['title_slide', 'content', 'two_column', 'image', 'quote'] as const;
+type SlideLayout = typeof VALID_LAYOUTS[number];
+
+/**
+ * Maps Claude's suggested layouts to valid database layouts
+ */
+function normalizeLayout(layout: string | undefined): SlideLayout {
+  if (!layout) return 'content';
+
+  const normalized = layout.toLowerCase().trim();
+
+  // Direct matches
+  if (VALID_LAYOUTS.includes(normalized as SlideLayout)) {
+    return normalized as SlideLayout;
+  }
+
+  // Map common variations to valid layouts
+  const layoutMap: Record<string, SlideLayout> = {
+    'title_only': 'title_slide',
+    'title_content': 'content',
+    'title_and_content': 'content',
+    'image_text': 'image',
+    'two_columns': 'two_column',
+    'two_col': 'two_column',
+  };
+
+  // Check if there's a mapping
+  if (layoutMap[normalized]) {
+    return layoutMap[normalized];
+  }
+
+  // Check for partial matches (e.g., "title_" -> "title_slide")
+  if (normalized.startsWith('title_') || normalized.startsWith('title')) {
+    return 'title_slide';
+  }
+  if (normalized.includes('two') || normalized.includes('column')) {
+    return 'two_column';
+  }
+  if (normalized.includes('image')) {
+    return 'image';
+  }
+  if (normalized.includes('quote')) {
+    return 'quote';
+  }
+
+  // Default fallback
+  console.warn(`Unknown layout "${layout}", defaulting to "content"`);
+  return 'content';
+}
+
+/**
  * Generate slides using Claude API with streaming
  */
 export async function generateSlides(options: GenerateSlidesOptions) {
@@ -238,7 +291,7 @@ ${JSON.stringify(topics, null, 2)}
 Für jedes Thema, erstelle eine Folie mit:
 - Titel
 - Inhalt (Stichpunkte oder Absätze)
-- Layout (title_only, title_content, two_column, image_text)
+- Layout (title_slide, content, two_column, image, quote)
 
 Ausgabeformat:
 Für jede Folie, gib aus:
@@ -247,7 +300,7 @@ Für jede Folie, gib aus:
   "order": 1,
   "title": "...",
   "content": "...",
-  "layout": "title_content"
+  "layout": "content"
 }
 [SLIDE_END]
 
@@ -255,9 +308,10 @@ Regeln:
 - Erstelle genau ${topics.length} Folien
 - Verwende die Themen in der Reihenfolge
 - Inhalt sollte informativ und ansprechend sein
-- Verwende passende Layouts
+- Verwende NUR diese Layouts: title_slide, content, two_column, image, quote
 - Ausgabe eine Folie nach der anderen mit [SLIDE_START] und [SLIDE_END] Markern
-- Alle Inhalte auf Deutsch`
+- Alle Inhalte auf Deutsch
+- WICHTIG: Gib NUR das JSON aus, keine zusätzlichen Kommentare oder Text`
       }],
     });
 
@@ -271,16 +325,79 @@ Regeln:
 
       // Check if slide is complete
       if (currentSlide.includes('[SLIDE_END]')) {
+        // Log the full slide content BEFORE processing
+        console.log('========================================');
+        console.log('FULL SLIDE CONTENT FROM STREAM:');
+        console.log(currentSlide);
+        console.log('========================================');
+
+        // Extract content between markers
+        const startMarker = '[SLIDE_START]';
+        const endMarker = '[SLIDE_END]';
+
+        const startIndex = currentSlide.indexOf(startMarker);
+        const endIndex = currentSlide.indexOf(endMarker);
+
+        if (startIndex === -1 || endIndex === -1) {
+          console.error('Error: Could not find SLIDE_START or SLIDE_END markers');
+          console.error('Start marker found:', startIndex !== -1);
+          console.error('End marker found:', endIndex !== -1);
+          currentSlide = '';
+          return;
+        }
+
+        // Extract content BETWEEN the markers (not including the markers themselves)
         const rawContent = currentSlide
-          .replace('[SLIDE_START]', '')
-          .replace('[SLIDE_END]', '')
+          .substring(startIndex + startMarker.length, endIndex)
           .trim();
+
+        console.log('EXTRACTED RAW CONTENT:');
+        console.log(rawContent);
+        console.log('First 50 chars:', rawContent.substring(0, 50));
+        console.log('Last 50 chars:', rawContent.substring(Math.max(0, rawContent.length - 50)));
 
         try {
           // Extract only the JSON object (from first { to matching closing })
-          const firstBrace = rawContent.indexOf('{');
+          let firstBrace = rawContent.indexOf('{');
+
+          // CRITICAL FIX: If no opening brace found, the stream might have been cut off
           if (firstBrace === -1) {
-            throw new Error('No JSON object found in slide content');
+            console.error('CRITICAL ERROR: No opening brace found in rawContent');
+            console.error('This suggests the stream splitting cut off the JSON start');
+            console.error('Attempting to prepend { to fix...');
+
+            // Try prepending the opening brace as a fallback
+            const fixedContent = '{' + rawContent;
+            firstBrace = 0;
+
+            // Try to parse with the fix
+            try {
+              const testParse = JSON.parse(fixedContent);
+              console.log('SUCCESS: Prepending { fixed the JSON');
+              // Continue with fixed content
+              const slide = testParse;
+              slideCount++;
+
+              // Normalize layout
+              slide.layout = normalizeLayout(slide.layout);
+
+              slides.push(slide);
+              console.log(`✅ Generated slide ${slideCount}/${topics.length}: ${slide.title} (layout: ${slide.layout})`);
+
+              // Emit slide preview via WebSocket with normalized layout
+              emitSlidePreviewUpdate?.(userId, presentationId, {
+                id: `slide-temp-${slideCount}`,
+                order_index: slide.order || slideCount,
+                title: slide.title,
+                content: slide.content,
+                layout: slide.layout,
+              });
+
+              currentSlide = '';
+              return;
+            } catch (fixError) {
+              throw new Error('No JSON object found in slide content. Prepending { did not fix it.');
+            }
           }
 
           // Find the matching closing brace
@@ -299,34 +416,54 @@ Regeln:
           }
 
           if (lastBrace === -1) {
-            throw new Error('No matching closing brace found in slide content');
+            throw new Error('No matching closing brace found in slide content. The JSON might be incomplete.');
           }
 
           // Extract the clean JSON string
           const slideJson = rawContent.substring(firstBrace, lastBrace + 1);
+          console.log('EXTRACTED JSON:');
+          console.log(slideJson);
 
           const slide = JSON.parse(slideJson);
           slideCount++;
+
+          // Normalize layout before saving
+          const originalLayout = slide.layout;
+          slide.layout = normalizeLayout(slide.layout);
+
+          if (originalLayout !== slide.layout) {
+            console.log(`Layout normalized: "${originalLayout}" -> "${slide.layout}"`);
+          }
+
           slides.push(slide);
 
-          console.log(`✅ Generated slide ${slideCount}/${topics.length}: ${slide.title}`);
+          console.log(`✅ Generated slide ${slideCount}/${topics.length}: ${slide.title} (layout: ${slide.layout})`);
 
-          // Emit slide preview via WebSocket with correct structure
+          // Emit slide preview via WebSocket with normalized layout
           emitSlidePreviewUpdate?.(userId, presentationId, {
             id: `slide-temp-${slideCount}`,
             order_index: slide.order || slideCount,
             title: slide.title,
             content: slide.content,
-            layout: slide.layout || 'title_content',
+            layout: slide.layout,
           });
 
           currentSlide = '';
         } catch (error) {
-          console.error('Error parsing slide JSON:', error);
+          console.error('========================================');
+          console.error('ERROR PARSING SLIDE JSON');
+          console.error('========================================');
+          console.error('Error:', error);
+          console.error('Raw content length:', rawContent.length);
           console.error('Raw content:', rawContent);
           if (error instanceof Error) {
             console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
           }
+          console.error('========================================');
+
+          // Reset currentSlide to avoid processing the same broken slide again
+          currentSlide = '';
         }
       }
     });
@@ -338,20 +475,38 @@ Regeln:
 
     // Step 4: Save slides to database
     if (slides.length > 0) {
-      const slidesData = slides.map((slide, index) => ({
-        presentation_id: presentationId,
-        order_index: slide.order || index + 1,
-        title: slide.title,
-        content: slide.content,
-        layout: slide.layout || 'title_content',
-      }));
+      const slidesData = slides.map((slide, index) => {
+        // Ensure layout is normalized (should already be from processing above)
+        const layout = normalizeLayout(slide.layout);
+
+        return {
+          presentation_id: presentationId,
+          order_index: slide.order || index + 1,
+          title: slide.title,
+          content: slide.content,
+          layout: layout,
+        };
+      });
+
+      console.log('Preparing to save slides to database:');
+      slidesData.forEach((slide, index) => {
+        console.log(`  Slide ${index + 1}: layout="${slide.layout}", title="${slide.title}"`);
+      });
 
       const { error: slidesError } = await supabaseAdmin
         .from('slides')
         .insert(slidesData);
 
       if (slidesError) {
-        console.error('Error saving slides to database:', slidesError);
+        console.error('========================================');
+        console.error('ERROR SAVING SLIDES TO DATABASE');
+        console.error('========================================');
+        console.error('Supabase error:', slidesError);
+        console.error('Error message:', slidesError.message);
+        console.error('Error details:', slidesError.details);
+        console.error('Error hint:', slidesError.hint);
+        console.error('Failed slides data:', JSON.stringify(slidesData, null, 2));
+        console.error('========================================');
         // Don't throw - slides were generated successfully, just log the error
       } else {
         console.log('✅ Saved', slides.length, 'slides to database');
