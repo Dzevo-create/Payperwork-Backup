@@ -9,6 +9,7 @@
 
 import { useSketchToRender } from '../sketch-to-render/useSketchToRender';
 import { useBranding } from '../branding/useBranding';
+import { useBrandingPromptEnhancer } from '../branding/useBrandingPromptEnhancer';
 import { useFurnishEmpty } from '../furnish-empty/useFurnishEmpty';
 import { useStyleTransfer } from '../style-transfer/useStyleTransfer';
 import { useRenderToCad } from '../render-to-cad/useRenderToCad';
@@ -264,7 +265,7 @@ export function useRenderToCadAdapter(): StandardGenerateHook<RenderToCadSetting
 }
 
 /**
- * Adapter for Prompt Enhancer Hook
+ * Adapter for Prompt Enhancer Hook (Sketch-to-Render)
  */
 export function usePromptEnhancerAdapter(
   sourceImage: string | null,
@@ -293,6 +294,48 @@ export function usePromptEnhancerAdapter(
         prompt,
         sourceImageData as any,
         settings
+      );
+
+      return result || prompt;
+    },
+    isEnhancing: hook.isEnhancing,
+    error: hook.error,
+  };
+}
+
+/**
+ * Adapter for Branding Prompt Enhancer Hook
+ * Uses workflow-specific endpoint with Two-Stage Enhancement:
+ * - Stage 1: GPT-4o Vision analyzes structure WITHOUT brand details
+ * - Stage 2: GPT-4o combines structure WITH exact brand guidelines
+ */
+export function useBrandingPromptEnhancerAdapter(
+  sourceImage: string | null,
+  settings: Record<string, unknown>
+): StandardEnhanceHook {
+  const hook = useBrandingPromptEnhancer();
+
+  return {
+    enhance: async (prompt: string) => {
+      if (!sourceImage) {
+        return prompt; // Can't enhance without source image
+      }
+
+      // Convert base64 to File object for validation
+      const response = await fetch(sourceImage);
+      const blob = await response.blob();
+      const file = new File([blob], 'source-image.jpg', { type: 'image/jpeg' });
+
+      // Convert to ImageData format expected by useBrandingPromptEnhancer
+      const sourceImageData = {
+        file,
+        preview: sourceImage,
+      };
+
+      const result = await hook.enhancePrompt(
+        prompt,
+        sourceImageData as any,
+        settings as BrandingSettingsType
       );
 
       return result || prompt;

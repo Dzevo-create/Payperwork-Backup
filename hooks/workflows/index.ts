@@ -34,6 +34,7 @@ export {
   useFurnishEmptyAdapter,
   useRenderToCadAdapter,
   usePromptEnhancerAdapter,
+  useBrandingPromptEnhancerAdapter,
   useRenderToCadEnhancerAdapter,
   useRenderEditAdapter,
   useUpscaleAdapter,

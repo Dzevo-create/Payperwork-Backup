@@ -13,7 +13,7 @@ import { DEFAULT_BRANDING_SETTINGS, type BrandingSettingsType } from '@/types/wo
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import {
   useBrandingAdapter,
-  usePromptEnhancerAdapter,
+  useBrandingPromptEnhancerAdapter,
   useRenderEditAdapter,
   useUpscaleAdapter
 } from '@/hooks/workflows';
@@ -34,7 +34,7 @@ const brandingConfig: WorkflowPageConfig<BrandingSettingsType> = {
   hooks: {
     useGenerate: useBrandingAdapter,
     useEnhance: (sourceImage, settings) =>
-      usePromptEnhancerAdapter(sourceImage, settings),
+      useBrandingPromptEnhancerAdapter(sourceImage, settings),
     useEdit: useRenderEditAdapter,
     useUpscale: useUpscaleAdapter,
   },
