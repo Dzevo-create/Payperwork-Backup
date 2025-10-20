@@ -37,7 +37,7 @@ export function WorkflowPageLayout<TSettings extends Record<string, unknown>>({
   const { PromptInputComponent } = config;
 
   return (
-    <div className="h-screen bg-pw-dark overflow-hidden px-0 sm:px-1 md:px-2 py-0 sm:py-1">
+    <div className="h-screen bg-gray-200 overflow-hidden px-0 sm:px-1 md:px-2 py-0 sm:py-1">
       <div className="h-full flex gap-0 sm:gap-1 max-w-none mx-auto">
         {/* Sidebar */}
         <ChatSidebar

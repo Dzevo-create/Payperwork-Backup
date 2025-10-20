@@ -2,7 +2,7 @@
  * Universal GPT-4 Vision Prompt Enhancer
  *
  * This module provides a workflow-agnostic GPT-4o Vision integration that adapts
- * to different workflows (Sketch-to-Render, Furnish-Empty, Branding) based on
+ * to different workflows (Sketch-to-Render, Furnish-Empty, Branding, Style-Transfer, Render-to-CAD) based on
  * configuration.
  *
  * Benefits:
@@ -10,9 +10,15 @@
  * - Prevents cross-workflow endpoint confusion
  * - Automatic adaptation to workflow goals
  * - Consistent error handling and fallback logic
+ * - Workflow-specific settings context builders for better prompts
+ *
+ * @author Payperwork Team
+ * @date 2025-01-20
+ * @refactored 2025-01-20 - Added workflow-specific settings builders
  */
 
 import OpenAI from "openai";
+import { buildSettingsContext } from './settingsContextBuilders';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -227,37 +233,11 @@ The prompt should be detailed but concise (200-400 words), written as continuous
 };
 
 // ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Builds a human-readable settings context string from settings object
- */
-function buildSettingsContext(
-  workflowType: WorkflowType,
-  settings: Record<string, any>
-): string {
-  const lines: string[] = [];
-
-  // Common pattern: iterate through settings and format them
-  for (const [key, value] of Object.entries(settings)) {
-    if (value !== undefined && value !== null && value !== "") {
-      // Convert camelCase to Title Case
-      const label = key
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (str) => str.toUpperCase())
-        .trim();
-
-      lines.push(`- ${label}: ${value}`);
-    }
-  }
-
-  return lines.join("\n");
-}
-
-// ============================================================================
 // MAIN FUNCTION
 // ============================================================================
+
+// NOTE: buildSettingsContext is now imported from settingsContextBuilders.ts
+// Each workflow has its own specialized context builder for better prompt quality
 
 /**
  * Universal GPT-4 Vision Prompt Enhancer
