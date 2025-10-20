@@ -19,14 +19,12 @@ import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
 import { useUser } from '@/hooks/useUser';
 import { SlidesWelcome } from './SlidesWelcome';
 import { SlidesMessages } from './SlidesMessages';
-import { SlidesPreviewPanel } from '../preview/SlidesPreviewPanel';
 import { PayperworkPanel } from '../panel/PayperworkPanel';
 import { AgentStatusIndicator } from '../AgentStatusIndicator';
 import { SlidesInput } from './SlidesInput';
 
 export function SlidesWorkflowContainer() {
   const messages = useSlidesStore((state) => state.messages);
-  const showPreview = useSlidesStore((state) => state.showPreview);
   const currentPrompt = useSlidesStore((state) => state.currentPrompt);
   const setCurrentPrompt = useSlidesStore((state) => state.setCurrentPrompt);
   const generationStatus = useSlidesStore((state) => state.generationStatus);
@@ -64,6 +62,23 @@ export function SlidesWorkflowContainer() {
   }, [currentPrompt]);
 
   // Removed polling - using WebSocket updates from webhook handler instead
+
+  const handleStopGeneration = () => {
+    console.log('Stopping generation...');
+
+    // Reset generation status to idle
+    setGenerationStatus('idle');
+
+    // Add a message to indicate generation was stopped
+    addMessage({
+      id: `msg-stopped-${Date.now()}`,
+      type: 'result',
+      content: {
+        message: 'Generation stopped by user.',
+      },
+      timestamp: new Date().toISOString(),
+    });
+  };
 
   const handleSendMessage = async () => {
     if (!currentPrompt.trim()) return;
@@ -180,7 +195,7 @@ export function SlidesWorkflowContainer() {
     <div className="w-full h-full flex gap-2 overflow-hidden">
       {/* Messages Area (left/center) */}
       <div
-        className={`flex flex-col ${showPreview || showComputerPanel ? 'flex-1' : 'w-full'} overflow-hidden`}
+        className={`flex flex-col ${showComputerPanel ? 'flex-1' : 'w-full'} overflow-hidden`}
       >
         {/* Welcome or Messages */}
         {!hasMessages ? (
@@ -206,6 +221,7 @@ export function SlidesWorkflowContainer() {
           currentPrompt={currentPrompt}
           setCurrentPrompt={setCurrentPrompt}
           onSend={handleSendMessage}
+          onStopGeneration={handleStopGeneration}
           isGenerating={isGenerating}
           format={format}
           setFormat={setFormat}
@@ -216,13 +232,6 @@ export function SlidesWorkflowContainer() {
           toolHistory={toolHistory}
         />
       </div>
-
-      {/* Preview Panel (right side, conditional) */}
-      {showPreview && (
-        <div className="w-96 flex-shrink-0">
-          <SlidesPreviewPanel />
-        </div>
-      )}
 
       {/* Payperwork Panel (right side, conditional) - Modular dynamic panel */}
       {showComputerPanel && (

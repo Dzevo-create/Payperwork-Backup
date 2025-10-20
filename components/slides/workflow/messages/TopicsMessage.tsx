@@ -23,7 +23,8 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const updateMessage = useSlidesStore((state) => state.updateMessage);
   const setCurrentTopics = useSlidesStore((state) => state.setCurrentTopics);
   const setTopicsApproved = useSlidesStore((state) => state.setTopicsApproved);
-  const setShowPreview = useSlidesStore((state) => state.setShowPreview);
+  const toggleComputerPanel = useSlidesStore((state) => state.toggleComputerPanel);
+  const showComputerPanel = useSlidesStore((state) => state.showComputerPanel);
   const setGenerationStatus = useSlidesStore((state) => state.setGenerationStatus);
   const format = useSlidesStore((state) => state.format);
   const theme = useSlidesStore((state) => state.theme);
@@ -53,8 +54,10 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
         timestamp: new Date().toISOString(),
       });
 
-      // Show preview panel
-      setShowPreview(true);
+      // Show Payperwork Panel if not already shown
+      if (!showComputerPanel) {
+        toggleComputerPanel();
+      }
       setGenerationStatus('generating');
 
       // Validate we have the required data

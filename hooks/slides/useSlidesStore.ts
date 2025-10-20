@@ -71,7 +71,6 @@ export const useSlidesStore = create<SlidesStore>()((set, get, api) => ({
       messages: [],
       currentTopics: [],
       topicsApproved: false,
-      showPreview: false,
       currentPrompt: '',
     });
 

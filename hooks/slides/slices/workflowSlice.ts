@@ -25,7 +25,6 @@ export interface WorkflowSlice {
   messages: SlidesMessage[];
   currentTopics: Topic[];
   topicsApproved: boolean;
-  showPreview: boolean;
   format: PresentationFormat;
   theme: PresentationTheme;
   currentPrompt: string;
@@ -36,7 +35,6 @@ export interface WorkflowSlice {
   clearMessages: () => void;
   setCurrentTopics: (topics: Topic[]) => void;
   setTopicsApproved: (approved: boolean) => void;
-  setShowPreview: (show: boolean) => void;
   setFormat: (format: PresentationFormat) => void;
   setTheme: (theme: PresentationTheme) => void;
   setCurrentPrompt: (prompt: string) => void;
@@ -56,7 +54,6 @@ export const createWorkflowSlice: StateCreator<
   messages: [],
   currentTopics: [],
   topicsApproved: false,
-  showPreview: false,
   format: '16:9',
   theme: 'default',
   currentPrompt: '',
@@ -107,14 +104,6 @@ export const createWorkflowSlice: StateCreator<
       approved,
     });
     set({ topicsApproved: approved });
-  },
-
-  setShowPreview: (show) => {
-    slidesLogger.debug('Setting show preview', {
-      action: 'setShowPreview',
-      show,
-    });
-    set({ showPreview: show });
   },
 
   setFormat: (format) => {

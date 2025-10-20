@@ -12,7 +12,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Mic, Send, Monitor, Loader2, Type, Palette, Maximize2, Plus } from 'lucide-react';
+import { Mic, Send, Square, Monitor, Loader2, Type, Palette, Maximize2, Plus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -27,6 +27,7 @@ interface SlidesInputProps {
   currentPrompt: string;
   setCurrentPrompt: (prompt: string) => void;
   onSend: () => void;
+  onStopGeneration?: () => void;
   isGenerating: boolean;
   format: PresentationFormat;
   setFormat: (format: PresentationFormat) => void;
@@ -41,6 +42,7 @@ export function SlidesInput({
   currentPrompt,
   setCurrentPrompt,
   onSend,
+  onStopGeneration,
   isGenerating,
   format,
   setFormat,
@@ -315,15 +317,26 @@ export function SlidesInput({
                 )}
               </button>
 
-              {/* Send Button */}
-              <button
-                onClick={onSend}
-                disabled={isDisabled}
-                className="flex-shrink-0 p-2 bg-pw-accent hover:bg-pw-accent/90 disabled:bg-pw-black/10 disabled:cursor-not-allowed rounded-lg transition-all hover:scale-105 disabled:hover:scale-100"
-                aria-label="Senden"
-              >
-                <Send className="w-4 h-4 text-pw-black" />
-              </button>
+              {/* Send/Stop Button */}
+              {isGenerating ? (
+                <button
+                  onClick={onStopGeneration}
+                  className="flex-shrink-0 p-2 bg-red-500 hover:bg-red-600 rounded-lg transition-all hover:scale-105"
+                  aria-label="Generierung stoppen"
+                  title="Generierung stoppen"
+                >
+                  <Square className="w-4 h-4 text-white fill-white" />
+                </button>
+              ) : (
+                <button
+                  onClick={onSend}
+                  disabled={isDisabled}
+                  className="flex-shrink-0 p-2 bg-pw-accent hover:bg-pw-accent/90 disabled:bg-pw-black/10 disabled:cursor-not-allowed rounded-lg transition-all hover:scale-105 disabled:hover:scale-100"
+                  aria-label="Senden"
+                >
+                  <Send className="w-4 h-4 text-pw-black" />
+                </button>
+              )}
             </div>
           </div>
         </div>
