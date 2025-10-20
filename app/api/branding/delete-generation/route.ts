@@ -9,8 +9,17 @@ async function handleDelete(req: NextRequest) {
   try {
     const body = await req.json();
     // Support both 'generationId' and 'id' for compatibility
-    const generationId = body.generationId || body.id;
+    let generationId = body.generationId || body.id;
     const userId = body.userId;
+
+    // Defensive: Log raw values for debugging
+    apiLogger.info('[Delete Branding API] Raw request:', {
+      bodyKeys: Object.keys(body),
+      generationIdType: typeof generationId,
+      generationIdValue: generationId,
+      isArray: Array.isArray(generationId),
+      userId,
+    });
 
     if (!generationId) {
       apiLogger.error('[Delete Branding API] Missing ID in request:', body);
@@ -18,6 +27,25 @@ async function handleDelete(req: NextRequest) {
         { error: "Generation ID is required" },
         { status: 400 }
       );
+    }
+
+    // Defensive: Ensure generationId is a proper string
+    // Handle case where ID might be passed as an array or array-like object
+    if (Array.isArray(generationId)) {
+      apiLogger.warn('[Delete Branding API] ID received as array, converting to string:', generationId);
+      generationId = generationId.join('');
+    } else if (typeof generationId === 'object' && generationId !== null) {
+      // Handle array-like objects (with numeric keys)
+      apiLogger.warn('[Delete Branding API] ID received as object, converting to string:', generationId);
+      const keys = Object.keys(generationId).sort((a, b) => Number(a) - Number(b));
+      generationId = keys.map(key => generationId[key]).join('');
+    } else if (typeof generationId !== 'string') {
+      // Convert any other type to string
+      apiLogger.warn('[Delete Branding API] ID not a string, converting:', {
+        type: typeof generationId,
+        value: generationId,
+      });
+      generationId = String(generationId);
     }
 
     if (!userId) {
@@ -28,20 +56,32 @@ async function handleDelete(req: NextRequest) {
       );
     }
 
-    apiLogger.info('[Delete Branding API] Deleting generation:', generationId);
+    apiLogger.info('[Delete Branding API] Deleting generation:', {
+      generationId,
+      type: typeof generationId,
+      length: generationId.length,
+    });
 
     // Delete generation from database using branding database functions
     const success = await deleteGeneration(userId, generationId);
 
     if (!success) {
-      apiLogger.error('[Delete Branding API] Failed to delete generation:', generationId);
+      apiLogger.error('[Delete Branding API] Failed to delete generation:', {
+        generationId,
+        userId,
+        type: typeof generationId,
+        length: generationId.length,
+      });
       return NextResponse.json(
         { error: "Failed to delete generation" },
         { status: 500 }
       );
     }
 
-    apiLogger.info('[Delete Branding API] Successfully deleted:', generationId);
+    apiLogger.info('[Delete Branding API] Successfully deleted:', {
+      generationId,
+      userId,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     apiLogger.error('[Delete Branding API] Unexpected error:', error instanceof Error ? error : undefined);
