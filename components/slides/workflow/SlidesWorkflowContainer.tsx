@@ -129,11 +129,19 @@ export function SlidesWorkflowContainer() {
         timestamp: new Date().toISOString(),
       });
 
-      // Step 2: Generate topics
-      const response = await fetch('/api/slides/workflow/generate-topics', {
+      // Step 2: Generate topics AND slides via pipeline
+      const response = await fetch('/api/slides/workflow/pipeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: message, format, theme, userId }),
+        body: JSON.stringify({
+          prompt: message,
+          format,
+          theme,
+          userId,
+          slideCount: 10,
+          enableResearch: true,  // Enable research for richer content
+          researchDepth: 'medium',  // medium | shallow | deep
+        }),
       });
 
       if (!response.ok) {
@@ -171,6 +179,10 @@ export function SlidesWorkflowContainer() {
             timestamp: new Date().toISOString(),
           });
           setGenerationStatus('idle');
+
+          // Pipeline generates slides automatically, so we're done!
+          console.log('✅ Pipeline completed:', data.slideCount, 'slides generated');
+          console.log('Quality score:', data.qualityScore);
         }
       }
     } catch (error) {

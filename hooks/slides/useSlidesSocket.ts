@@ -59,6 +59,45 @@ export function useSlidesSocket(userId: string | null) {
       setGenerationStatus('idle'); // Ready for approval
     });
 
+    // Pipeline Research Events
+    socket.on('agent:thinking:step', (data: {
+      agent: string;
+      step: string;
+      content: string;
+      messageId: string
+    }) => {
+      console.log(`🤖 ${data.agent} - ${data.step}:`, data.content);
+
+      addMessage({
+        id: data.messageId,
+        type: 'thinking',
+        content: `[${data.agent}] ${data.content}`,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    socket.on('research:started', (data: { topic: string; depth: string }) => {
+      console.log('🔍 Research started:', data.topic);
+
+      addMessage({
+        id: `research-start-${Date.now()}`,
+        type: 'thinking',
+        content: `Researching "${data.topic}" (${data.depth} depth)...`,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    socket.on('research:completed', (data: { sourceCount: number; findingCount: number }) => {
+      console.log('✅ Research completed:', data);
+
+      addMessage({
+        id: `research-done-${Date.now()}`,
+        type: 'thinking',
+        content: `Research completed: ${data.sourceCount} sources analyzed, ${data.findingCount} key findings`,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
     // Listen to thinking messages
     socket.on('thinking:message', (data: { content: string; messageId: string }) => {
       console.log('💭 Received thinking:message:', data.content);
@@ -257,6 +296,9 @@ export function useSlidesSocket(userId: string | null) {
       socket.off('agent:action:update');
       socket.off('agent:insight:generated');
       socket.off('agent:source:found');
+      // Pipeline research events cleanup
+      socket.off('research:started');
+      socket.off('research:completed');
     };
   }, [userId, addOrUpdateThinkingStep, setLivePreviewSlide, setGenerationStatus, setFinalPresentation, addMessage, setCurrentTopics, addToolAction, addSlidePreview, updateAgentStatus, setCurrentAgent, addAgentInsight, addResearchSource, updatePipelineProgress]);
 
