@@ -5,6 +5,7 @@ import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateSketchToRenderPrompt, generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender";
 import { enhanceSketchToRenderPrompt, enhanceBrandingPrompt } from "@/lib/api/workflows/common/universalGptEnhancer";
+import { generateIntelligentFallback } from "@/lib/api/workflows/common/intelligentFallbacks";
 import { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
@@ -69,8 +70,10 @@ export async function POST(req: NextRequest) {
       type: isBrandingRequest ? 'branding' : 'sketch'
     });
 
-    // Check cache
-    const cachedPrompt = promptCache.get(cacheKey);
+    // Check cache (DISABLED during development for testing new TWO-STEP prompts)
+    const CACHE_ENABLED = process.env.NODE_ENV === 'production';
+    const cachedPrompt = CACHE_ENABLED ? promptCache.get(cacheKey) : null;
+
     if (cachedPrompt) {
       apiLogger.info("T-Button: Using cached prompt", {
         clientId,
@@ -138,28 +141,24 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (gptError) {
-      // Fallback to static prompt generators if GPT-4 fails
-      apiLogger.warn("T-Button: Universal GPT-4 Vision failed, using static generator", {
+      // Fallback to intelligent prompt generator (NO API calls required)
+      const errorMessage = gptError instanceof Error ? gptError.message : String(gptError);
+      const isQuotaError = errorMessage.includes('429') || errorMessage.includes('quota');
+
+      apiLogger.warn("T-Button: Universal GPT-4 Vision failed, using intelligent fallback", {
         clientId,
         workflow: isBrandingRequest ? 'branding' : 'sketch-to-render',
-        error: gptError instanceof Error ? gptError.message : String(gptError),
+        error: errorMessage,
+        isQuotaError,
+        fallbackType: 'intelligent-settings-based'
       });
 
-      if (isBrandingRequest) {
-        generatedPrompt = await generateBrandingPrompt(
-          userPrompt || null,
-          sourceImage,
-          settings as BrandingSettingsType | undefined,
-          referenceImage ? [referenceImage] : undefined
-        );
-      } else {
-        generatedPrompt = await generateSketchToRenderPrompt(
-          userPrompt || null,
-          sourceImage,
-          settings as SketchToRenderSettingsType | undefined,
-          referenceImage
-        );
-      }
+      // Use intelligent fallback that builds prompts from settings
+      generatedPrompt = generateIntelligentFallback(
+        isBrandingRequest ? 'branding' : 'sketch-to-render',
+        userPrompt || '',
+        settings || {}
+      );
     }
 
     // Store in cache

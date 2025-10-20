@@ -4,6 +4,7 @@ import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError } from "@/lib/api-error-handler";
 import { generateBrandingPrompt } from "@/lib/api/workflows/sketchToRender";
+import { enhanceBrandingPrompt } from "@/lib/api/workflows/common/universalGptEnhancer";
 import { BrandingSettingsType } from "@/types/workflows/brandingSettings";
 import { LRUCache, createObjectCacheKey } from "@/lib/cache/lruCache";
 import { perfMonitor } from "@/lib/performance/monitor";
@@ -100,13 +101,39 @@ export async function POST(req: NextRequest) {
       cacheHit: false,
     });
 
-    // Generate prompt using dedicated Branding T-Button function with Brand Intelligence
-    const generatedPrompt = await generateBrandingPrompt(
-      userPrompt || null,
-      sourceImage,
-      settings as BrandingSettingsType | undefined,
-      referenceImage
-    );
+    // Generate prompt using universal GPT-4 Vision enhancer
+    let generatedPrompt: string;
+
+    try {
+      // Use universal branding prompt enhancer with GPT-4 Vision
+      generatedPrompt = await enhanceBrandingPrompt({
+        userPrompt: userPrompt || "",
+        sourceImage,
+        settings: settings as BrandingSettingsType || {},
+        referenceImages: referenceImage ? [referenceImage] : undefined
+      });
+
+      apiLogger.info("Branding T-Button: Universal GPT-4 Vision prompt generated", {
+        clientId,
+        workflow: 'branding',
+        promptLength: generatedPrompt.length,
+        brand: settings?.brandingText,
+      });
+    } catch (gptError) {
+      // Fallback to static prompt generator if GPT-4 fails
+      apiLogger.warn("Branding T-Button: Universal GPT-4 Vision failed, using static generator", {
+        clientId,
+        workflow: 'branding',
+        error: gptError instanceof Error ? gptError.message : String(gptError),
+      });
+
+      generatedPrompt = await generateBrandingPrompt(
+        userPrompt || null,
+        sourceImage,
+        settings as BrandingSettingsType | undefined,
+        referenceImage ? [referenceImage] : undefined
+      );
+    }
 
     // Store in cache
     brandingPromptCache.set(cacheKey, generatedPrompt);
