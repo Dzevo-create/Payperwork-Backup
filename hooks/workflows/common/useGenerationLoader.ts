@@ -20,10 +20,30 @@ export function useGenerationLoader<TSettings extends Record<string, unknown>>(
   // Load generation for editing
   const handleLoadForEdit = useCallback((gen: Generation) => {
     const mediaType = gen.type === "video" ? "video" : "image";
+
+    // Load result image
     workflowState.setResultImage(gen.imageUrl);
     workflowState.setResultMediaType(mediaType);
     setRenderName(gen.name || "");
     workflowState.setOriginalPrompt(gen.prompt || "");
+
+    // Load source image if available
+    if (gen.sourceImageUrl) {
+      workflowState.setInputData((prev) => ({
+        ...prev,
+        sourceImage: {
+          file: null, // File object not available from URL
+          preview: gen.sourceImageUrl || null,
+          originalPreview: gen.sourceImageUrl || null,
+        },
+      }));
+    }
+
+    // Load settings if available
+    if (gen.settings) {
+      workflowState.setSettings(gen.settings as TSettings);
+    }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [workflowState, setRenderName]);
 
