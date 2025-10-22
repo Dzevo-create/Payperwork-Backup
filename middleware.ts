@@ -154,6 +154,7 @@ export async function middleware(request: NextRequest) {
   const origin = request.headers.get("origin");
   const allowedOrigins = getAllowedOrigins();
   const pathname = request.nextUrl.pathname;
+  const isDevelopment = process.env.NODE_ENV !== "production";
 
   // Protected routes that require authentication
   const protectedPaths = [
@@ -189,8 +190,15 @@ export async function middleware(request: NextRequest) {
   // Check if path requires authentication (but exclude public paths)
   const requiresAuth = !isPublicPath && protectedPaths.some((path) => pathname.startsWith(path));
 
-  // If route requires auth, check authentication
-  if (requiresAuth && request.method !== "OPTIONS") {
+  // 🔧 DEVELOPMENT MODE: Skip authentication check
+  // In development, we skip auth to allow testing without Supabase Auth setup
+  // WARNING: Remove this in production!
+  if (isDevelopment && requiresAuth && request.method !== "OPTIONS") {
+    logger.debug("Development mode: Skipping auth check", { path: pathname });
+    // Continue without auth check
+  }
+  // If route requires auth in PRODUCTION, check authentication
+  else if (requiresAuth && request.method !== "OPTIONS") {
     const authenticated = await isAuthenticated(request);
 
     if (!authenticated) {
