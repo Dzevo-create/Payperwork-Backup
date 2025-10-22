@@ -13,6 +13,9 @@
 -- STYLE TRANSFER: Fix existing policies
 -- ========================================
 
+-- Enable RLS first (in case it was disabled)
+ALTER TABLE IF EXISTS style_transfer ENABLE ROW LEVEL SECURITY;
+
 -- Drop old policies (they were already permissive but let's recreate them cleanly)
 DROP POLICY IF EXISTS "Users can view their own style-transfer renders" ON style_transfer;
 DROP POLICY IF EXISTS "Users can insert their own style-transfer renders" ON style_transfer;
@@ -41,7 +44,7 @@ CREATE POLICY "Development: Allow all deletes on style_transfer"
 -- ========================================
 
 -- Enable RLS (should already be enabled, but make sure)
-ALTER TABLE render_to_cad ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS render_to_cad ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (DEVELOPMENT MODE - permissive)
 CREATE POLICY "Development: Allow all reads on render_to_cad"
