@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 interface UseRenderEditOptions {
+  apiEndpoint?: string; // ✅ NEW: Allow workflow-specific API endpoints
   onSuccess?: (editedImageUrl: string) => void;
   onError?: (error: string) => void;
 }
@@ -11,12 +12,21 @@ interface UseRenderEditOptions {
  * useRenderEdit Hook
  *
  * Handles editing/refining of existing renders
- * Calls /api/sketch-to-render/edit to make changes to current image
+ *
+ * ✅ FIXED: Now supports workflow-specific API endpoints via options.apiEndpoint
+ * Defaults to /api/sketch-to-render/edit for backward compatibility
+ *
+ * Usage:
+ *   useRenderEdit({ apiEndpoint: "/api/branding/edit" })
+ *   useRenderEdit({ apiEndpoint: "/api/style-transfer/edit" })
  */
 export function useRenderEdit(options: UseRenderEditOptions = {}) {
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+
+  // ✅ FIXED: Use configurable API endpoint (defaults to sketch-to-render for backward compatibility)
+  const apiEndpoint = options.apiEndpoint || "/api/sketch-to-render/edit";
 
   // Use refs to avoid re-creating callback on every render
   const onSuccessRef = useRef(options.onSuccess);
@@ -131,14 +141,14 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
             }
             // Fallback if format is unexpected
             return {
-              data: dataUrl.split(',')[1] || dataUrl,
-              mimeType: 'image/jpeg',
+              data: dataUrl.split(",")[1] || dataUrl,
+              mimeType: "image/jpeg",
             };
           });
         }
 
-        // Call edit API
-        const apiResponse = await fetch("/api/sketch-to-render/edit", {
+        // ✅ FIXED: Call workflow-specific edit API (configurable via options)
+        const apiResponse = await fetch(apiEndpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
