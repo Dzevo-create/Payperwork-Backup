@@ -63,12 +63,52 @@ payperwork/
 
 ## 📦 Available Scripts
 
+### Development
+
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm start` - Start production server
+
+### Code Quality
+
 - `npm run lint` - Run ESLint
 - `npm run type-check` - Check TypeScript types
 - `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting
+
+### Testing
+
+- `npm test` - Run Jest tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+
+## 🔄 CI/CD Workflows
+
+This project includes automated GitHub Actions workflows:
+
+### Continuous Integration
+
+- **Lint & Type Check** - Runs on every push/PR
+  - ESLint validation
+  - TypeScript type checking
+  - Prettier formatting check
+
+- **Unit Tests** - Runs on every push/PR
+  - Jest tests with coverage
+  - Codecov integration
+  - Coverage comments on PRs
+
+- **Security Scan** - Runs on push/PR and weekly
+  - npm audit for vulnerabilities
+  - Dependency review on PRs
+  - Outdated package detection
+
+### Pre-Commit Hooks
+
+- Husky + lint-staged configured
+- Auto-formats code before commit
+- Runs ESLint on staged files
+- Ensures code quality standards
 
 ## 🎨 Adding Components
 
@@ -84,6 +124,7 @@ npx shadcn-ui@latest add card
 ## 📝 Development Guidelines
 
 See [.claude/agents/CODE-STANDARDS.md](.claude/agents/CODE-STANDARDS.md) for:
+
 - Code standards
 - Architecture principles
 - Best practices
@@ -92,6 +133,7 @@ See [.claude/agents/CODE-STANDARDS.md](.claude/agents/CODE-STANDARDS.md) for:
 ## 🤖 AI Agents
 
 This project uses specialized AI agents for development. See [.claude/agents/](.claude/agents/) for:
+
 - 26 specialized development agents
 - Agent rules and guidelines
 - Development workflows
