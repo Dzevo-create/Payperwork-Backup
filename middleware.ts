@@ -168,12 +168,26 @@ export async function middleware(request: NextRequest) {
     "/api/branding",
     "/api/furnish-empty",
     "/api/sketch-to-render",
-    "/api/style-transfer",
+    "/api/style-transfer/generations", // History endpoint requires auth
+    "/api/style-transfer/delete-generation", // Delete requires auth
+    "/api/style-transfer/save-generation", // Save requires auth
     "/api/render-to-cad",
   ];
 
-  // Check if path requires authentication
-  const requiresAuth = protectedPaths.some((path) => pathname.startsWith(path));
+  // Public workflow endpoints (T-Button, generate endpoints)
+  // These only require API keys, not user authentication
+  const publicWorkflowPaths = [
+    "/api/style-transfer/generate-prompt",
+    "/api/furnish-empty/generate-prompt",
+    "/api/sketch-to-render/generate-prompt",
+    "/api/render-to-cad/generate-prompt",
+  ];
+
+  // Check if path is explicitly public (skip auth even if parent path is protected)
+  const isPublicPath = publicWorkflowPaths.some((path) => pathname === path);
+
+  // Check if path requires authentication (but exclude public paths)
+  const requiresAuth = !isPublicPath && protectedPaths.some((path) => pathname.startsWith(path));
 
   // If route requires auth, check authentication
   if (requiresAuth && request.method !== "OPTIONS") {

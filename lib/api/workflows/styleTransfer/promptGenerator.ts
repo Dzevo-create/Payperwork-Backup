@@ -1,141 +1,158 @@
 /**
  * Style-Transfer Prompt Generator
  *
- * Generates detailed prompts for style transfer based on Option 2 settings.
- * Creates flowing text descriptions for AI image generation using:
- * - Architectural Style (preset styles)
- * - Transfer Intensity (subtle/balanced/strong)
- * - Style Strength (0-100%)
+ * Neues Preset-System mit zwei Modi:
+ *
+ * MODE 1 - PRESET:
+ * - Bereich (Interieur / Exterieur)
+ * - Stil (6 Optionen: mediterran, ikea, minimalistisch, modern, mittelalterlich, industrial)
+ * - Tageszeit (6 Optionen: morgen, mittag, abend, nacht, daemmerung, golden_hour)
+ * - Wetter (6 Optionen: sonnig, bewoelkt, regen, schnee, nebel, sturm)
+ * - Render-Art (5 Optionen: fotorealistisch, skizze, wasserfarben, blaupause, kuenstlerisch)
  * - Structure Preservation (0-100%)
- * - Material Palette (natural/industrial/luxury/etc)
- * - Color Scheme (neutral/warm/cool/etc)
- * - Accent Color (optional primary color)
+ *
+ * MODE 2 - REFERENZBILD:
+ * - Material-Transfer von hochgeladenem Referenzbild
+ * - Structure Preservation (0-100%)
  */
 
-import { StyleTransferSettingsType } from "@/types/workflows/styleTransferSettings";
+import {
+  StyleTransferSettingsType,
+  STYLE_DETAILS,
+  TIME_OF_DAY_DESCRIPTIONS,
+  WEATHER_DESCRIPTIONS,
+  RENDER_STYLE_DESCRIPTIONS,
+} from "@/types/workflows/styleTransferSettings";
 
 /**
- * Generate a complete style-transfer prompt from settings
+ * Hauptfunktion - Route zwischen Preset und Referenzbild-Modus
  */
 export function generateStyleTransferPrompt(
   settings: StyleTransferSettingsType,
+  hasReferenceImage: boolean = false,
   userPrompt?: string
 ): string {
-  const {
-    architecturalStyle,
-    transferIntensity,
-    styleStrength,
-    structurePreservation,
-    materialPalette,
-    colorScheme,
-    accentColor,
-  } = settings;
-
-  // Architectural Style descriptions
-  const styleDescriptions: Record<string, string> = {
-    modern: "the clean lines and minimalist aesthetic of Modern architecture, with emphasis on geometric forms, glass facades, and open spaces",
-    contemporary: "the Contemporary style with innovative design elements, mixed materials, and bold asymmetrical compositions",
-    minimalist: "the Minimalist philosophy of 'less is more', featuring simple forms, neutral palettes, and functional elegance",
-    industrial: "the Industrial aesthetic with exposed structures, raw materials like metal and concrete, and utilitarian design",
-    mediterranean: "the Mediterranean style with terracotta roofs, stucco walls, arched openings, and warm earthy tones",
-    scandinavian: "the Scandinavian design principles of simplicity, natural light, light wood tones, and functional beauty",
-    classical: "the Classical architecture with symmetry, columns, pediments, and timeless proportions",
-    baroque: "the Baroque grandeur with ornate details, dramatic curves, rich materials, and theatrical flourishes",
-    art_deco: "the Art Deco elegance with geometric patterns, streamlined forms, luxurious materials, and bold vertical elements",
-    brutalist: "the Brutalist style with raw concrete, massive forms, dramatic sculptural shapes, and honest materiality",
-    gothic: "the Gothic architecture with pointed arches, ribbed vaults, flying buttresses, and intricate stone details",
-    renaissance: "the Renaissance principles of harmony, proportion, classical orders, and refined ornamentation",
-  };
-
-  // Transfer Intensity descriptions
-  const intensityDescriptions: Record<string, string> = {
-    subtle: "subtly, maintaining most original characteristics while introducing gentle stylistic hints",
-    balanced: "in a balanced manner, preserving key design elements while introducing clear stylistic features",
-    strong: "strongly, allowing significant transformation and comprehensive style adoption",
-  };
-
-  // Material Palette descriptions
-  const materialDescriptions: Record<string, string> = {
-    natural: "Use natural materials like wood and stone, emphasizing organic textures and earthy warmth",
-    industrial: "Use industrial materials like metal and concrete, with raw exposed surfaces and utilitarian finishes",
-    luxury: "Use luxury materials like marble and gold, creating an opulent and refined aesthetic",
-    rustic: "Use rustic materials like weathered wood and brick, conveying warmth and handcrafted character",
-    modern: "Use modern materials like glass and steel, emphasizing sleekness and contemporary sophistication",
-    traditional: "Use traditional materials like stone and wood, respecting classic building methods and timeless quality",
-    mixed: "Use a mixed material palette, thoughtfully combining different materials for visual interest",
-  };
-
-  // Color Scheme descriptions
-  const colorDescriptions: Record<string, string> = {
-    neutral: "Apply a neutral color scheme with whites, grays, and beiges for timeless elegance",
-    warm: "Apply a warm color scheme with reds, oranges, and yellows for inviting energy",
-    cool: "Apply a cool color scheme with blues, greens, and violets for calming sophistication",
-    monochrome: "Apply a monochrome color scheme focused on one color with tonal variations",
-    vibrant: "Apply a vibrant color scheme with bold, saturated colors for dynamic impact",
-    pastel: "Apply a pastel color scheme with soft, muted colors for gentle charm",
-    earth_tones: "Apply an earth-toned color scheme with browns and terracottas for natural warmth",
-    jewel_tones: "Apply a jewel-toned color scheme with rich emeralds and rubies for luxurious depth",
-    black_white: "Apply a black and white color scheme for dramatic contrast and timeless simplicity",
-    gold_accent: "Apply a color scheme with prominent gold accents for luxurious highlights",
-  };
-
-  // Accent Color descriptions
-  const accentDescriptions: Record<string, string> = {
-    red: "Use red as a strategic accent color to highlight key architectural features",
-    blue: "Use blue as a strategic accent color to add calm sophistication to focal points",
-    green: "Use green as a strategic accent color to introduce natural freshness",
-    yellow: "Use yellow as a strategic accent color to create vibrant focal points",
-    orange: "Use orange as a strategic accent color for energetic highlights",
-    purple: "Use purple as a strategic accent color for regal elegance",
-    pink: "Use pink as a strategic accent color for contemporary softness",
-    gold: "Use gold as a strategic accent color for luxurious embellishment",
-    silver: "Use silver as a strategic accent color for modern sophistication",
-    bronze: "Use bronze as a strategic accent color for warm metallic richness",
-    white: "Use white as a strategic accent color for crisp contrast",
-    black: "Use black as a strategic accent color for bold definition",
-  };
-
-  // Build flowing text prompt
-  let prompt = `Transform this architectural sketch into a stunning photorealistic rendering`;
-
-  // Add architectural style if selected
-  if (architecturalStyle && styleDescriptions[architecturalStyle]) {
-    prompt += ` by embracing ${styleDescriptions[architecturalStyle]}`;
+  // Wenn Referenzbild vorhanden ist, verwende Material-Transfer
+  if (settings.mode === "reference" || hasReferenceImage) {
+    return generateReferencePrompt(settings, userPrompt);
   }
 
-  prompt += `, while maintaining the ${structurePreservation >= 80 ? "precise" : structurePreservation >= 50 ? "general" : "flexible"} composition and perspective of the original illustration. `;
+  // Ansonsten verwende Preset-System
+  return generatePresetPrompt(settings, userPrompt);
+}
 
-  // Add transfer intensity
-  prompt += `Apply the style transformation ${intensityDescriptions[transferIntensity]} `;
-  prompt += `with ${styleStrength}% style strength, creating a ${styleStrength < 40 ? "subtle" : styleStrength < 70 ? "moderate" : "pronounced"} stylistic transformation. `;
+/**
+ * MODE 1: Preset-basierter Prompt
+ *
+ * Erstellt detaillierten Prompt basierend auf gewählten Preset-Optionen
+ */
+function generatePresetPrompt(settings: StyleTransferSettingsType, userPrompt?: string): string {
+  const { spaceType, architecturalStyle, timeOfDay, weather, renderStyle, structurePreservation } =
+    settings;
 
-  // Add material palette if selected
-  if (materialPalette && materialDescriptions[materialPalette]) {
-    prompt += `${materialDescriptions[materialPalette]} `;
+  // Hole Details für den gewählten Stil
+  const styleDetails = STYLE_DETAILS[architecturalStyle];
+  const timeDescription = TIME_OF_DAY_DESCRIPTIONS[timeOfDay];
+  const weatherDescription = WEATHER_DESCRIPTIONS[weather];
+  const renderDescription = RENDER_STYLE_DESCRIPTIONS[renderStyle];
+
+  // Bereich-spezifische Einleitung
+  const spaceIntro =
+    spaceType === "interieur"
+      ? "Transform this interior space"
+      : "Transform this exterior architectural scene";
+
+  // Hauptprompt zusammenbauen
+  let prompt = `${spaceIntro} into a stunning ${renderStyle} rendering in ${styleDetails.name} style.\n\n`;
+
+  // Stil-Beschreibung
+  prompt += `ARCHITECTURAL STYLE:\n`;
+  prompt += `${styleDetails.beschreibung}\n\n`;
+
+  prompt += `KEY CHARACTERISTICS:\n`;
+  prompt += `- ${styleDetails.charakteristik}\n`;
+  prompt += `- Materials: ${styleDetails.materialien.join(", ")}\n`;
+  prompt += `- Colors: ${styleDetails.farben.join(", ")}\n\n`;
+
+  // Tageszeit & Beleuchtung
+  prompt += `LIGHTING & TIME OF DAY:\n`;
+  prompt += `${timeDescription}\n\n`;
+
+  // Wetter & Atmosphäre
+  prompt += `WEATHER & ATMOSPHERE:\n`;
+  prompt += `${weatherDescription}\n\n`;
+
+  // Render-Art Spezifikationen
+  prompt += `RENDERING STYLE:\n`;
+  prompt += `${renderDescription}\n\n`;
+
+  // Structure Preservation
+  prompt += `COMPOSITION & STRUCTURE:\n`;
+  if (structurePreservation >= 80) {
+    prompt += `Strictly preserve the exact composition, proportions, and perspective of the original image. Maintain all architectural elements in their precise positions and relationships.\n`;
+  } else if (structurePreservation >= 50) {
+    prompt += `Maintain the general composition and key architectural elements while allowing moderate creative interpretation of details and materiality.\n`;
+  } else {
+    prompt += `Use the original composition as inspiration, but allow significant creative freedom in interpretation, proportions, and architectural details.\n`;
   }
 
-  // Add color scheme if selected
-  if (colorScheme && colorDescriptions[colorScheme]) {
-    prompt += `${colorDescriptions[colorScheme]} `;
-  }
+  // Technische Qualitätsanforderungen
+  prompt += `\nQUALITY REQUIREMENTS:\n`;
+  prompt += `- High attention to architectural detail and material accuracy\n`;
+  prompt += `- Proper scale and proportions consistent with ${styleDetails.name} architecture\n`;
+  prompt += `- Realistic shadows and reflections appropriate for the chosen lighting conditions\n`;
+  prompt += `- Atmospheric depth and environmental context\n`;
 
-  // Add accent color if selected
-  if (accentColor && accentDescriptions[accentColor]) {
-    prompt += `${accentDescriptions[accentColor]}, providing striking contrast without overwhelming the overall design. `;
-  }
-
-  // Technical requirements
-  prompt += `\nIncorporate realistic textures and materials with precision rendering. `;
-  prompt += `The lighting should mimic natural daylight, casting soft yet defined shadows that accentuate geometric patterns, creating depth and dimension. `;
-  prompt += `Introduce atmospheric details like ${structurePreservation >= 70 ? "subtle" : "expressive"} sky conditions and reflections on surfaces, giving the scene vibrancy and life. `;
-
-  // Preservation requirements
-  prompt += `\nEnsure architectural accuracy by ${structurePreservation >= 80 ? "strictly preserving" : structurePreservation >= 50 ? "carefully maintaining" : "flexibly adapting"} the scale and proportions from the sketch. `;
-  prompt += `The end result should be a photorealistic rendering that ${structurePreservation >= 70 ? "precisely captures" : "creatively interprets"} the essence of the original drawing while elevating it to professional-quality visualization. `;
-
-  // Append user prompt if provided
+  // User Prompt anhängen
   if (userPrompt && userPrompt.trim()) {
-    prompt += `\n\nAdditional Requirements: ${userPrompt.trim()}`;
+    prompt += `\n\nADDITIONAL REQUIREMENTS:\n${userPrompt.trim()}`;
+  }
+
+  return prompt;
+}
+
+/**
+ * MODE 2: Referenzbild-basierter Prompt (Material Transfer)
+ *
+ * Überträgt nur Materialien und Texturen vom Referenzbild,
+ * behält aber die Struktur des Originalbildes bei.
+ */
+function generateReferencePrompt(settings: StyleTransferSettingsType, userPrompt?: string): string {
+  const { structurePreservation, renderStyle } = settings;
+
+  // Render-Art Beschreibung
+  const renderDescription = RENDER_STYLE_DESCRIPTIONS[renderStyle];
+
+  let prompt = `Transfer the materials, textures, colors, and surface qualities from the reference image to this architectural scene.\n\n`;
+
+  prompt += `MATERIAL TRANSFER INSTRUCTIONS:\n`;
+  prompt += `- Analyze the materials visible in the reference image (e.g., wood grain, stone texture, metal finishes, fabric patterns, surface colors)\n`;
+  prompt += `- Apply these exact materials and textures to the corresponding surfaces in the target image\n`;
+  prompt += `- Maintain the color palette and material characteristics from the reference\n`;
+  prompt += `- Preserve lighting properties and reflectance qualities of the reference materials\n\n`;
+
+  // Render-Art Spezifikation (NEU!)
+  prompt += `RENDERING STYLE:\n`;
+  prompt += `${renderDescription}\n\n`;
+
+  prompt += `STRUCTURE PRESERVATION:\n`;
+  if (structurePreservation >= 80) {
+    prompt += `CRITICAL: Do NOT change the composition, perspective, or architectural forms of the target image. Only apply the materials from the reference image to the existing structures. Every wall, window, door, and architectural element must remain in its exact original position and proportion.\n`;
+  } else if (structurePreservation >= 50) {
+    prompt += `Maintain the general architectural layout and key structural elements of the target image, while allowing moderate adjustments to details when applying the reference materials.\n`;
+  } else {
+    prompt += `Use the target image's composition as a guide, but allow creative freedom in how the reference materials are applied and interpreted across the architectural elements.\n`;
+  }
+
+  prompt += `\nQUALITY REQUIREMENTS:\n`;
+  prompt += `- Seamless material application that respects the target architecture's geometry\n`;
+  prompt += `- Consistent lighting that matches the reference material properties\n`;
+  prompt += `- Natural integration of textures that follows architectural surfaces correctly\n`;
+  prompt += `- ${renderStyle} rendering of all transferred materials\n`;
+
+  // User Prompt anhängen
+  if (userPrompt && userPrompt.trim()) {
+    prompt += `\n\nADDITIONAL REQUIREMENTS:\n${userPrompt.trim()}`;
   }
 
   return prompt;

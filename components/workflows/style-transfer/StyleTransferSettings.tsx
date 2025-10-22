@@ -1,14 +1,14 @@
 /**
  * Style-Transfer Settings Component
  *
- * Option 2 - Mit mehr Kontrolle:
- * - Architectural Style (Dropdown)
- * - Transfer Intensity (Dropdown - Subtle/Balanced/Strong)
- * - Style Strength (Slider - 0-100%)
- * - Structure Preservation (Slider - 0-100%)
- * - Material Palette (Dropdown - Natural/Industrial/Luxury/etc.)
- * - Color Scheme (Dropdown - Warm/Cool/Neutral/Vibrant/etc.)
- * - Accent Color (Dropdown - Red/Blue/Gold/etc.)
+ * Neues Preset-System:
+ * - Mode (Preset / Referenzbild)
+ * - Bereich (Interieur / Exterieur)
+ * - Stil (6 Optionen: mediterran, ikea, minimalistisch, modern, mittelalterlich, industrial)
+ * - Tageszeit (6 Optionen: morgen, mittag, abend, nacht, daemmerung, golden_hour)
+ * - Wetter (6 Optionen: sonnig, bewoelkt, regen, schnee, nebel, sturm)
+ * - Render-Art (5 Optionen: fotorealistisch, skizze, wasserfarben, blaupause, kuenstlerisch)
+ * - Structure Preservation (0-100%) - BLEIBT ERHALTEN!
  */
 
 "use client";
@@ -17,22 +17,26 @@ import { StyleTransferSettingsType } from "@/types/workflows/styleTransferSettin
 import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
 import { SettingsSlider } from "@/components/ui/SettingsSlider";
 import {
+  MODES,
+  SPACE_TYPES,
   ARCHITECTURAL_STYLES,
-  TRANSFER_INTENSITIES,
-  MATERIAL_PALETTES,
-  COLOR_SCHEMES,
-  ACCENT_COLORS,
+  TIME_OF_DAY,
+  WEATHER,
+  RENDER_STYLES,
   SETTING_ICONS,
 } from "@/constants/styleTransferSettings";
+import { Building, Palette, Clock, Cloud, Paintbrush, Lock, LayoutGrid } from "lucide-react";
 
 interface StyleTransferSettingsProps {
   settings: StyleTransferSettingsType;
   onSettingsChange: (settings: StyleTransferSettingsType) => void;
+  hasReferenceImage?: boolean; // Ob ein Referenzbild hochgeladen wurde
 }
 
 export function StyleTransferSettings({
   settings,
   onSettingsChange,
+  hasReferenceImage = false,
 }: StyleTransferSettingsProps) {
   const updateSetting = <K extends keyof StyleTransferSettingsType>(
     key: K,
@@ -41,84 +45,101 @@ export function StyleTransferSettings({
     onSettingsChange({ ...settings, [key]: value });
   };
 
+  // Icon-Mapping für Lucide Icons
+  const iconMap = {
+    LayoutGrid: LayoutGrid,
+    Building: Building,
+    Palette: Palette,
+    Clock: Clock,
+    Cloud: Cloud,
+    Paintbrush: Paintbrush,
+    Lock: Lock,
+  };
+
+  // Wenn Mode = "reference" ist, zeige nur Structure Preservation
+  const showPresetOptions = settings.mode === "preset";
+
   return (
-    <div className="flex items-center justify-end gap-1 flex-wrap">
-      {/* Architectural Style */}
+    <div className="flex flex-wrap items-center justify-end gap-1">
+      {/* Mode (Preset / Referenzbild) */}
       <SettingsDropdown
-        icon={SETTING_ICONS.architecturalStyle!}
-        options={ARCHITECTURAL_STYLES}
-        value={settings.architecturalStyle}
-        onChange={(v) => updateSetting("architecturalStyle", v as any)}
-        placeholder="Stil"
+        icon={iconMap[SETTING_ICONS.mode]}
+        options={MODES}
+        value={settings.mode}
+        onChange={(v) => updateSetting("mode", v as any)}
+        placeholder="Modus"
+        alwaysShowTitle={true}
+      />
+
+      {/* Preset-Optionen (nur zeigen wenn mode = "preset") */}
+      {showPresetOptions && (
+        <>
+          {/* Bereich (Interieur / Exterieur) */}
+          <SettingsDropdown
+            icon={iconMap[SETTING_ICONS.spaceType]}
+            options={SPACE_TYPES}
+            value={settings.spaceType}
+            onChange={(v) => updateSetting("spaceType", v as any)}
+            placeholder="Bereich"
+            alwaysShowTitle={true}
+          />
+
+          {/* Architekturstil */}
+          <SettingsDropdown
+            icon={iconMap[SETTING_ICONS.architecturalStyle]}
+            options={ARCHITECTURAL_STYLES}
+            value={settings.architecturalStyle}
+            onChange={(v) => updateSetting("architecturalStyle", v as any)}
+            placeholder="Stil"
+            alwaysShowTitle={true}
+            scrollable={true}
+          />
+
+          {/* Tageszeit */}
+          <SettingsDropdown
+            icon={iconMap[SETTING_ICONS.timeOfDay]}
+            options={TIME_OF_DAY}
+            value={settings.timeOfDay}
+            onChange={(v) => updateSetting("timeOfDay", v as any)}
+            placeholder="Tageszeit"
+            alwaysShowTitle={true}
+            scrollable={true}
+          />
+
+          {/* Wetter */}
+          <SettingsDropdown
+            icon={iconMap[SETTING_ICONS.weather]}
+            options={WEATHER}
+            value={settings.weather}
+            onChange={(v) => updateSetting("weather", v as any)}
+            placeholder="Wetter"
+            alwaysShowTitle={true}
+            scrollable={true}
+          />
+        </>
+      )}
+
+      {/* Render-Art (IMMER zeigen - in beiden Modi) */}
+      <SettingsDropdown
+        icon={iconMap[SETTING_ICONS.renderStyle]}
+        options={RENDER_STYLES}
+        value={settings.renderStyle}
+        onChange={(v) => updateSetting("renderStyle", v as any)}
+        placeholder="Render-Art"
         alwaysShowTitle={true}
         scrollable={true}
+        align="right"
       />
 
-      {/* Transfer Intensity */}
-      <SettingsDropdown
-        icon={SETTING_ICONS.transferIntensity!}
-        options={TRANSFER_INTENSITIES}
-        value={settings.transferIntensity}
-        onChange={(v) => updateSetting("transferIntensity", v as any)}
-        placeholder="Intensität"
-        alwaysShowTitle={true}
-      />
-
-      {/* Style Strength Slider */}
+      {/* Structure Preservation (IMMER zeigen - auch bei Referenzbild-Modus) */}
       <SettingsSlider
-        icon={SETTING_ICONS.styleStrength!}
-        label="Stil-Stärke"
-        value={settings.styleStrength}
-        onChange={(v) => updateSetting("styleStrength", v)}
-        min={0}
-        max={100}
-        unit="%"
-      />
-
-      {/* Structure Preservation Slider */}
-      <SettingsSlider
-        icon={SETTING_ICONS.structurePreservation!}
+        icon={iconMap[SETTING_ICONS.structurePreservation]}
         label="Struktur"
         value={settings.structurePreservation}
         onChange={(v) => updateSetting("structurePreservation", v)}
         min={0}
         max={100}
         unit="%"
-      />
-
-      {/* Material Palette */}
-      <SettingsDropdown
-        icon={SETTING_ICONS.materialPalette!}
-        options={MATERIAL_PALETTES}
-        value={settings.materialPalette}
-        onChange={(v) => updateSetting("materialPalette", v as any)}
-        placeholder="Material Palette"
-        alwaysShowTitle={true}
-        scrollable={true}
-      />
-
-      {/* Color Scheme */}
-      <SettingsDropdown
-        icon={SETTING_ICONS.colorScheme!}
-        options={COLOR_SCHEMES}
-        value={settings.colorScheme}
-        onChange={(v) => updateSetting("colorScheme", v as any)}
-        placeholder="Color Scheme"
-        alwaysShowTitle={true}
-        scrollable={true}
-        align="right"
-      />
-
-      {/* Accent Color */}
-      <SettingsDropdown
-        icon={SETTING_ICONS.accentColor!}
-        options={ACCENT_COLORS}
-        value={settings.accentColor}
-        onChange={(v) => updateSetting("accentColor", v as any)}
-        placeholder="Accent Color"
-        alwaysShowTitle={true}
-        scrollable={true}
-        align="right"
       />
     </div>
   );

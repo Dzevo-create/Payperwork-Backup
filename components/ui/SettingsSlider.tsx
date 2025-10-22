@@ -95,10 +95,7 @@ export function SettingsSlider({
   useEffect(() => {
     if (variant === "dropdown") {
       const handleClickOutside = (event: MouseEvent) => {
-        if (
-          dropdownRef.current &&
-          !dropdownRef.current.contains(event.target as Node)
-        ) {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
           setIsOpen(false);
         }
       };
@@ -128,19 +125,19 @@ export function SettingsSlider({
   // INLINE VARIANT - Gradient track with hover tooltip
   if (variant === "inline") {
     return (
-      <div className={`relative group ${className}`}>
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-white/80 to-white/70 backdrop-blur-sm rounded-lg border border-pw-black/10 hover:shadow transition-all min-w-[120px]">
+      <div className={`group relative ${className}`}>
+        <div className="border-pw-black/10 flex min-w-[120px] items-center gap-1.5 rounded-lg border bg-gradient-to-br from-white/80 to-white/70 px-2.5 py-1.5 backdrop-blur-sm transition-all hover:shadow">
           {/* Icon and Label */}
           <div className="flex items-center gap-1.5">
-            <Icon className="w-3.5 h-3.5 text-pw-black/40" />
-            <span className="text-[10px] font-medium text-pw-black/70 whitespace-nowrap">
+            <Icon className="text-pw-black/40 h-3.5 w-3.5" />
+            <span className="text-pw-black/70 whitespace-nowrap text-[10px] font-medium">
               {value}
               {unit}
             </span>
           </div>
 
           {/* Slider Track */}
-          <div className="relative flex-1 h-1.5 bg-gradient-to-r from-orange-300 via-yellow-300 to-green-300 rounded-full shadow-inner">
+          <div className="relative h-1.5 flex-1 rounded-full bg-gradient-to-r from-orange-300 via-yellow-300 to-green-300 shadow-inner">
             <input
               type="range"
               min={min}
@@ -148,11 +145,11 @@ export function SettingsSlider({
               step={step}
               value={value}
               onChange={(e) => onChange(parseInt(e.target.value))}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
             {/* Thumb indicator */}
             <div
-              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-pw-accent border border-white rounded-full shadow-md pointer-events-none transition-all group-hover:scale-125"
+              className="pointer-events-none absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-white bg-pw-accent shadow-md transition-all group-hover:scale-125"
               style={{
                 left: `${thumbPosition}%`,
                 transform: "translate(-50%, -50%)",
@@ -162,11 +159,11 @@ export function SettingsSlider({
         </div>
 
         {/* Hover Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-white text-pw-black text-[10px] font-medium rounded-lg shadow-xl border border-pw-black/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[9999]">
+        <div className="border-pw-black/10 pointer-events-none absolute bottom-full right-0 z-[9999] mb-2 whitespace-nowrap rounded-lg border bg-white px-3 py-1.5 text-[10px] font-medium text-pw-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
           {getCurrentTooltip()}
           {/* Arrow pointing down to the right */}
           <div
-            className="absolute top-full right-4 -mt-px w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"
+            className="absolute right-4 top-full -mt-px h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"
             style={{ filter: "drop-shadow(0 1px 0 rgba(0,0,0,0.1))" }}
           />
         </div>
@@ -180,10 +177,10 @@ export function SettingsSlider({
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2 py-1 bg-pw-black/5 hover:bg-pw-black/10 rounded-lg transition-all text-xs font-medium text-pw-black/80 hover:text-pw-black whitespace-nowrap"
+        className="bg-pw-black/5 hover:bg-pw-black/10 text-pw-black/80 flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium transition-all hover:text-pw-black"
         title={label}
       >
-        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+        <Icon className="h-3.5 w-3.5 flex-shrink-0" />
         <span className="text-xs">
           {value}
           {unit}
@@ -192,13 +189,11 @@ export function SettingsSlider({
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-pw-black/10 overflow-hidden z-50 min-w-[220px]">
-          <div className="px-4 py-3 space-y-3">
+        <div className="border-pw-black/10 absolute bottom-full right-0 z-50 mb-1 min-w-[220px] overflow-hidden rounded-lg border bg-white shadow-lg">
+          <div className="space-y-3 px-4 py-3">
             {/* Header */}
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-pw-black/60">
-                {label}
-              </span>
+              <span className="text-pw-black/60 text-xs font-medium">{label}</span>
               <span className="text-sm font-semibold text-pw-black">
                 {value}
                 {unit}
@@ -207,7 +202,7 @@ export function SettingsSlider({
 
             {/* Slider */}
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-pw-black/40 w-8 text-left">
+              <span className="text-pw-black/40 w-8 text-left text-[10px]">
                 {min}
                 {unit}
               </span>
@@ -218,25 +213,9 @@ export function SettingsSlider({
                 step={step}
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
-                className="flex-1 h-1.5 bg-pw-black/10 rounded-full appearance-none cursor-pointer
-                  [&::-webkit-slider-thumb]:appearance-none
-                  [&::-webkit-slider-thumb]:w-4
-                  [&::-webkit-slider-thumb]:h-4
-                  [&::-webkit-slider-thumb]:rounded-full
-                  [&::-webkit-slider-thumb]:bg-pw-accent
-                  [&::-webkit-slider-thumb]:cursor-pointer
-                  [&::-webkit-slider-thumb]:transition-all
-                  [&::-webkit-slider-thumb]:hover:scale-110
-                  [&::-moz-range-thumb]:w-4
-                  [&::-moz-range-thumb]:h-4
-                  [&::-moz-range-thumb]:rounded-full
-                  [&::-moz-range-thumb]:bg-pw-accent
-                  [&::-moz-range-thumb]:border-0
-                  [&::-moz-range-thumb]:cursor-pointer
-                  [&::-moz-range-thumb]:transition-all
-                  [&::-moz-range-thumb]:hover:scale-110"
+                className="bg-pw-black/10 h-1.5 flex-1 cursor-pointer appearance-none rounded-full [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-pw-accent [&::-moz-range-thumb]:transition-all [&::-moz-range-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-pw-accent [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110"
               />
-              <span className="text-[10px] text-pw-black/40 w-8 text-right">
+              <span className="text-pw-black/40 w-8 text-right text-[10px]">
                 {max}
                 {unit}
               </span>
