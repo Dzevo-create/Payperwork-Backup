@@ -236,16 +236,25 @@ export function generateReferencePromptWithStyleAnalysis(
 
   // ✅ NEW: Window Style (CRITICAL!)
   if (styleDescription.windowStyle) {
-    prompt += `WINDOW DESIGN (CRITICAL - Apply exact style from reference):\n`;
+    prompt += `WINDOW DESIGN (CRITICAL - Apply STYLE from reference to SOURCE building windows):\n`;
     prompt += `${styleDescription.windowStyle}\n`;
-    prompt += `Apply this exact window design to the source building, maintaining the same frame style, colors, proportions, and arrangement.\n\n`;
+    prompt += `IMPORTANT: Keep the SOURCE building's window POSITIONS and SIZES unchanged. Only apply the reference's window STYLING:\n`;
+    prompt += `- Frame style and colors from reference\n`;
+    prompt += `- Frame thickness and details from reference\n`;
+    prompt += `- Window shape/form (rounded corners, arches, etc.) from reference\n`;
+    prompt += `- BUT: Maintain SOURCE building's window locations, count, and overall size\n\n`;
   }
 
   // ✅ NEW: Facade Structure (CRITICAL!)
   if (styleDescription.facadeStructure) {
-    prompt += `FACADE STRUCTURE (CRITICAL - Recreate 3D depth and relief):\n`;
+    prompt += `FACADE STRUCTURE (CRITICAL - Apply 3D STYLING from reference, NOT geometry):\n`;
     prompt += `${styleDescription.facadeStructure}\n`;
-    prompt += `Recreate this facade structure with the same depth, relief, projections, and recesses as shown in the reference.\n\n`;
+    prompt += `IMPORTANT: Keep the SOURCE building's VOLUME, FORM, and GEOMETRY unchanged. Only apply the reference's facade TREATMENT:\n`;
+    prompt += `- Surface relief and depth treatment (panels, reveals) from reference\n`;
+    prompt += `- Material layering and 3D texture from reference\n`;
+    prompt += `- Facade articulation style from reference\n`;
+    prompt += `- BUT: Maintain SOURCE building's overall shape, height, width, and proportions\n`;
+    prompt += `- Think: "Same building, different skin treatment"\n\n`;
   }
 
   // ✅ NEW: Architectural Elements
@@ -280,14 +289,20 @@ export function generateReferencePromptWithStyleAnalysis(
 
   // STRUCTURE PRESERVATION - Sehr wichtig!
   prompt += `CRITICAL STRUCTURE PRESERVATION (${structurePreservation}%):\n`;
+  prompt += `\nIMPORTANT DISTINCTION:\n`;
+  prompt += `- PRESERVE: Source building's volume, form, geometry, perspective, camera angle\n`;
+  prompt += `- TRANSFER: Reference image's materials, colors, window styling, facade treatment\n`;
+  prompt += `- METAPHOR: "Same building, different skin"\n\n`;
+
   if (structurePreservation >= 80) {
     prompt += `MAINTAIN EXACT BUILDING GEOMETRY:\n`;
-    prompt += `- Keep PRECISE building proportions (height, width, depth)\n`;
-    prompt += `- Preserve ALL window and door openings in ORIGINAL positions\n`;
-    prompt += `- Maintain exact roof geometry and building footprint\n`;
-    prompt += `- Do NOT change the architectural composition, perspective, or building form\n`;
-    prompt += `- ONLY add materials, textures, realistic details, and environmental context\n`;
-    prompt += `- Think of this as "material application" not "redesign"\n`;
+    prompt += `- Keep PRECISE building proportions (height, width, depth) FROM SOURCE\n`;
+    prompt += `- Preserve ALL window and door opening POSITIONS FROM SOURCE\n`;
+    prompt += `- Maintain exact roof geometry and building footprint FROM SOURCE\n`;
+    prompt += `- Keep camera angle, perspective, and viewpoint FROM SOURCE\n`;
+    prompt += `- Do NOT change the architectural composition or building form\n`;
+    prompt += `- ONLY apply reference's materials, colors, window styling, facade treatment to source's unchanged geometry\n`;
+    prompt += `- Think: "Reskin the same building with reference's aesthetic"\n`;
   } else if (structurePreservation >= 50) {
     prompt += `MAINTAIN GENERAL ARCHITECTURAL LAYOUT:\n`;
     prompt += `- Keep main building proportions and overall form\n`;
