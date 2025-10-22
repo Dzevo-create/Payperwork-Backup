@@ -115,7 +115,7 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
           editPrompt: string;
           currentImage: { data: string; mimeType: string };
           originalPrompt?: string;
-          referenceImages?: Array<{ data: string; mimeType: string }>;
+          referenceImage?: { data: string; mimeType: string }; // ✅ CHANGED: singular referenceImage (not array)
         } = {
           editPrompt: editPrompt.trim(),
           currentImage: {
@@ -128,23 +128,24 @@ export function useRenderEdit(options: UseRenderEditOptions = {}) {
           payload.originalPrompt = originalPrompt;
         }
 
-        // Convert reference images from data URLs to API format
+        // ✅ NEW: Convert reference image from data URL to API format
+        // Note: Most edit APIs expect a single referenceImage, so we take the first one
         if (referenceImages && referenceImages.length > 0) {
-          payload.referenceImages = referenceImages.map((dataUrl) => {
-            // Extract data and mimeType from data URL (data:image/jpeg;base64,...)
-            const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-            if (matches && matches[1] && matches[2]) {
-              return {
-                data: matches[2],
-                mimeType: matches[1],
-              };
-            }
+          const dataUrl = referenceImages[0];
+          // Extract data and mimeType from data URL (data:image/jpeg;base64,...)
+          const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if (matches && matches[1] && matches[2]) {
+            payload.referenceImage = {
+              data: matches[2],
+              mimeType: matches[1],
+            };
+          } else {
             // Fallback if format is unexpected
-            return {
+            payload.referenceImage = {
               data: dataUrl.split(",")[1] || dataUrl,
               mimeType: "image/jpeg",
             };
-          });
+          }
         }
 
         // ✅ FIXED: Call workflow-specific edit API (configurable via options)

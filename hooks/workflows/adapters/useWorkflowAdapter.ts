@@ -7,21 +7,21 @@
  * This allows us to reuse existing hooks without modifying them.
  */
 
-import { useSketchToRender } from '../sketch-to-render/useSketchToRender';
-import { useBranding } from '../branding/useBranding';
-import { useBrandingPromptEnhancer } from '../branding/useBrandingPromptEnhancer';
-import { useFurnishEmpty } from '../furnish-empty/useFurnishEmpty';
-import { useStyleTransfer } from '../style-transfer/useStyleTransfer';
-import { useRenderToCad } from '../render-to-cad/useRenderToCad';
-import { useRenderToCadEnhancer } from '../render-to-cad/useRenderToCadEnhancer';
-import { usePromptEnhancer } from '../common/usePromptEnhancer';
-import { useRenderEdit } from '../common/useRenderEdit';
-import { useUpscale } from '../common/useUpscale';
-import type { SketchToRenderSettingsType } from '@/types/workflows/sketchToRenderSettings';
-import type { BrandingSettingsType } from '@/types/workflows/brandingSettings';
-import type { FurnishEmptySettingsType } from '@/types/workflows/furnishEmptySettings';
-import type { StyleTransferSettingsType } from '@/types/workflows/styleTransferSettings';
-import type { RenderToCadSettingsType } from '@/types/workflows/renderToCadSettings';
+import { useSketchToRender } from "../sketch-to-render/useSketchToRender";
+import { useBranding } from "../branding/useBranding";
+import { useBrandingPromptEnhancer } from "../branding/useBrandingPromptEnhancer";
+import { useFurnishEmpty } from "../furnish-empty/useFurnishEmpty";
+import { useStyleTransfer } from "../style-transfer/useStyleTransfer";
+import { useRenderToCad } from "../render-to-cad/useRenderToCad";
+import { useRenderToCadEnhancer } from "../render-to-cad/useRenderToCadEnhancer";
+import { usePromptEnhancer } from "../common/usePromptEnhancer";
+import { useRenderEdit } from "../common/useRenderEdit";
+import { useUpscale } from "../common/useUpscale";
+import type { SketchToRenderSettingsType } from "@/types/workflows/sketchToRenderSettings";
+import type { BrandingSettingsType } from "@/types/workflows/brandingSettings";
+import type { FurnishEmptySettingsType } from "@/types/workflows/furnishEmptySettings";
+import type { StyleTransferSettingsType } from "@/types/workflows/styleTransferSettings";
+import type { RenderToCadSettingsType } from "@/types/workflows/renderToCadSettings";
 
 /**
  * Workflow Generation Result Interface
@@ -76,9 +76,7 @@ export interface StandardEditHook {
  * Standard Upscale Hook Interface
  */
 export interface StandardUpscaleHook {
-  upscale: (params: {
-    imageUrl: string;
-  }) => Promise<string | null>;
+  upscale: (params: { imageUrl: string }) => Promise<string | null>;
   isUpscaling: boolean;
   error: string | null;
 }
@@ -95,15 +93,20 @@ export function useSketchToRenderAdapter(): StandardGenerateHook<SketchToRenderS
 
       // Convert base64 preview string to ImageData format expected by useSketchToRender
       // useSketchToRender expects: { file: File | null, preview: string | null }
-      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
-        file: null, // File object not needed for generation, only preview
-        preview: sourceImage, // Base64 data URL
-      } : {file: null, preview: null};
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage
+        ? {
+            file: null, // File object not needed for generation, only preview
+            preview: sourceImage, // Base64 data URL
+          }
+        : { file: null, preview: null };
 
-      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
-        file: null,
-        preview: referenceImages[0] || null,
-      } : undefined;
+      const referenceImageData: { file: File | null; preview: string | null } | undefined =
+        referenceImages.length > 0
+          ? {
+              file: null,
+              preview: referenceImages[0] || null,
+            }
+          : undefined;
 
       const result = await hook.generate(
         prompt,
@@ -132,15 +135,20 @@ export function useBrandingAdapter(): StandardGenerateHook<BrandingSettingsType>
 
       // Convert base64 preview string to ImageData format expected by useBranding
       // useBranding expects: { file: File | null, preview: string | null }
-      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
-        file: null, // File object not needed for generation, only preview
-        preview: sourceImage, // Base64 data URL
-      } : {file: null, preview: null};
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage
+        ? {
+            file: null, // File object not needed for generation, only preview
+            preview: sourceImage, // Base64 data URL
+          }
+        : { file: null, preview: null };
 
-      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
-        file: null,
-        preview: referenceImages[0] || null,
-      } : undefined;
+      const referenceImageData: { file: File | null; preview: string | null } | undefined =
+        referenceImages.length > 0
+          ? {
+              file: null,
+              preview: referenceImages[0] || null,
+            }
+          : undefined;
 
       const result = await hook.generate(
         prompt,
@@ -170,15 +178,20 @@ export function useFurnishEmptyAdapter(): StandardGenerateHook<FurnishEmptySetti
 
       // Convert base64 preview string to ImageData format expected by useFurnishEmpty
       // useFurnishEmpty expects: { file: File | null, preview: string | null }
-      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
-        file: null, // File object not needed for generation, only preview
-        preview: sourceImage, // Base64 data URL
-      } : {file: null, preview: null};
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage
+        ? {
+            file: null, // File object not needed for generation, only preview
+            preview: sourceImage, // Base64 data URL
+          }
+        : { file: null, preview: null };
 
-      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
-        file: null,
-        preview: referenceImages[0] || null,
-      } : undefined;
+      const referenceImageData: { file: File | null; preview: string | null } | undefined =
+        referenceImages.length > 0
+          ? {
+              file: null,
+              preview: referenceImages[0] || null,
+            }
+          : undefined;
 
       const result = await hook.generate(
         prompt,
@@ -207,16 +220,21 @@ export function useStyleTransferAdapter(): StandardGenerateHook<StyleTransferSet
 
       // Convert base64 preview string to ImageData format expected by useStyleTransfer
       // useStyleTransfer expects: { file: File | null, preview: string | null }
-      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
-        file: null, // File object not needed for generation, only preview
-        preview: sourceImage, // Base64 data URL
-      } : {file: null, preview: null};
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage
+        ? {
+            file: null, // File object not needed for generation, only preview
+            preview: sourceImage, // Base64 data URL
+          }
+        : { file: null, preview: null };
 
       // Reference image is optional for Style-Transfer
-      const referenceImageData: { file: File | null; preview: string | null } | undefined = referenceImages.length > 0 ? {
-        file: null,
-        preview: referenceImages[0] || null,
-      } : undefined;
+      const referenceImageData: { file: File | null; preview: string | null } | undefined =
+        referenceImages.length > 0
+          ? {
+              file: null,
+              preview: referenceImages[0] || null,
+            }
+          : undefined;
 
       const result = await hook.generate(
         prompt,
@@ -245,10 +263,12 @@ export function useRenderToCadAdapter(): StandardGenerateHook<RenderToCadSetting
 
       // Convert base64 preview string to ImageData format expected by useRenderToCad
       // useRenderToCad expects: { file: File | null, preview: string | null }
-      const sourceImageData: { file: File | null; preview: string | null } = sourceImage ? {
-        file: null, // File object not needed for generation, only preview
-        preview: sourceImage, // Base64 data URL
-      } : {file: null, preview: null};
+      const sourceImageData: { file: File | null; preview: string | null } = sourceImage
+        ? {
+            file: null, // File object not needed for generation, only preview
+            preview: sourceImage, // Base64 data URL
+          }
+        : { file: null, preview: null };
 
       const result = await hook.generate(
         prompt,
@@ -282,7 +302,7 @@ export function usePromptEnhancerAdapter(
       // Convert base64 to File object for validation
       const response = await fetch(sourceImage);
       const blob = await response.blob();
-      const file = new File([blob], 'source-image.jpg', { type: 'image/jpeg' });
+      const file = new File([blob], "source-image.jpg", { type: "image/jpeg" });
 
       // Convert to ImageData format expected by usePromptEnhancer
       const sourceImageData = {
@@ -290,11 +310,7 @@ export function usePromptEnhancerAdapter(
         preview: sourceImage,
       };
 
-      const result = await hook.enhancePrompt(
-        prompt,
-        sourceImageData as any,
-        settings
-      );
+      const result = await hook.enhancePrompt(prompt, sourceImageData as any, settings);
 
       return result || prompt;
     },
@@ -324,7 +340,7 @@ export function useBrandingPromptEnhancerAdapter(
       // Convert base64 to File object for validation
       const response = await fetch(sourceImage);
       const blob = await response.blob();
-      const file = new File([blob], 'source-image.jpg', { type: 'image/jpeg' });
+      const file = new File([blob], "source-image.jpg", { type: "image/jpeg" });
 
       // Convert to ImageData format expected by useBrandingPromptEnhancer
       const sourceImageData = {
@@ -364,7 +380,7 @@ export function useRenderToCadEnhancerAdapter(
       // Convert base64 to File object for validation
       const response = await fetch(sourceImage);
       const blob = await response.blob();
-      const file = new File([blob], 'source-image.jpg', { type: 'image/jpeg' });
+      const file = new File([blob], "source-image.jpg", { type: "image/jpeg" });
 
       // Convert to ImageData format expected by useRenderToCadEnhancer
       const sourceImageData = {
@@ -387,14 +403,23 @@ export function useRenderToCadEnhancerAdapter(
 
 /**
  * Adapter for Render Edit Hook
+ *
+ * ✅ NEW: Accepts optional apiEndpoint to use workflow-specific edit endpoints
+ * @param apiEndpoint - Optional API endpoint (e.g., "/api/style-transfer/edit", "/api/branding/edit")
+ *                      Defaults to "/api/sketch-to-render/edit" for backward compatibility
  */
-export function useRenderEditAdapter(): StandardEditHook {
-  const hook = useRenderEdit();
+export function useRenderEditAdapter(apiEndpoint?: string): StandardEditHook {
+  const hook = useRenderEdit({ apiEndpoint });
 
   return {
     edit: async (params) => {
       const { editPrompt, currentImageUrl, originalPrompt, referenceImages } = params;
-      const imageUrl = await hook.editRender(editPrompt, currentImageUrl, originalPrompt, referenceImages);
+      const imageUrl = await hook.editRender(
+        editPrompt,
+        currentImageUrl,
+        originalPrompt,
+        referenceImages
+      );
 
       if (!imageUrl) {
         return null;
