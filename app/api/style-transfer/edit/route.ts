@@ -69,40 +69,41 @@ export async function POST(req: NextRequest) {
 
     // Parse request body
     const body = await req.json();
-    const { editPrompt, currentImage, originalPrompt } = body;
+    const { editPrompt, currentImage, originalPrompt, referenceImage } = body;
 
     // Validate required fields
     if (!editPrompt || !editPrompt.trim()) {
-      return NextResponse.json(
-        { error: "Edit-Prompt ist erforderlich" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Edit-Prompt ist erforderlich" }, { status: 400 });
     }
 
     if (!currentImage || !currentImage.data || !currentImage.mimeType) {
-      return NextResponse.json(
-        { error: "Aktuelles Bild ist erforderlich" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Aktuelles Bild ist erforderlich" }, { status: 400 });
     }
 
     apiLogger.info("Edit request validated", {
       clientId,
       editPromptLength: editPrompt.length,
       hasOriginalPrompt: !!originalPrompt,
+      hasReferenceImage: !!referenceImage?.data, // ✅ NEW: Log reference image
     });
 
-    // Step 1: Enhance edit prompt with GPT-4o Vision
-    apiLogger.info("Enhancing edit prompt with GPT-4o", { clientId });
+    // Step 1: Enhance edit prompt with GPT-4o Vision (+ optional reference image analysis)
+    apiLogger.info("Enhancing edit prompt with GPT-4o", {
+      clientId,
+      hasReferenceImage: !!referenceImage?.data,
+    });
+
     const enhancedPrompt = await enhanceEditPrompt({
       editPrompt: editPrompt.trim(),
       currentImage,
       originalPrompt,
+      referenceImage, // ✅ NEW: Pass reference image for feature extraction
     });
 
     apiLogger.info("Edit prompt enhanced", {
       clientId,
       enhancedLength: enhancedPrompt.length,
+      hasReferenceFeatures: !!referenceImage?.data,
     });
 
     // Step 2: Initialize Nano Banana (Gemini 2.5 Flash Image)
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
       maxOutputTokens: 8192,
     };
 
-    // Step 4: Build content parts (prompt + current image)
+    // Step 4: Build content parts (prompt + current image + optional reference image)
     const parts: Part[] = [
       { text: enhancedPrompt },
       {
@@ -128,6 +129,20 @@ export async function POST(req: NextRequest) {
         },
       },
     ];
+
+    // ✅ NEW: Add reference image if provided (for feature extraction)
+    if (referenceImage?.data) {
+      parts.push({
+        inlineData: {
+          data: referenceImage.data,
+          mimeType: referenceImage.mimeType || "image/jpeg",
+        },
+      });
+      apiLogger.info("Reference image added to edit request", {
+        clientId,
+        referenceImageSize: referenceImage.data.length,
+      });
+    }
 
     apiLogger.info("Starting image edit with Nano Banana", { clientId });
 
