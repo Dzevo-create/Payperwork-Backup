@@ -7,7 +7,7 @@
  * - Filtered by level and context
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogContext {
   component?: string;
@@ -19,15 +19,15 @@ interface LogContext {
 }
 
 class Logger {
-  private isDevelopment = process.env.NODE_ENV === 'development';
-  private isClient = typeof window !== 'undefined';
+  private isDevelopment = process.env.NODE_ENV === "development";
+  private isClient = typeof window !== "undefined";
 
   /**
    * Debug logs - only in development
    */
   debug(message: string, context?: LogContext) {
     if (this.isDevelopment) {
-      this.log('debug', message, context);
+      this.log("debug", message, context);
     }
   }
 
@@ -35,36 +35,38 @@ class Logger {
    * Info logs - important events
    */
   info(message: string, context?: LogContext) {
-    this.log('info', message, context);
+    this.log("info", message, context);
   }
 
   /**
    * Warning logs - potential issues
    */
   warn(message: string, context?: LogContext) {
-    this.log('warn', message, context);
+    this.log("warn", message, context);
   }
 
   /**
    * Error logs - always logged, sent to monitoring
    */
   error(message: string, error?: Error | unknown, context?: LogContext) {
-    this.log('error', message, { ...context, error: this.serializeError(error) });
+    this.log("error", message, { ...context, error: this.serializeError(error) });
 
     // Send to Sentry in production
     if (!this.isDevelopment && this.isClient && error) {
       try {
         // Dynamic import to avoid bundling issues
-        import('@sentry/nextjs').then(({ captureException }) => {
-          captureException(error, {
-            extra: context,
-            tags: {
-              component: context?.component,
-            },
+        import("@sentry/nextjs")
+          .then(({ captureException }) => {
+            captureException(error, {
+              extra: context,
+              tags: {
+                component: context?.component,
+              },
+            });
+          })
+          .catch(() => {
+            // Fail silently if Sentry is not configured
           });
-        }).catch(() => {
-          // Fail silently if Sentry is not configured
-        });
       } catch {
         // Fail silently
       }
@@ -96,11 +98,11 @@ class Logger {
         level,
         message,
         context,
-        environment: this.isClient ? 'client' : 'server',
+        environment: this.isClient ? "client" : "server",
       };
 
       // Only log warnings and errors in production
-      if (level === 'warn' || level === 'error') {
+      if (level === "warn" || level === "error") {
         console[level](JSON.stringify(logEntry));
       }
     }
@@ -111,10 +113,14 @@ class Logger {
    */
   private getPrefix(level: LogLevel): string {
     switch (level) {
-      case 'debug': return '🔍';
-      case 'info': return 'ℹ️';
-      case 'warn': return '⚠️';
-      case 'error': return '❌';
+      case "debug":
+        return "🔍";
+      case "info":
+        return "ℹ️";
+      case "warn":
+        return "⚠️";
+      case "error":
+        return "❌";
     }
   }
 
@@ -123,10 +129,14 @@ class Logger {
    */
   private getStyle(level: LogLevel): string {
     switch (level) {
-      case 'debug': return 'color: gray';
-      case 'info': return 'color: blue';
-      case 'warn': return 'color: orange';
-      case 'error': return 'color: red';
+      case "debug":
+        return "color: gray";
+      case "info":
+        return "color: blue";
+      case "warn":
+        return "color: orange";
+      case "error":
+        return "color: red";
     }
   }
 
@@ -145,13 +155,13 @@ class Logger {
     }
 
     // Handle plain objects (e.g., API error responses)
-    if (typeof error === 'object') {
+    if (typeof error === "object") {
       try {
         // Attempt to extract meaningful data from the object
         const errorObj = error as any;
         return {
-          type: 'object',
-          message: errorObj.message || errorObj.error || errorObj.statusText || 'Unknown error',
+          type: "object",
+          message: errorObj.message || errorObj.error || errorObj.statusText || "Unknown error",
           status: errorObj.status || errorObj.statusCode,
           code: errorObj.code,
           details: this.isDevelopment ? errorObj : undefined,
@@ -160,9 +170,9 @@ class Logger {
       } catch (e) {
         // If JSON.stringify fails, fall back to String()
         return {
-          type: 'object',
+          type: "object",
           value: String(error),
-          warning: 'Could not serialize error object'
+          warning: "Could not serialize error object",
         };
       }
     }
@@ -170,7 +180,7 @@ class Logger {
     // Primitive values
     return {
       type: typeof error,
-      value: String(error)
+      value: String(error),
     };
   }
 
@@ -210,6 +220,7 @@ class Logger {
   table(data: any, label?: string) {
     if (this.isDevelopment) {
       if (label) {
+        // eslint-disable-next-line no-console
         console.log(`📊 ${label}`);
       }
       console.table(data);
@@ -222,80 +233,80 @@ export const logger = new Logger();
 
 // Convenience exports for specific contexts
 export const chatLogger = {
-  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.debug(message, { component: 'Chat', ...context }),
-  info: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.info(message, { component: 'Chat', ...context }),
-  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.warn(message, { component: 'Chat', ...context }),
-  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
-    logger.error(message, error, { component: 'Chat', ...context }),
+  debug: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.debug(message, { component: "Chat", ...context }),
+  info: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.info(message, { component: "Chat", ...context }),
+  warn: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.warn(message, { component: "Chat", ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, "component">) =>
+    logger.error(message, error, { component: "Chat", ...context }),
 };
 
 export const libraryLogger = {
-  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.debug(message, { component: 'Library', ...context }),
-  info: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.info(message, { component: 'Library', ...context }),
-  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.warn(message, { component: 'Library', ...context }),
-  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
-    logger.error(message, error, { component: 'Library', ...context }),
+  debug: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.debug(message, { component: "Library", ...context }),
+  info: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.info(message, { component: "Library", ...context }),
+  warn: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.warn(message, { component: "Library", ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, "component">) =>
+    logger.error(message, error, { component: "Library", ...context }),
 };
 
 export const apiLogger = {
-  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.debug(message, { component: 'API', ...context }),
-  info: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.info(message, { component: 'API', ...context }),
-  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.warn(message, { component: 'API', ...context }),
-  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
-    logger.error(message, error, { component: 'API', ...context }),
+  debug: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.debug(message, { component: "API", ...context }),
+  info: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.info(message, { component: "API", ...context }),
+  warn: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.warn(message, { component: "API", ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, "component">) =>
+    logger.error(message, error, { component: "API", ...context }),
 };
 
 export const workflowLogger = {
-  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.debug(message, { component: 'Workflow', ...context }),
-  info: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.info(message, { component: 'Workflow', ...context }),
-  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.warn(message, { component: 'Workflow', ...context }),
-  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
-    logger.error(message, error, { component: 'Workflow', ...context }),
+  debug: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.debug(message, { component: "Workflow", ...context }),
+  info: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.info(message, { component: "Workflow", ...context }),
+  warn: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.warn(message, { component: "Workflow", ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, "component">) =>
+    logger.error(message, error, { component: "Workflow", ...context }),
 };
 
 export const videoLogger = {
-  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.debug(message, { component: 'Video', ...context }),
-  info: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.info(message, { component: 'Video', ...context }),
-  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.warn(message, { component: 'Video', ...context }),
-  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
-    logger.error(message, error, { component: 'Video', ...context }),
+  debug: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.debug(message, { component: "Video", ...context }),
+  info: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.info(message, { component: "Video", ...context }),
+  warn: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.warn(message, { component: "Video", ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, "component">) =>
+    logger.error(message, error, { component: "Video", ...context }),
 };
 
 export const imageLogger = {
-  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.debug(message, { component: 'Image', ...context }),
-  info: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.info(message, { component: 'Image', ...context }),
-  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.warn(message, { component: 'Image', ...context }),
-  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
-    logger.error(message, error, { component: 'Image', ...context }),
+  debug: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.debug(message, { component: "Image", ...context }),
+  info: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.info(message, { component: "Image", ...context }),
+  warn: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.warn(message, { component: "Image", ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, "component">) =>
+    logger.error(message, error, { component: "Image", ...context }),
 };
 
 export const slidesLogger = {
-  debug: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.debug(message, { component: 'Slides', ...context }),
-  info: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.info(message, { component: 'Slides', ...context }),
-  warn: (message: string, context?: Omit<LogContext, 'component'>) =>
-    logger.warn(message, { component: 'Slides', ...context }),
-  error: (message: string, error?: Error, context?: Omit<LogContext, 'component'>) =>
-    logger.error(message, error, { component: 'Slides', ...context }),
+  debug: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.debug(message, { component: "Slides", ...context }),
+  info: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.info(message, { component: "Slides", ...context }),
+  warn: (message: string, context?: Omit<LogContext, "component">) =>
+    logger.warn(message, { component: "Slides", ...context }),
+  error: (message: string, error?: Error, context?: Omit<LogContext, "component">) =>
+    logger.error(message, error, { component: "Slides", ...context }),
 };
 
 // Legacy compatibility - for gradual migration
@@ -318,8 +329,8 @@ export const createLogger = (component: string) => ({
     logger.warn(message, { component, data: args.length > 0 ? args : undefined });
   },
   error: (message: string, ...args: any[]) => {
-    const error = args.find(arg => arg instanceof Error);
-    const otherArgs = args.filter(arg => !(arg instanceof Error));
+    const error = args.find((arg) => arg instanceof Error);
+    const otherArgs = args.filter((arg) => !(arg instanceof Error));
     logger.error(message, error, { component, data: otherArgs.length > 0 ? otherArgs : undefined });
   },
 });

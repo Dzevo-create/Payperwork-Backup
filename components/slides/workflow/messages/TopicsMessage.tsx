@@ -6,6 +6,7 @@ import { CheckCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useSlidesStore } from "@/hooks/slides/useSlidesStore";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger } from "@/lib/logger";
 
 interface TopicsMessageProps {
   message: SlidesMessage;
@@ -53,7 +54,7 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       setCurrentTopics(topics);
 
       // OLD PIPELINE: Generate slides after approval
-      console.log("🔄 Generating slides with old pipeline...");
+      logger.info("🔄 Generating slides with old pipeline...");
 
       // Add generation message
       const generationMessageId = `msg-gen-${Date.now()}`;
@@ -113,7 +114,7 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
 
       if (data.success) {
         // WebSocket will handle the rest
-        console.log("Slides generation started:", data.presentationId);
+        logger.info("Slides generation started:", { value: data.presentationId });
       }
     } catch (error) {
       console.error("Error approving topics:", error);

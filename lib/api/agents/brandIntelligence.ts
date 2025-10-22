@@ -81,24 +81,39 @@ function validateBrandGuidelines(guidelines: BrandGuidelines): string[] {
   const warnings: string[] = [];
 
   // Check colors for hex codes
-  const hasHexCodes = guidelines.colors.some(color => color.includes("#"));
+  const hasHexCodes = guidelines.colors.some((color) => color.includes("#"));
   if (!hasHexCodes && guidelines.colors.length > 0) {
     warnings.push("Colors do not include hex codes - may be too generic");
   }
 
   // Check for generic color names
-  const genericColors = ["black", "white", "gray", "grey", "red", "blue", "green", "orange", "yellow", "purple", "pink", "brown"];
-  const hasOnlyGenericColors = guidelines.colors.every(color =>
-    genericColors.some(generic => color.toLowerCase().includes(generic) && !color.includes("#"))
+  const genericColors = [
+    "black",
+    "white",
+    "gray",
+    "grey",
+    "red",
+    "blue",
+    "green",
+    "orange",
+    "yellow",
+    "purple",
+    "pink",
+    "brown",
+  ];
+  const hasOnlyGenericColors = guidelines.colors.every((color) =>
+    genericColors.some((generic) => color.toLowerCase().includes(generic) && !color.includes("#"))
   );
   if (hasOnlyGenericColors && guidelines.colors.length > 0) {
-    warnings.push("Colors are generic names without specificity (e.g., 'black' instead of '#000000')");
+    warnings.push(
+      "Colors are generic names without specificity (e.g., 'black' instead of '#000000')"
+    );
   }
 
   // Check for generic materials
   const genericMaterials = ["metal", "wood", "stone", "glass", "plastic", "fabric", "leather"];
-  const hasOnlyGenericMaterials = guidelines.materials.every(material =>
-    genericMaterials.some(generic => material.toLowerCase() === generic)
+  const hasOnlyGenericMaterials = guidelines.materials.every((material) =>
+    genericMaterials.some((generic) => material.toLowerCase() === generic)
   );
   if (hasOnlyGenericMaterials && guidelines.materials.length > 0) {
     warnings.push("Materials are too generic (e.g., 'metal' instead of 'brushed aluminum')");
@@ -126,8 +141,8 @@ function validateBrandGuidelines(guidelines: BrandGuidelines): string[] {
  * @example
  * ```typescript
  * const guidelines = await analyzeBrand("Audemars Piguet", "retail");
- * console.log(guidelines.colors); // ["#000080", "#FFD700", "#000000"]
- * console.log(guidelines.materials); // ["Calacatta marble", "Brushed brass", "Low-iron glass"]
+ apiLogger.info(guidelines.colors)
+ apiLogger.info(guidelines.materials)
  * ```
  */
 export async function analyzeBrand(
@@ -174,7 +189,7 @@ Be specific about colors, materials, textures, and spatial design.`;
           model: "gpt-4o", // Using GPT-5 for superior brand intelligence
           messages: [
             { role: "system", content: BRAND_INTELLIGENCE_SYSTEM_PROMPT },
-            { role: "user", content: userPrompt }
+            { role: "user", content: userPrompt },
           ],
           max_tokens: 1500, // Changed from max_tokens for GPT-5
           response_format: { type: "json_object" },
@@ -189,14 +204,16 @@ Be specific about colors, materials, textures, and spatial design.`;
       brandName,
       hasChoices: !!completion.choices,
       choicesLength: completion.choices?.length,
-      firstChoice: completion.choices?.[0] ? {
-        finishReason: completion.choices[0].finish_reason,
-        hasMessage: !!completion.choices[0].message,
-        messageRole: completion.choices[0].message?.role,
-        hasContent: !!completion.choices[0].message?.content,
-        contentLength: completion.choices[0].message?.content?.length || 0,
-        refusal: completion.choices[0].message?.refusal,
-      } : null,
+      firstChoice: completion.choices?.[0]
+        ? {
+            finishReason: completion.choices[0].finish_reason,
+            hasMessage: !!completion.choices[0].message,
+            messageRole: completion.choices[0].message?.role,
+            hasContent: !!completion.choices[0].message?.content,
+            contentLength: completion.choices[0].message?.content?.length || 0,
+            refusal: completion.choices[0].message?.refusal,
+          }
+        : null,
     });
 
     const responseText = completion.choices[0]?.message?.content;
@@ -220,9 +237,13 @@ Be specific about colors, materials, textures, and spatial design.`;
       guidelines = JSON.parse(responseText);
     } catch (parseError) {
       const error = new Error("Invalid JSON response from Brand Intelligence Agent");
-      apiLogger.error("Brand Intelligence: Failed to parse JSON response", parseError instanceof Error ? parseError : error, {
-        responseText: responseText.substring(0, 500),
-      });
+      apiLogger.error(
+        "Brand Intelligence: Failed to parse JSON response",
+        parseError instanceof Error ? parseError : error,
+        {
+          responseText: responseText.substring(0, 500),
+        }
+      );
       throw error;
     }
 
@@ -250,20 +271,23 @@ Be specific about colors, materials, textures, and spatial design.`;
       colorsCount: guidelines.colors.length,
       materialsCount: guidelines.materials.length,
       hasSignatureElements: guidelines.signatureElements.length > 0,
-      hasHexCodes: guidelines.colors.some(c => c.includes("#")),
+      hasHexCodes: guidelines.colors.some((c) => c.includes("#")),
       qualityWarnings: validationWarnings.length,
     });
 
     return guidelines;
-
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    apiLogger.error("Brand Intelligence: Analysis failed", error instanceof Error ? error : undefined, {
-      brandName,
-      venueType,
-      duration,
-    });
+    apiLogger.error(
+      "Brand Intelligence: Analysis failed",
+      error instanceof Error ? error : undefined,
+      {
+        brandName,
+        venueType,
+        duration,
+      }
+    );
 
     throw error;
   }
@@ -286,9 +310,7 @@ Be specific about colors, materials, textures, and spatial design.`;
  * ```
  */
 export function formatBrandGuidelinesForPrompt(guidelines: BrandGuidelines): string {
-  const sections: string[] = [
-    `BRAND IDENTITY - ${guidelines.brandName}:`,
-  ];
+  const sections: string[] = [`BRAND IDENTITY - ${guidelines.brandName}:`];
 
   if (guidelines.colors.length > 0) {
     sections.push(`- Brand colors: ${guidelines.colors.join(", ")}`);

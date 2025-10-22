@@ -176,13 +176,25 @@ function generateReferencePrompt(settings: StyleTransferSettingsType, userPrompt
 export function generateReferencePromptWithStyleAnalysis(
   settings: StyleTransferSettingsType,
   styleDescription: StyleDescription,
-  userPrompt?: string
+  userPrompt?: string,
+  sourceImageDescription?: string // ✅ NEW: Phase 1 - WHAT IS in source image
 ): string {
   const { structurePreservation, renderStyle } = settings;
   const renderDescription = RENDER_STYLE_DESCRIPTIONS[renderStyle];
 
-  // Hauptprompt: Volumen-Modell → Photorealistic Rendering
-  let prompt = `Transform this white architectural volume model (simple massing study) into a fully photorealistic architectural rendering.\n\n`;
+  // ✅ PHASE 1: WHAT IS (beschreibe was IST)
+  let prompt = `SOURCE IMAGE DESCRIPTION:\n`;
+  if (sourceImageDescription) {
+    // Use actual analysis of source image
+    prompt += `${sourceImageDescription}\n\n`;
+  } else {
+    // Fallback (should not happen with 2-phase approach)
+    prompt += `A white architectural volume model (simple massing study)\n\n`;
+  }
+
+  // ✅ PHASE 2: WHAT SHOULD BECOME (beschreibe was werden soll)
+  prompt += `TRANSFORMATION GOAL:\n`;
+  prompt += `Transform the source image into a fully photorealistic architectural rendering with the following specifications.\n\n`;
 
   // Stil-Beschreibung aus Reference Image
   prompt += `TARGET STYLE & MATERIALS (extracted from reference):\n`;
@@ -222,10 +234,9 @@ export function generateReferencePromptWithStyleAnalysis(
   });
   prompt += `\n`;
 
-  // SOURCE IMAGE KONTEXT: Volumen-Modell → Realistisches Rendering
-  prompt += `SOURCE IMAGE TRANSFORMATION:\n`;
-  prompt += `The source image is a SIMPLE WHITE VOLUME MODEL (massing study without details).\n`;
-  prompt += `Transform this into a FULLY PHOTOREALISTIC architectural rendering with:\n`;
+  // ✅ SOURCE IMAGE TRANSFORMATION (no assumptions!)
+  prompt += `TRANSFORMATION REQUIREMENTS:\n`;
+  prompt += `Apply the following to the source image to create a FULLY PHOTOREALISTIC architectural rendering:\n`;
   prompt += `- All materials, textures, and colors listed above applied to appropriate surfaces\n`;
   prompt += `- Detailed facade elements (windows with frames, doors, balconies, architectural details)\n`;
   prompt += `- Realistic surrounding environment (ground, landscaping, trees, sky, neighboring context)\n`;

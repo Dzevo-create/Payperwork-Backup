@@ -22,6 +22,7 @@ import { SlidesMessages } from "./SlidesMessages";
 import { PayperworkPanel } from "../panel/PayperworkPanel";
 import { AgentStatusIndicator } from "../AgentStatusIndicator";
 import { SlidesInput } from "./SlidesInput";
+import { logger } from "@/lib/logger";
 
 export function SlidesWorkflowContainer() {
   const messages = useSlidesStore((state) => state.messages);
@@ -64,7 +65,7 @@ export function SlidesWorkflowContainer() {
   // Removed polling - using WebSocket updates from webhook handler instead
 
   const handleStopGeneration = () => {
-    console.log("Stopping generation...");
+    logger.info("Stopping generation...");
 
     // Reset generation status to idle
     setGenerationStatus("idle");
@@ -147,7 +148,7 @@ export function SlidesWorkflowContainer() {
       if (data.success && data.presentationId) {
         const setStoredPresentationId = useSlidesStore.getState().setCurrentPresentationId;
         setStoredPresentationId(data.presentationId);
-        console.log("✅ Topic generation started, presentationId:", data.presentationId);
+        logger.info("✅ Topic generation started", { presentationId: data.presentationId });
 
         // Add new presentation to sidebar
         addPresentation({

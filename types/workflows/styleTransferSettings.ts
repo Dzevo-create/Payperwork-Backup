@@ -1,113 +1,195 @@
 /**
- * Style-Transfer Workflow Settings Types
+ * Style-Transfer Workflow Settings Types (NEU - Preset-System)
  *
- * Defines all settings for the Style-Transfer workflow which transfers
- * architectural styles and materialities from reference images to designs.
+ * Umfassendes Preset-System für Material- und Stil-Transfer mit:
+ * - Mode (Preset / Referenzbild)
+ * - Bereich (Interieur / Exterieur)
+ * - Architektonische Stile (6 Hauptstile)
+ * - Tageszeit (6 Optionen)
+ * - Wetter (6 Optionen)
+ * - Render-Art (5 Optionen)
+ * - Structure Preservation (0-100%)
  */
 
-// Architectural Style - Pre-defined architectural styles
+// ============================================================================
+// MODE - Preset oder Referenzbild
+// ============================================================================
+export type StyleTransferMode = "preset" | "reference";
+
+// ============================================================================
+// BEREICH - Interieur oder Exterieur
+// ============================================================================
+export type SpaceType = "interieur" | "exterieur";
+
+// ============================================================================
+// ARCHITEKTONISCHE STILE
+// ============================================================================
 export type ArchitecturalStyle =
+  | "mediterran"
+  | "ikea"
+  | "minimalistisch"
   | "modern"
-  | "contemporary"
-  | "minimalist"
-  | "industrial"
-  | "mediterranean"
-  | "scandinavian"
-  | "classical"
-  | "baroque"
-  | "art_deco"
-  | "brutalist"
-  | "gothic"
-  | "renaissance";
+  | "mittelalterlich"
+  | "industrial";
 
-// Transfer Intensity - How strongly the style is transferred
-export type TransferIntensity = "subtle" | "balanced" | "strong";
-
-// Material Palette - Types of materials to focus on
-export type MaterialPalette =
-  | "natural"        // Wood, Stone
-  | "industrial"     // Metal, Concrete
-  | "luxury"         // Marble, Gold
-  | "rustic"         // Wood, Brick
-  | "modern"         // Glass, Steel
-  | "traditional"    // Stone, Wood
-  | "mixed";         // Combination
-
-// Color Scheme - Color palettes
-export type ColorScheme =
-  | "neutral"          // White, Gray, Beige
-  | "warm"             // Red, Orange, Yellow
-  | "cool"             // Blue, Green, Violet
-  | "monochrome"       // One color
-  | "vibrant"          // Bold colors
-  | "pastel"           // Soft colors
-  | "earth_tones"      // Brown, Terracotta
-  | "jewel_tones"      // Emerald, Ruby
-  | "black_white"      // Black & White
-  | "gold_accent";     // Gold accents
-
-// Accent Color - Specific primary color
-export type AccentColor =
-  | "red"
-  | "blue"
-  | "green"
-  | "yellow"
-  | "orange"
-  | "purple"
-  | "pink"
-  | "gold"
-  | "silver"
-  | "bronze"
-  | "white"
-  | "black";
-
-// Architectural Elements - Specific elements that can be transferred
-export type ArchitecturalElement =
-  | "facade"
-  | "windows"
-  | "doors"
-  | "roof"
-  | "columns"
-  | "ornaments"
-  | "textures"
-  | "lighting";
-
-/**
- * Complete Style-Transfer Settings Interface
- */
-export interface StyleTransferSettingsType extends Record<string, unknown> {
-  // 1. Architectural style (optional - guides the transfer)
-  architecturalStyle: ArchitecturalStyle | null;
-
-  // 2. Transfer intensity (how strongly to apply the style)
-  transferIntensity: TransferIntensity;
-
-  // 3. Style strength (0-100%)
-  styleStrength: number;
-
-  // 4. Structure preservation (0-100%)
-  structurePreservation: number;
-
-  // 5. Material palette (which materials to focus on)
-  materialPalette: MaterialPalette | null;
-
-  // 6. Color scheme (color palette)
-  colorScheme: ColorScheme | null;
-
-  // 7. Accent color (optional primary color)
-  accentColor: AccentColor | null;
+// Stil-Details für Prompt-Generierung
+export interface StyleDetails {
+  name: string;
+  charakteristik: string;
+  materialien: string[];
+  farben: string[];
+  beschreibung: string;
 }
 
-/**
- * Default Style-Transfer Settings
- * Balanced configuration for most use cases
- */
+export const STYLE_DETAILS: Record<ArchitecturalStyle, StyleDetails> = {
+  mediterran: {
+    name: "Mediterran",
+    charakteristik: "Warme Farben, Bögen, Terrakotta",
+    materialien: ["Stein", "Ziegel", "Holz", "Terrakotta"],
+    farben: ["Ocker", "Terrakotta", "Weiß", "Blau"],
+    beschreibung:
+      "Mediterranean style with warm earth tones, arched openings, terracotta tiles, stucco walls, and natural stone. Emphasize rustic charm with textured surfaces and traditional craftsmanship.",
+  },
+  ikea: {
+    name: "IKEA/Skandinavisch",
+    charakteristik: "Funktional, hell, gemütlich",
+    materialien: ["Helles Holz", "Textilien", "Glas"],
+    farben: ["Weiß", "Beige", "Hellgrau", "Pastellblau"],
+    beschreibung:
+      "Scandinavian/IKEA style with light wood tones, functional minimalism, cozy textiles, and bright open spaces. Focus on simplicity, natural light, and hygge atmosphere.",
+  },
+  minimalistisch: {
+    name: "Minimalistisch",
+    charakteristik: "Reduziert, clean, geometrisch",
+    materialien: ["Beton", "Glas", "Stahl"],
+    farben: ["Weiß", "Grau", "Schwarz"],
+    beschreibung:
+      "Minimalist style with clean lines, geometric forms, monochromatic palette, and 'less is more' philosophy. Emphasize simplicity, negative space, and functional elegance.",
+  },
+  modern: {
+    name: "Modern",
+    charakteristik: "Klare Linien, große Fenster",
+    materialien: ["Glas", "Stahl", "Beton"],
+    farben: ["Neutral", "Akzentfarben"],
+    beschreibung:
+      "Modern style with clean lines, large windows, open floor plans, and contemporary materials. Focus on functionality, innovation, and sleek aesthetics.",
+  },
+  mittelalterlich: {
+    name: "Mittelalterlich",
+    charakteristik: "Massiv, rustikale Elemente",
+    materialien: ["Naturstein", "Dunkles Holz", "Schmiedeeisen"],
+    farben: ["Braun", "Grau", "Dunkelrot"],
+    beschreibung:
+      "Medieval style with massive stone walls, dark wood beams, arched doorways, and rustic craftsmanship. Emphasize historical authenticity and fortress-like solidity.",
+  },
+  industrial: {
+    name: "Industrial",
+    charakteristik: "Roh, exposed Elements",
+    materialien: ["Metall", "Beton", "Ziegel", "Rohre"],
+    farben: ["Grau", "Schwarz", "Rost", "Dunkelbraun"],
+    beschreibung:
+      "Industrial style with exposed brick, metal beams, concrete surfaces, and utilitarian design. Focus on raw materials, honest construction, and warehouse aesthetics.",
+  },
+};
+
+// ============================================================================
+// TAGESZEIT
+// ============================================================================
+export type TimeOfDay = "morgen" | "mittag" | "abend" | "nacht" | "daemmerung" | "golden_hour";
+
+export const TIME_OF_DAY_DESCRIPTIONS: Record<TimeOfDay, string> = {
+  morgen:
+    "Early morning light with soft golden rays, long shadows, and fresh atmosphere. Sunrise glow with cool to warm transition.",
+  mittag:
+    "Midday lighting with bright overhead sun, short shadows, and high contrast. Clear visibility with strong illumination.",
+  abend:
+    "Evening light with warm amber tones, lengthening shadows, and golden hour glow. Sunset atmosphere with rich colors.",
+  nacht:
+    "Night scene with artificial lighting, deep shadows, and dramatic contrasts. Moonlight or street lamps creating atmospheric mood.",
+  daemmerung:
+    "Twilight/dusk with blue hour atmosphere, soft diffused light, and magical transition between day and night.",
+  golden_hour:
+    "Golden hour with warm, soft, directional light. Long shadows, rich colors, and photographer's favorite lighting.",
+};
+
+// ============================================================================
+// WETTER
+// ============================================================================
+export type Weather = "sonnig" | "bewoelkt" | "regen" | "schnee" | "nebel" | "sturm";
+
+export const WEATHER_DESCRIPTIONS: Record<Weather, string> = {
+  sonnig:
+    "Sunny weather with clear blue sky, bright sunlight, and crisp shadows. Vibrant colors and high visibility.",
+  bewoelkt:
+    "Overcast with soft diffused lighting, no harsh shadows, and muted colors. Cloudy sky with even illumination.",
+  regen:
+    "Rainy atmosphere with wet surfaces, reflections, and dramatic sky. Water droplets, puddles, and moody ambiance.",
+  schnee:
+    "Snowy scene with white coverage, soft lighting, and winter atmosphere. Snow on surfaces, cold color palette.",
+  nebel:
+    "Foggy conditions with reduced visibility, soft atmospheric perspective, and mysterious mood. Diffused light through mist.",
+  sturm:
+    "Stormy weather with dramatic dark clouds, wind effects, and intense atmosphere. Dynamic sky and turbulent conditions.",
+};
+
+// ============================================================================
+// RENDER-ART
+// ============================================================================
+export type RenderStyle =
+  | "fotorealistisch"
+  | "skizze"
+  | "wasserfarben"
+  | "blaupause"
+  | "kuenstlerisch";
+
+export const RENDER_STYLE_DESCRIPTIONS: Record<RenderStyle, string> = {
+  fotorealistisch:
+    "Fully photorealistic rendering with realistic materials, lighting, and textures. High detail, accurate physics, and lifelike appearance.",
+  skizze:
+    "Architectural sketch style with hand-drawn lines, hatching, and artistic interpretation. Pencil or pen drawing aesthetic.",
+  wasserfarben:
+    "Watercolor painting style with soft edges, color bleeding, and artistic fluidity. Painterly interpretation with transparent washes.",
+  blaupause:
+    "Blueprint/technical drawing style with white lines on blue background, precise measurements, and architectural notation.",
+  kuenstlerisch:
+    "Artistic interpretation with creative freedom, expressive style, and unique visual language. Painterly or illustrative approach.",
+};
+
+// ============================================================================
+// COMPLETE SETTINGS INTERFACE
+// ============================================================================
+export interface StyleTransferSettingsType extends Record<string, unknown> {
+  // Mode
+  mode: StyleTransferMode;
+
+  // Bereich
+  spaceType: SpaceType;
+
+  // Stil
+  architecturalStyle: ArchitecturalStyle;
+
+  // Tageszeit
+  timeOfDay: TimeOfDay;
+
+  // Wetter
+  weather: Weather;
+
+  // Render-Art
+  renderStyle: RenderStyle;
+
+  // Structure Preservation (0-100%) - BEHALTEN!
+  structurePreservation: number;
+}
+
+// ============================================================================
+// DEFAULT SETTINGS
+// ============================================================================
 export const DEFAULT_STYLE_TRANSFER_SETTINGS: StyleTransferSettingsType = {
-  architecturalStyle: null,      // No pre-defined style - let reference image guide
-  transferIntensity: "balanced", // Balanced transfer
-  styleStrength: 70,             // 70% style strength
-  structurePreservation: 80,     // 80% structure preservation
-  materialPalette: null,         // No specific material palette - use reference
-  colorScheme: null,             // No specific color scheme - use reference
-  accentColor: null,             // No accent color - use reference
+  mode: "preset",
+  spaceType: "exterieur",
+  architecturalStyle: "modern",
+  timeOfDay: "mittag",
+  weather: "sonnig",
+  renderStyle: "fotorealistisch",
+  structurePreservation: 80,
 };

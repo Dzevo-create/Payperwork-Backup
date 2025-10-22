@@ -8,8 +8,9 @@
  * @date 2025-10-20
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+import { apiLogger } from "@/lib/logger";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -29,14 +30,11 @@ export async function POST(request: NextRequest) {
       files,
     } = body;
 
-    if (!topic || typeof topic !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Topic is required' },
-        { status: 400 }
-      );
+    if (!topic || typeof topic !== "string") {
+      return NextResponse.json({ success: false, error: "Topic is required" }, { status: 400 });
     }
 
-    console.log('🪄 Generating optimized prompt for:', topic);
+    apiLogger.info("🪄 Generating optimized prompt for:", { topic });
 
     // Build structured prompt for Claude
     const systemPrompt = `Du bist ein Experte für Präsentationserstellung. Deine Aufgabe ist es, aus strukturierten Eingaben einen optimierten, detaillierten Prompt zu erstellen, der für die automatische Generierung von professionellen Präsentationen verwendet wird.
@@ -56,16 +54,16 @@ Der Prompt sollte so formuliert sein, dass ein AI-System daraus direkt Topics, O
 **Thema:**
 ${topic}
 
-${targetAudience ? `**Zielgruppe:**\n${targetAudience}\n` : ''}
-${designGuidelines ? `**Design-Vorgaben:**\n${designGuidelines}\n` : ''}
-${brandColors ? `**Firmen-CI / Brand-Farben:**\n${brandColors}\n` : ''}
-${additionalNotes ? `**Weitere Hinweise:**\n${additionalNotes}\n` : ''}
+${targetAudience ? `**Zielgruppe:**\n${targetAudience}\n` : ""}
+${designGuidelines ? `**Design-Vorgaben:**\n${designGuidelines}\n` : ""}
+${brandColors ? `**Firmen-CI / Brand-Farben:**\n${brandColors}\n` : ""}
+${additionalNotes ? `**Weitere Hinweise:**\n${additionalNotes}\n` : ""}
 
 **Technische Einstellungen:**
 - Format: ${format}
 - Theme: ${theme}
 
-${files && files.length > 0 ? `**Hochgeladene Dateien:**\n${files.map((f: any) => `- ${f.name} (${f.type})`).join('\n')}\n` : ''}
+${files && files.length > 0 ? `**Hochgeladene Dateien:**\n${files.map((f: any) => `- ${f.name} (${f.type})`).join("\n")}\n` : ""}
 
 Generiere einen klaren, strukturierten Prompt (2-4 Sätze), der alle wichtigen Informationen enthält und direkt für die Präsentationserstellung verwendet werden kann.
 
@@ -81,32 +79,35 @@ Antworte NUR mit dem generierten Prompt, ohne zusätzliche Erklärungen oder For
     try {
       // Try Claude API first
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: "claude-sonnet-4-5-20250929",
         max_tokens: 300,
         temperature: 0.7,
         system: systemPrompt,
         messages: [
           {
-            role: 'user',
+            role: "user",
             content: userPrompt,
           },
         ],
       });
 
-      const textContent = message.content.find((c) => c.type === 'text');
-      if (!textContent || textContent.type !== 'text') {
-        throw new Error('No text content in response');
+      const textContent = message.content.find((c) => c.type === "text");
+      if (!textContent || textContent.type !== "text") {
+        throw new Error("No text content in response");
       }
 
       generatedPrompt = textContent.text.trim();
 
-      console.log('✅ Generated optimized prompt:', generatedPrompt);
+      apiLogger.info("✅ Generated optimized prompt:", { generatedPrompt });
     } catch (claudeError) {
       // Fallback: Build prompt from settings
       const errorMessage = claudeError instanceof Error ? claudeError.message : String(claudeError);
-      const isQuotaError = errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('rate_limit');
+      const isQuotaError =
+        errorMessage.includes("429") ||
+        errorMessage.includes("quota") ||
+        errorMessage.includes("rate_limit");
 
-      console.warn('⚠️ Claude API failed, using intelligent fallback', {
+      console.warn("⚠️ Claude API failed, using intelligent fallback", {
         error: errorMessage,
         isQuotaError,
       });
@@ -132,11 +133,11 @@ Antworte NUR mit dem generierten Prompt, ohne zusätzliche Erklärungen oder For
       }
 
       parts.push(`Format: ${format}, Theme: ${theme}`);
-      parts.push('Include engaging visuals, clear structure, and professional layout.');
+      parts.push("Include engaging visuals, clear structure, and professional layout.");
 
-      generatedPrompt = parts.join(' ');
+      generatedPrompt = parts.join(" ");
 
-      console.log('✅ Generated fallback prompt:', generatedPrompt);
+      apiLogger.info("✅ Generated fallback prompt:", { generatedPrompt });
     }
 
     return NextResponse.json({
@@ -144,11 +145,11 @@ Antworte NUR mit dem generierten Prompt, ohne zusätzliche Erklärungen oder For
       generatedPrompt,
     });
   } catch (error) {
-    console.error('❌ Error generating optimized prompt:', error);
+    console.error("❌ Error generating optimized prompt:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: error instanceof Error ? error.message : "Internal server error",
       },
       { status: 500 }
     );

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * Socket Emit Helper
  *
@@ -13,7 +14,7 @@
 
 const SOCKET_EMIT_URL = process.env.NEXT_PUBLIC_APP_URL
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/socket/emit`
-  : 'http://localhost:3000/api/socket/emit';
+  : "http://localhost:3000/api/socket/emit";
 
 /**
  * Emit a Socket.IO event via HTTP
@@ -22,16 +23,12 @@ const SOCKET_EMIT_URL = process.env.NEXT_PUBLIC_APP_URL
  * @param event - Event name
  * @param data - Event data
  */
-export async function emitSocketEvent(
-  userId: string,
-  event: string,
-  data: any
-): Promise<void> {
+export async function emitSocketEvent(userId: string, event: string, data: any): Promise<void> {
   try {
     const response = await fetch(SOCKET_EMIT_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         userId,
@@ -44,7 +41,7 @@ export async function emitSocketEvent(
       const error = await response.json();
       console.error(`[Socket Emit] Failed to emit ${event}:`, error);
     } else {
-      console.log(`[Socket Emit] ✅ Successfully emitted ${event} to user:${userId}`);
+      logger.info(`[Socket Emit] ✅ Successfully emitted ${event} to user:${userId}`);
     }
   } catch (error) {
     console.error(`[Socket Emit] Error emitting ${event}:`, error);
@@ -65,7 +62,7 @@ export async function emitTopicsGenerated(
     messageId: string;
   }
 ): Promise<void> {
-  await emitSocketEvent(userId, 'topics:generated', data);
+  await emitSocketEvent(userId, "topics:generated", data);
 }
 
 /**
@@ -78,7 +75,7 @@ export async function emitThinkingMessage(
     messageId: string;
   }
 ): Promise<void> {
-  await emitSocketEvent(userId, 'thinking:message', data);
+  await emitSocketEvent(userId, "thinking:message", data);
 }
 
 /**
@@ -95,7 +92,7 @@ export async function emitSlidePreviewUpdate(
     layout: string;
   }
 ): Promise<void> {
-  await emitSocketEvent(userId, 'slide:preview:update', {
+  await emitSocketEvent(userId, "slide:preview:update", {
     presentationId,
     slide,
   });
@@ -109,7 +106,7 @@ export async function emitGenerationCompleted(
   presentationId: string,
   slideCount: number
 ): Promise<void> {
-  await emitSocketEvent(userId, 'generation:completed', {
+  await emitSocketEvent(userId, "generation:completed", {
     presentationId,
     slideCount,
   });
@@ -123,7 +120,7 @@ export async function emitGenerationError(
   presentationId: string,
   error: string
 ): Promise<void> {
-  await emitSocketEvent(userId, 'generation:error', {
+  await emitSocketEvent(userId, "generation:error", {
     presentationId,
     error,
   });

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSocketServer } from '@/lib/socket/server';
+import { NextRequest, NextResponse } from "next/server";
+import { getSocketServer } from "@/lib/socket/server";
+import { apiLogger } from "@/lib/logger";
 
 /**
  * POST /api/socket/emit
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !event || !data) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, event, data' },
+        { error: "Missing required fields: userId, event, data" },
         { status: 400 }
       );
     }
@@ -27,9 +28,9 @@ export async function POST(request: NextRequest) {
     const io = getSocketServer();
 
     if (!io) {
-      console.warn('[Socket Emit] Socket.IO server not initialized');
+      console.warn("[Socket Emit] Socket.IO server not initialized");
       return NextResponse.json(
-        { success: false, error: 'Socket.IO server not initialized' },
+        { success: false, error: "Socket.IO server not initialized" },
         { status: 503 }
       );
     }
@@ -40,14 +41,11 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
 
-    console.log(`[Socket Emit] ✅ Emitted ${event} to user:${userId}`);
+    apiLogger.info(`[Socket Emit] ✅ Emitted ${event} to user:${userId}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[Socket Emit] Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error("[Socket Emit] Error:", error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

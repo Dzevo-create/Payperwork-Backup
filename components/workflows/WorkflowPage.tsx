@@ -43,7 +43,9 @@ export interface WorkflowGenerationResult {
 /**
  * Workflow Configuration Interface
  */
-export interface WorkflowPageConfig<TSettings extends Record<string, unknown> = Record<string, unknown>> {
+export interface WorkflowPageConfig<
+  TSettings extends Record<string, unknown> = Record<string, unknown>,
+> {
   /** Workflow name (e.g. "Sketch to Render") */
   name: string;
 
@@ -64,6 +66,7 @@ export interface WorkflowPageConfig<TSettings extends Record<string, unknown> = 
     disabled?: boolean;
     settings: TSettings;
     onSettingsChange: (settings: TSettings) => void;
+    hasReferenceImage?: boolean;
   }>;
 
   /** Hooks */
@@ -79,7 +82,10 @@ export interface WorkflowPageConfig<TSettings extends Record<string, unknown> = 
       error: string | null;
       progress: number;
     };
-    useEnhance?: (sourceImage: string | null, settings: TSettings) => {
+    useEnhance?: (
+      sourceImage: string | null,
+      settings: TSettings
+    ) => {
       enhance: (prompt: string) => Promise<string>;
       isEnhancing: boolean;
       error: string | null;
@@ -129,9 +135,8 @@ interface WorkflowPageProps<TSettings extends Record<string, unknown> = Record<s
  * - WorkflowModals: Modal overlays (lightbox, crop)
  */
 export function WorkflowPage<TSettings extends Record<string, unknown> = Record<string, unknown>>({
-  config
+  config,
 }: WorkflowPageProps<TSettings>) {
-
   // State Management Hook
   const state = useWorkflowPageState(config);
 
@@ -144,18 +149,10 @@ export function WorkflowPage<TSettings extends Record<string, unknown> = Record<
   return (
     <ErrorBoundary>
       {/* Main Layout */}
-      <WorkflowPageLayout
-        config={config}
-        state={state}
-        actions={actions}
-        chat={chat}
-      />
+      <WorkflowPageLayout config={config} state={state} actions={actions} chat={chat} />
 
       {/* Modal Overlays */}
-      <WorkflowModals
-        state={state}
-        actions={actions}
-      />
+      <WorkflowModals state={state} actions={actions} />
     </ErrorBoundary>
   );
 }

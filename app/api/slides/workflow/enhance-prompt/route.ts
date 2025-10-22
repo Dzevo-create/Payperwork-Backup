@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+import { apiLogger } from "@/lib/logger";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -9,14 +10,11 @@ export async function POST(request: NextRequest) {
   try {
     const { prompt, format, theme } = await request.json();
 
-    if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Prompt is required' },
-        { status: 400 }
-      );
+    if (!prompt || typeof prompt !== "string") {
+      return NextResponse.json({ success: false, error: "Prompt is required" }, { status: 400 });
     }
 
-    console.log('🔧 Enhancing prompt:', prompt);
+    apiLogger.info("🔧 Enhancing prompt:", { prompt });
 
     const systemPrompt = `Du bist ein Experte für Präsentationserstellung. Deine Aufgabe ist es, einfache Benutzer-Prompts in detaillierte, professionelle Prompts umzuwandeln.
 
@@ -47,32 +45,32 @@ Input: "Präsentation zu Tesla"
 Output: "Erstelle eine professionelle Präsentation über Tesla Inc. mit Fokus auf Innovation, Elektromobilität und nachhaltige Energie. Verwende die Tesla-Markenfarben (Rot #E31937, Schwarz, Silber) für ein modernes, technologisches Design. Format: ${format}, Theme: ${theme}."`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 200,
       temperature: 0.7,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [{ role: "user", content: userPrompt }],
     });
 
-    const textContent = message.content.find((c) => c.type === 'text');
-    if (!textContent || textContent.type !== 'text') {
-      throw new Error('No text content in response');
+    const textContent = message.content.find((c) => c.type === "text");
+    if (!textContent || textContent.type !== "text") {
+      throw new Error("No text content in response");
     }
 
     const enhancedPrompt = textContent.text.trim();
 
-    console.log('✅ Enhanced prompt:', enhancedPrompt);
+    apiLogger.info("✅ Enhanced prompt:", { enhancedPrompt });
 
     return NextResponse.json({
       success: true,
       enhancedPrompt,
     });
   } catch (error) {
-    console.error('❌ Error enhancing prompt:', error);
+    console.error("❌ Error enhancing prompt:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: error instanceof Error ? error.message : "Internal server error",
       },
       { status: 500 }
     );

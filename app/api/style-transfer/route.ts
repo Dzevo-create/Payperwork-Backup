@@ -20,6 +20,7 @@ import {
   analyzeReferenceImage,
   getDefaultStyleDescription,
 } from "@/lib/api/workflows/styleTransfer/styleAnalyzer";
+import { analyzeSourceImage, formatAnalysisForPrompt } from "@/lib/ai/sourceImageAnalyzer";
 import {
   geminiClient,
   GEMINI_MODELS,
@@ -75,7 +76,32 @@ export async function POST(req: NextRequest) {
       hasReferenceImage: !!referenceImage?.data,
     });
 
-    // Generate enhanced prompt
+    // ✅ PHASE 1: Analyze SOURCE Image (WHAT IS)
+    // This is the critical fix: Don't ASSUME what's in the image, ANALYZE it!
+    apiLogger.info("Style-Transfer: Phase 1 - Analyzing source image");
+
+    let sourceImageDescription: string | undefined;
+    try {
+      const sourceAnalysis = await analyzeSourceImage(
+        sourceImage.data,
+        sourceImage.mimeType || "image/jpeg",
+        "style-transfer"
+      );
+      sourceImageDescription = formatAnalysisForPrompt(sourceAnalysis);
+
+      apiLogger.info("Style-Transfer: Source image analysis complete", {
+        style: sourceAnalysis.style,
+        materials: sourceAnalysis.materials.length,
+        colors: sourceAnalysis.colors.length,
+      });
+    } catch (error) {
+      apiLogger.warn(
+        "Style-Transfer: Source image analysis failed, proceeding without description",
+        error instanceof Error ? error : undefined
+      );
+    }
+
+    // ✅ PHASE 2: Generate Transformation Prompt (WHAT SHOULD BECOME)
     // ZWEI MODI:
     // 1. Preset Mode (ohne Reference Image): Nutze Presets (Stil, Zeit, Wetter)
     // 2. Reference Mode (mit Reference Image): Analysiere Reference, extrahiere Stil
@@ -85,7 +111,7 @@ export async function POST(req: NextRequest) {
     if (hasReferenceImage) {
       // MODE 2: Reference Image Style Analysis
       apiLogger.info(
-        "Style-Transfer: Reference mode - analyzing reference image for style extraction"
+        "Style-Transfer: Phase 2 - Reference mode - analyzing reference image for style extraction"
       );
 
       try {
@@ -101,16 +127,18 @@ export async function POST(req: NextRequest) {
           overallStyle: styleDescription.overallStyle,
         });
 
-        // Generiere Prompt MIT Stil-Beschreibung
+        // ✅ Generiere Prompt MIT Stil-Beschreibung UND Source Image Beschreibung
         enhancedPrompt = generateReferencePromptWithStyleAnalysis(
           settings as StyleTransferSettingsType,
           styleDescription,
-          prompt || ""
+          prompt || "",
+          sourceImageDescription // ✅ NEW: Include source image analysis
         );
 
         apiLogger.debug("Style-Transfer: Enhanced prompt generated from style analysis", {
           promptLength: enhancedPrompt.length,
           materials: styleDescription.materials.join(", "),
+          hasSourceAnalysis: !!sourceImageDescription,
         });
       } catch (error) {
         // Fallback: Wenn Analyse fehlschlägt, nutze Default-Beschreibung
@@ -123,12 +151,13 @@ export async function POST(req: NextRequest) {
         enhancedPrompt = generateReferencePromptWithStyleAnalysis(
           settings as StyleTransferSettingsType,
           defaultStyle,
-          prompt || ""
+          prompt || "",
+          sourceImageDescription // ✅ NEW: Still include source image analysis
         );
       }
     } else {
       // MODE 1: Preset Mode (ohne Reference Image)
-      apiLogger.info("Style-Transfer: Preset mode - using preset settings");
+      apiLogger.info("Style-Transfer: Phase 2 - Preset mode - using preset settings");
 
       enhancedPrompt = generateStyleTransferPrompt(
         settings as StyleTransferSettingsType,
@@ -138,6 +167,7 @@ export async function POST(req: NextRequest) {
 
       apiLogger.debug("Style-Transfer: Preset prompt generated", {
         promptLength: enhancedPrompt.length,
+        hasSourceAnalysis: !!sourceImageDescription,
       });
     }
 

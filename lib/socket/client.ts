@@ -6,6 +6,7 @@
 
 import { io, Socket } from "socket.io-client";
 import { WEBSOCKET_EVENTS } from "@/constants/slides";
+import { logger } from "@/lib/logger";
 
 /**
  * Global Socket.IO client instance
@@ -20,7 +21,7 @@ let socket: Socket | null = null;
  */
 export function initializeSocketClient(userId: string): Socket {
   if (socket && socket.connected) {
-    console.log("Socket.IO client already connected");
+    logger.info("Socket.IO client already connected");
     return socket;
   }
 
@@ -37,7 +38,7 @@ export function initializeSocketClient(userId: string): Socket {
 
   // Connection handler
   socket.on(WEBSOCKET_EVENTS.CONNECT, () => {
-    console.log("Socket.IO client connected");
+    logger.info("Socket.IO client connected");
 
     // Authenticate
     socket?.emit(WEBSOCKET_EVENTS.AUTHENTICATE, { userId });
@@ -45,7 +46,7 @@ export function initializeSocketClient(userId: string): Socket {
 
   // Disconnect handler
   socket.on(WEBSOCKET_EVENTS.DISCONNECT, () => {
-    console.log("Socket.IO client disconnected");
+    logger.info("Socket.IO client disconnected");
   });
 
   // Error handler
@@ -72,6 +73,6 @@ export function disconnectSocketClient(): void {
   if (socket) {
     socket.disconnect();
     socket = null;
-    console.log("Socket.IO client disconnected");
+    logger.info("Socket.IO client disconnected");
   }
 }

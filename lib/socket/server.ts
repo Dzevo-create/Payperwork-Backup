@@ -7,6 +7,7 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { WEBSOCKET_EVENTS } from "@/constants/slides";
+import { logger } from "@/lib/logger";
 
 /**
  * Global Socket.IO server instance
@@ -30,7 +31,7 @@ export function getSocketServer(): SocketIOServer | null {
  */
 export function initializeSocketServer(httpServer: HTTPServer): SocketIOServer {
   if (io) {
-    console.log("Socket.IO server already initialized");
+    logger.info("Socket.IO server already initialized");
     return io;
   }
 
@@ -47,7 +48,7 @@ export function initializeSocketServer(httpServer: HTTPServer): SocketIOServer {
 
   // Connection handler
   io.on(WEBSOCKET_EVENTS.CONNECT, (socket: Socket) => {
-    console.log(`Client connected: ${socket.id}`);
+    logger.info(`Client connected: ${socket.id}`);
 
     // Authentication
     socket.on(WEBSOCKET_EVENTS.AUTHENTICATE, (data: { userId: string }) => {
@@ -60,12 +61,12 @@ export function initializeSocketServer(httpServer: HTTPServer): SocketIOServer {
 
       // Join user-specific room
       socket.join(`user:${userId}`);
-      console.log(`User ${userId} authenticated and joined room`);
+      logger.info(`User ${userId} authenticated and joined room`);
     });
 
     // Disconnect handler
     socket.on(WEBSOCKET_EVENTS.DISCONNECT, () => {
-      console.log(`Client disconnected: ${socket.id}`);
+      logger.info(`Client disconnected: ${socket.id}`);
     });
 
     // Error handler
@@ -74,7 +75,7 @@ export function initializeSocketServer(httpServer: HTTPServer): SocketIOServer {
     });
   });
 
-  console.log("Socket.IO server initialized");
+  logger.info("Socket.IO server initialized");
   return io;
 }
 
@@ -101,7 +102,7 @@ export function emitToUser(userId: string, event: string, data: any): void {
   }
 
   io.to(`user:${userId}`).emit(event, data);
-  console.log(`Emitted ${event} to user ${userId}:`, data);
+  logger.info(`Emitted ${event} to user ${userId}:`, { data });
 }
 
 /**
@@ -110,10 +111,7 @@ export function emitToUser(userId: string, event: string, data: any): void {
  * @param userId - User ID
  * @param presentationId - Presentation ID
  */
-export function emitPresentationReady(
-  userId: string,
-  presentationId: string
-): void {
+export function emitPresentationReady(userId: string, presentationId: string): void {
   emitToUser(userId, WEBSOCKET_EVENTS.PRESENTATION_READY, {
     presentation_id: presentationId,
     timestamp: new Date().toISOString(),
@@ -127,11 +125,7 @@ export function emitPresentationReady(
  * @param presentationId - Presentation ID
  * @param error - Error message
  */
-export function emitPresentationError(
-  userId: string,
-  presentationId: string,
-  error: string
-): void {
+export function emitPresentationError(userId: string, presentationId: string, error: string): void {
   emitToUser(userId, WEBSOCKET_EVENTS.PRESENTATION_ERROR, {
     presentation_id: presentationId,
     error,
@@ -146,11 +140,7 @@ export function emitPresentationError(
  * @param presentationId - Presentation ID
  * @param slideId - Slide ID
  */
-export function emitSlideUpdated(
-  userId: string,
-  presentationId: string,
-  slideId: string
-): void {
+export function emitSlideUpdated(userId: string, presentationId: string, slideId: string): void {
   emitToUser(userId, WEBSOCKET_EVENTS.SLIDE_UPDATED, {
     presentation_id: presentationId,
     slide_id: slideId,
@@ -346,13 +336,13 @@ export function emitTopicsGenerated(
     messageId: string;
   }
 ): void {
-  emitToUser(userId, 'topics:generated', {
+  emitToUser(userId, "topics:generated", {
     topics: data.topics,
     messageId: data.messageId,
     timestamp: new Date().toISOString(),
   });
 
-  console.log(`✅ Emitted topics:generated to user:${userId} with ${data.topics.length} topics`);
+  logger.info(`✅ Emitted topics:generated to user:${userId} with ${data.topics.length} topics`);
 }
 
 // ============================================
@@ -378,13 +368,13 @@ export function emitToolActionStarted(
     messageId: string;
   }
 ): void {
-  emitToUser(userId, 'tool:action:started', {
+  emitToUser(userId, "tool:action:started", {
     toolAction: data.toolAction,
     messageId: data.messageId,
     timestamp: new Date().toISOString(),
   });
 
-  console.log(`✅ Emitted tool:action:started to user:${userId} - ${data.toolAction.type}`);
+  logger.info(`✅ Emitted tool:action:started to user:${userId} - ${data.toolAction.type}`);
 }
 
 /**
@@ -408,13 +398,13 @@ export function emitToolActionCompleted(
     messageId: string;
   }
 ): void {
-  emitToUser(userId, 'tool:action:completed', {
+  emitToUser(userId, "tool:action:completed", {
     toolAction: data.toolAction,
     messageId: data.messageId,
     timestamp: new Date().toISOString(),
   });
 
-  console.log(`✅ Emitted tool:action:completed to user:${userId} - ${data.toolAction.type}`);
+  logger.info(`✅ Emitted tool:action:completed to user:${userId} - ${data.toolAction.type}`);
 }
 
 /**
@@ -437,13 +427,15 @@ export function emitToolActionFailed(
     messageId: string;
   }
 ): void {
-  emitToUser(userId, 'tool:action:failed', {
+  emitToUser(userId, "tool:action:failed", {
     toolAction: data.toolAction,
     messageId: data.messageId,
     timestamp: new Date().toISOString(),
   });
 
-  console.log(`⚠️ Emitted tool:action:failed to user:${userId} - ${data.toolAction.type}: ${data.toolAction.error}`);
+  logger.error(
+    `⚠️ Emitted tool:action:failed to user:${userId} - ${data.toolAction.type}: ${data.toolAction.error}`
+  );
 }
 
 /**
@@ -459,11 +451,11 @@ export function emitThinkingMessage(
     messageId: string;
   }
 ): void {
-  emitToUser(userId, 'thinking:message', {
+  emitToUser(userId, "thinking:message", {
     content: data.content,
     messageId: data.messageId,
     timestamp: new Date().toISOString(),
   });
 
-  console.log(`✅ Emitted thinking:message to user:${userId}`);
+  logger.info(`✅ Emitted thinking:message to user:${userId}`);
 }

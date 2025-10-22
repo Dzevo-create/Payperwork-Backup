@@ -18,14 +18,13 @@ import type {
   AgentStatusEvent,
   AgentSourceFoundEvent,
   AgentInsightEvent,
-} from '../types/agentTypes';
-import {
   createThinkingEvent,
   createActionEvent,
   createStatusEvent,
   createSourceFoundEvent,
   createInsightEvent,
-} from '../types/agentTypes';
+} from "../types/agentTypes";
+import { apiLogger } from "@/lib/logger";
 
 // ============================================
 // Safe Socket Import (works in Next.js)
@@ -34,10 +33,10 @@ import {
 let emitToUser: Function | undefined;
 
 try {
-  const socketServer = require('@/lib/socket/server');
+  const socketServer = require("@/lib/socket/server");
   emitToUser = socketServer.emitToUser;
 } catch (error) {
-  console.warn('[AgentEventEmitter] Socket.IO server not available (OK for development)');
+  console.warn("[AgentEventEmitter] Socket.IO server not available (OK for development)");
 }
 
 // ============================================
@@ -53,53 +52,41 @@ export class AgentEventEmitter {
   thinking(agent: AgentType, content: string): void {
     const event = createThinkingEvent(agent, content);
     this.emitEvent(event);
-    console.log(`🤖 ${agent} thinking:`, content);
+    apiLogger.info(`🤖 ${agent} thinking:`, { content });
   }
 
   /**
    * Emit agent action started
    */
   actionStarted(agent: AgentType, action: AgentAction, data?: Record<string, any>): void {
-    const event = createActionEvent(agent, action, 'started', data);
+    const event = createActionEvent(agent, action, "started", data);
     this.emitEvent(event);
-    console.log(`🚀 ${agent} started ${action}`);
+    apiLogger.info(`🚀 ${agent} started ${action}`);
   }
 
   /**
    * Emit agent action progress
    */
-  actionProgress(
-    agent: AgentType,
-    action: AgentAction,
-    data?: Record<string, any>
-  ): void {
-    const event = createActionEvent(agent, action, 'progress', data);
+  actionProgress(agent: AgentType, action: AgentAction, data?: Record<string, any>): void {
+    const event = createActionEvent(agent, action, "progress", data);
     this.emitEvent(event);
-    console.log(`⏳ ${agent} progress on ${action}:`, data);
+    apiLogger.info(`⏳ ${agent} progress on ${action}:`, { data });
   }
 
   /**
    * Emit agent action completed
    */
-  actionCompleted(
-    agent: AgentType,
-    action: AgentAction,
-    data?: Record<string, any>
-  ): void {
-    const event = createActionEvent(agent, action, 'completed', data);
+  actionCompleted(agent: AgentType, action: AgentAction, data?: Record<string, any>): void {
+    const event = createActionEvent(agent, action, "completed", data);
     this.emitEvent(event);
-    console.log(`✅ ${agent} completed ${action}`);
+    apiLogger.info(`✅ ${agent} completed ${action}`);
   }
 
   /**
    * Emit agent action failed
    */
-  actionFailed(
-    agent: AgentType,
-    action: AgentAction,
-    error: string
-  ): void {
-    const event = createActionEvent(agent, action, 'failed', { error });
+  actionFailed(agent: AgentType, action: AgentAction, error: string): void {
+    const event = createActionEvent(agent, action, "failed", { error });
     this.emitEvent(event);
     console.error(`❌ ${agent} failed ${action}:`, error);
   }
@@ -115,7 +102,7 @@ export class AgentEventEmitter {
   ): void {
     const event = createStatusEvent(agent, status, currentAction, progress);
     this.emitEvent(event);
-    console.log(`📊 ${agent} status: ${status}`, { currentAction, progress });
+    apiLogger.info(`📊 ${agent} status: ${status}`, { value: { currentAction, progress } });
   }
 
   /**
@@ -132,7 +119,7 @@ export class AgentEventEmitter {
   ): void {
     const event = createSourceFoundEvent(agent, source);
     this.emitEvent(event);
-    console.log(`🔍 ${agent} found source:`, source.title);
+    apiLogger.debug(`🔍 ${agent} found source:`, { value: source.title });
   }
 
   /**
@@ -141,7 +128,7 @@ export class AgentEventEmitter {
   insight(agent: AgentType, insight: string, confidence: number): void {
     const event = createInsightEvent(agent, insight, confidence);
     this.emitEvent(event);
-    console.log(`💡 ${agent} insight (${confidence}%):`, insight);
+    apiLogger.info(`💡 ${agent} insight (${confidence}%):`, { insight });
   }
 
   /**
@@ -152,7 +139,7 @@ export class AgentEventEmitter {
       ...data,
       timestamp: new Date().toISOString(),
     });
-    console.log(`📡 Custom event: ${eventType}`, data);
+    apiLogger.info(`📡 Custom event: ${eventType}`, { data });
   }
 
   /**
@@ -169,13 +156,13 @@ export class AgentEventEmitter {
   /**
    * Map internal event type to WebSocket event name
    */
-  private getEventName(type: AgentEvent['type']): string {
-    const mapping: Record<AgentEvent['type'], string> = {
-      'agent:thinking': 'agent:thinking:step',
-      'agent:action': 'agent:action:update',
-      'agent:status': 'agent:status:change',
-      'agent:source:found': 'agent:source:found',
-      'agent:insight': 'agent:insight:generated',
+  private getEventName(type: AgentEvent["type"]): string {
+    const mapping: Record<AgentEvent["type"], string> = {
+      "agent:thinking": "agent:thinking:step",
+      "agent:action": "agent:action:update",
+      "agent:status": "agent:status:change",
+      "agent:source:found": "agent:source:found",
+      "agent:insight": "agent:insight:generated",
     };
     return mapping[type];
   }
@@ -195,11 +182,7 @@ export function createAgentEmitter(userId: string): AgentEventEmitter {
 /**
  * Emit thinking step (shorthand)
  */
-export function emitThinking(
-  userId: string,
-  agent: AgentType,
-  content: string
-): void {
+export function emitThinking(userId: string, agent: AgentType, content: string): void {
   const emitter = new AgentEventEmitter(userId);
   emitter.thinking(agent, content);
 }

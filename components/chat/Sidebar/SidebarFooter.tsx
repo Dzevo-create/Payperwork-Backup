@@ -1,14 +1,18 @@
 "use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 import { Settings, User, LogOut, Moon, Bell, Home } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface SidebarFooterProps {
   credits?: number;
 }
 
 export function SidebarFooter({ credits = 3000 }: SidebarFooterProps) {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -35,43 +39,59 @@ export function SidebarFooter({ credits = 3000 }: SidebarFooterProps) {
         {/* Home Button */}
         <Link
           href="/"
-          className="p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 hover:scale-110"
+          className="hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg p-2 transition-all duration-200 hover:scale-110"
           aria-label="Home"
           title="Zur Startseite"
         >
-          <Home className="w-4 h-4 text-pw-black/60" />
+          <Home className="text-pw-black/60 h-4 w-4" />
         </Link>
 
         {/* Profile Dropdown */}
         <div className="relative flex-1" ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-full p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 flex items-center gap-2"
+            className="hover:bg-pw-black/20 active:bg-pw-black/30 flex w-full items-center gap-2 rounded-lg p-2 transition-all duration-200"
             aria-label="Profile"
           >
-            <User className="w-4 h-4 text-pw-black/60" />
-            <span className="text-xs font-medium text-pw-black/80 flex-1 text-left">Profil</span>
+            <User className="text-pw-black/60 h-4 w-4" />
+            <span className="text-pw-black/80 flex-1 text-left text-xs font-medium">Profil</span>
           </button>
 
           {showProfileMenu && (
-            <div className="absolute bottom-full left-0 mb-2 w-52 bg-white rounded-xl shadow-2xl border border-pw-black/10 py-2 z-50">
-              <div className="px-4 py-2 border-b border-pw-black/10">
-                <p className="text-sm font-semibold text-pw-black">Benutzer</p>
-                <p className="text-xs text-pw-black/60">user@example.com</p>
+            <div className="border-pw-black/10 absolute bottom-full left-0 z-50 mb-2 w-52 rounded-xl border bg-white py-2 shadow-2xl">
+              <div className="border-pw-black/10 border-b px-4 py-2">
+                <p className="text-sm font-semibold text-pw-black">
+                  {user?.user_metadata?.name || "Benutzer"}
+                </p>
+                <p className="text-pw-black/60 truncate text-xs" title={user?.email}>
+                  {user?.email || "Keine E-Mail"}
+                </p>
               </div>
               {/* Credits in Dropdown */}
-              <div className="px-4 py-3 border-b border-pw-black/10">
+              <div className="border-pw-black/10 border-b px-4 py-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-pw-black/60">Credits</span>
+                  <span className="text-pw-black/60 text-xs">Credits</span>
                   <span className="text-sm font-bold text-pw-accent">{credits}</span>
                 </div>
               </div>
-              <button className="w-full px-4 py-2 text-left text-sm text-pw-black/80 hover:bg-pw-black/20 active:bg-pw-black/30 transition-all duration-150 flex items-center gap-3">
-                <User className="w-4 h-4" />
+              <button
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  router.push("/profile");
+                }}
+                className="text-pw-black/80 hover:bg-pw-black/20 active:bg-pw-black/30 flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-all duration-150"
+              >
+                <User className="h-4 w-4" />
                 <span>Profil bearbeiten</span>
               </button>
-              <button className="w-full px-4 py-2 text-left text-sm hover:bg-red-100 active:bg-red-200 transition-all duration-150 flex items-center gap-3 text-red-600">
-                <LogOut className="w-4 h-4" />
+              <button
+                onClick={async () => {
+                  await signOut();
+                  router.push("/");
+                }}
+                className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 transition-all duration-150 hover:bg-red-100 active:bg-red-200"
+              >
+                <LogOut className="h-4 w-4" />
                 <span>Abmelden</span>
               </button>
             </div>
@@ -82,20 +102,20 @@ export function SidebarFooter({ credits = 3000 }: SidebarFooterProps) {
         <div className="relative" ref={settingsRef}>
           <button
             onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-            className="p-2 hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg transition-all duration-200 hover:scale-110"
+            className="hover:bg-pw-black/20 active:bg-pw-black/30 rounded-lg p-2 transition-all duration-200 hover:scale-110"
             aria-label="Settings"
           >
-            <Settings className="w-4 h-4 text-pw-black/60" />
+            <Settings className="text-pw-black/60 h-4 w-4" />
           </button>
 
           {showSettingsMenu && (
-            <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-xl shadow-2xl border border-pw-black/10 py-2 z-50">
-              <button className="w-full px-4 py-2 text-left text-sm text-pw-black/80 hover:bg-pw-black/20 active:bg-pw-black/30 transition-all duration-150 flex items-center gap-3">
-                <Moon className="w-4 h-4" />
+            <div className="border-pw-black/10 absolute bottom-full right-0 z-50 mb-2 w-48 rounded-xl border bg-white py-2 shadow-2xl">
+              <button className="text-pw-black/80 hover:bg-pw-black/20 active:bg-pw-black/30 flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-all duration-150">
+                <Moon className="h-4 w-4" />
                 <span>Dark Mode</span>
               </button>
-              <button className="w-full px-4 py-2 text-left text-sm text-pw-black/80 hover:bg-pw-black/20 active:bg-pw-black/30 transition-all duration-150 flex items-center gap-3">
-                <Bell className="w-4 h-4" />
+              <button className="text-pw-black/80 hover:bg-pw-black/20 active:bg-pw-black/30 flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-all duration-150">
+                <Bell className="h-4 w-4" />
                 <span>Benachrichtigungen</span>
               </button>
             </div>

@@ -15,6 +15,8 @@ export interface AuthContextValue {
     password: string,
     metadata?: { name?: string }
   ) => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
+  signInWithApple: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 }
@@ -99,6 +101,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        logger.error("Google sign in error", error);
+        return { error };
+      }
+
+      logger.info("Google sign in initiated");
+      return { error: null };
+    } catch (error) {
+      logger.error("Unexpected Google sign in error", error as Error);
+      return { error: error as AuthError };
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        logger.error("Apple sign in error", error);
+        return { error };
+      }
+
+      logger.info("Apple sign in initiated");
+      return { error: null };
+    } catch (error) {
+      logger.error("Unexpected Apple sign in error", error as Error);
+      return { error: error as AuthError };
+    }
+  };
+
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -140,6 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     signIn,
     signUp,
+    signInWithGoogle,
+    signInWithApple,
     signOut,
     resetPassword,
   };
