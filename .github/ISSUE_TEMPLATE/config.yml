@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Dokumentation
+    url: https://github.com/YOUR_USERNAME/payperwork/wiki
+    about: Schaue in der Dokumentation nach Antworten auf häufige Fragen
+  - name: 💬 Diskussionen
+    url: https://github.com/YOUR_USERNAME/payperwork/discussions
+    about: Stelle Fragen und diskutiere mit der Community
+  - name: 🔒 Sicherheitslücke melden
+    url: https://github.com/YOUR_USERNAME/payperwork/security/advisories/new
+    about: Melde Sicherheitslücken vertraulich
