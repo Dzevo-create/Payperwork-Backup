@@ -9,12 +9,16 @@
  * - Finishes (matte, glossy, weathered)
  * - Overall architectural style
  *
- * Used to generate detailed prompts for photorealistic rendering
- * without sending the reference image to the generation model.
+ * ✅ NOW USES GPT-4o Vision (same as Source Image Analyzer) for consistent analysis!
+ * Reference image is analyzed but NOT sent to generation model.
  */
 
-import { geminiClient, GEMINI_MODELS } from "@/lib/api/providers/gemini";
+import OpenAI from "openai";
 import { apiLogger } from "@/lib/logger";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "",
+});
 
 export interface StyleDescription {
   materials: string[]; // e.g., ["vertical wood cladding", "natural stone base"]
@@ -29,7 +33,9 @@ export interface StyleDescription {
 /**
  * Analyzes a reference image and extracts detailed style information
  *
- * Uses Gemini Vision to analyze:
+ * ✅ Uses GPT-4o Vision (OpenAI) instead of Gemini Vision
+ *
+ * Analyzes:
  * 1. Architectural materials visible in the image
  * 2. Color palette and specific tones
  * 3. Texture types and surface qualities
@@ -45,14 +51,10 @@ export async function analyzeReferenceImage(
   imageData: string,
   mimeType: string = "image/jpeg"
 ): Promise<StyleDescription> {
-  apiLogger.info("[Style Analyzer] Starting reference image analysis");
+  apiLogger.info("[Style Analyzer] Starting reference image analysis with GPT-4o Vision");
 
   try {
-    const model = geminiClient.getGenerativeModel({
-      model: GEMINI_MODELS.vision,
-    });
-
-    const analysisPrompt = `Analyze this architectural image and extract detailed style information for material transfer.
+    const analysisPrompt = `Analyze this architectural reference image and extract detailed style information for material transfer.
 
 ANALYZE THE FOLLOWING:
 
@@ -106,29 +108,48 @@ IMPORTANT:
 - Avoid mentioning specific building locations or contexts
 - Describe what you SEE, not what you assume`;
 
-    const result = await model.generateContent([
-      { text: analysisPrompt },
-      {
-        inlineData: {
-          mimeType: mimeType,
-          data: imageData,
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert architectural material analyst. Analyze images with precision and provide detailed, accurate style descriptions in JSON format.",
         },
-      },
-    ]);
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: analysisPrompt,
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${mimeType};base64,${imageData}`,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 800,
+      temperature: 0.3, // Low temperature for consistent, factual analysis
+    });
 
-    const response = result.response.text();
+    const responseText = response.choices[0]?.message?.content || "";
 
-    apiLogger.debug("[Style Analyzer] Raw Vision API response", {
-      responseLength: response.length,
-      preview: response.substring(0, 200),
+    apiLogger.debug("[Style Analyzer] Raw GPT-4o Vision response", {
+      responseLength: responseText.length,
+      preview: responseText.substring(0, 200),
     });
 
     // Extract JSON from response (handles markdown code blocks)
-    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/\{[\s\S]*\}/);
+    const jsonMatch =
+      responseText.match(/```json\s*([\s\S]*?)\s*```/) || responseText.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
       apiLogger.error("[Style Analyzer] Failed to parse JSON from response", {
-        response: response.substring(0, 500),
+        response: responseText.substring(0, 500),
       });
       throw new Error("Failed to parse style analysis response as JSON");
     }
@@ -148,7 +169,7 @@ IMPORTANT:
       throw new Error("Invalid style analysis response structure");
     }
 
-    apiLogger.info("[Style Analyzer] Analysis complete", {
+    apiLogger.info("[Style Analyzer] GPT-4o Vision analysis complete", {
       materialsCount: styleDescription.materials.length,
       colorsCount: styleDescription.colors.length,
       texturesCount: styleDescription.textures.length,
@@ -158,7 +179,7 @@ IMPORTANT:
     return styleDescription;
   } catch (error) {
     apiLogger.error(
-      "[Style Analyzer] Failed to analyze reference image",
+      "[Style Analyzer] Failed to analyze reference image with GPT-4o Vision",
       error instanceof Error ? error : undefined,
       {
         mimeType,
