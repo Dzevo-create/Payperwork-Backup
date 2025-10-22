@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { apiLogger } from '@/lib/logger';
+import { apiLogger } from "@/lib/logger";
+import { requireAuth } from "@/lib/auth-api";
 
 export async function POST(req: NextRequest) {
   try {
+    // Authentication check
+    let user;
+    try {
+      user = await requireAuth(req);
+      apiLogger.info("Authenticated upload request", { userId: user.id });
+    } catch (authError) {
+      return NextResponse.json(
+        { error: "Unauthorized", message: "Authentication required" },
+        { status: 401 }
+      );
+    }
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "File is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
 
     // Validate file type - images and PDFs
@@ -52,7 +61,7 @@ export async function POST(req: NextRequest) {
       name: file.name,
     });
   } catch (error) {
-    apiLogger.error('Upload error:', error instanceof Error ? error : undefined);
+    apiLogger.error("Upload error:", error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) || "Failed to upload file" },
       { status: 500 }

@@ -6,10 +6,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { generateSlidesPrompt, validatePrompt } from "@/lib/api/slides/prompt-generator";
-import type {
-  CreatePresentationRequest,
-  CreatePresentationResponse,
-} from "@/types/slides";
+import { requireAuth } from "@/lib/auth-api";
+import { apiLogger } from "@/lib/logger";
+import type { CreatePresentationRequest, CreatePresentationResponse } from "@/types/slides";
 
 /**
  * POST /api/slides/generate
@@ -35,6 +34,17 @@ import type {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Authentication check
+    let user;
+    try {
+      user = await requireAuth(request);
+      apiLogger.info("Authenticated slides generation request", { userId: user.id });
+    } catch (authError) {
+      return NextResponse.json(
+        { error: "Unauthorized", message: "Authentication required" },
+        { status: 401 }
+      );
+    }
     // Parse request body
     const body: CreatePresentationRequest = await request.json();
     const { prompt, format = "16:9", theme = "default" } = body;
@@ -97,10 +107,7 @@ export async function POST(request: NextRequest) {
     // Create Manus task
     try {
       const manusClient = getManusClient();
-      const taskId = await manusClient.createSlidesTask(
-        enhancedPrompt,
-        presentation.id
-      );
+      const taskId = await manusClient.createSlidesTask(enhancedPrompt, presentation.id);
 
       // Update presentation with task_id
       const { error: updateError } = await supabase
@@ -134,10 +141,7 @@ export async function POST(request: NextRequest) {
       console.error("Manus API error:", manusError);
 
       // Update presentation status to error
-      await supabase
-        .from("presentations")
-        .update({ status: "error" })
-        .eq("id", presentation.id);
+      await supabase.from("presentations").update({ status: "error" }).eq("id", presentation.id);
 
       return NextResponse.json(
         {
