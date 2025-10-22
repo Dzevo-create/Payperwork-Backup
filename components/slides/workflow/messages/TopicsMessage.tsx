@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { SlidesMessage, SlidesMessageContent, Topic } from '@/types/slides';
-import { CheckCircle, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
-import { useUser } from '@/hooks/useUser';
+import React, { useState } from "react";
+import { SlidesMessage, SlidesMessageContent, Topic } from "@/types/slides";
+import { CheckCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { useSlidesStore } from "@/hooks/slides/useSlidesStore";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TopicsMessageProps {
   message: SlidesMessage;
@@ -16,7 +16,7 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   // User Auth
-  const { user } = useUser();
+  const { user } = useAuth();
 
   // Store
   const addMessage = useSlidesStore((state) => state.addMessage);
@@ -39,7 +39,9 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   const topics: Topic[] = Array.isArray(message.content)
     ? message.content
     : messageContent?.topics || [];
-  const originalPrompt = !Array.isArray(message.content) ? messageContent?.originalPrompt : undefined;
+  const originalPrompt = !Array.isArray(message.content)
+    ? messageContent?.originalPrompt
+    : undefined;
 
   const handleApprove = async () => {
     setIsApproving(true);
@@ -51,33 +53,33 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       setCurrentTopics(topics);
 
       // OLD PIPELINE: Generate slides after approval
-      console.log('🔄 Generating slides with old pipeline...');
+      console.log("🔄 Generating slides with old pipeline...");
 
       // Add generation message
       const generationMessageId = `msg-gen-${Date.now()}`;
       addMessage({
         id: generationMessageId,
-        type: 'generation',
-        content: 'Creating your presentation...',
+        type: "generation",
+        content: "Creating your presentation...",
         timestamp: new Date().toISOString(),
       });
 
       // Clear previous slides and set panel to 'slides' type
       clearSlides();
-      setPanelType('slides');
+      setPanelType("slides");
 
       // Show Payperwork Panel if not already shown
       if (!showComputerPanel) {
         toggleComputerPanel();
       }
-      setGenerationStatus('generating');
+      setGenerationStatus("generating");
 
       // Validate we have the required data
       if (!currentPresentationId) {
-        throw new Error('Presentation ID is missing');
+        throw new Error("Presentation ID is missing");
       }
       if (!user?.id) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
       const userId = user.id;
@@ -86,13 +88,13 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       const promptToUse = originalPrompt || currentPrompt;
 
       if (!promptToUse) {
-        throw new Error('Prompt is missing - cannot generate slides');
+        throw new Error("Prompt is missing - cannot generate slides");
       }
 
       // Call API to start generation
-      const response = await fetch('/api/slides/workflow/generate-slides', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/slides/workflow/generate-slides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptToUse,
           topics,
@@ -104,29 +106,29 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to start generation');
+        throw new Error("Failed to start generation");
       }
 
       const data = await response.json();
 
       if (data.success) {
         // WebSocket will handle the rest
-        console.log('Slides generation started:', data.presentationId);
+        console.log("Slides generation started:", data.presentationId);
       }
     } catch (error) {
-      console.error('Error approving topics:', error);
+      console.error("Error approving topics:", error);
 
       // Add error message
       addMessage({
         id: `msg-error-${Date.now()}`,
-        type: 'result',
+        type: "result",
         content: {
-          error: error instanceof Error ? error.message : 'Failed to generate slides',
+          error: error instanceof Error ? error.message : "Failed to generate slides",
         },
         timestamp: new Date().toISOString(),
       });
 
-      setGenerationStatus('error');
+      setGenerationStatus("error");
     } finally {
       setIsApproving(false);
     }
@@ -139,32 +141,32 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
       // Add thinking message
       addMessage({
         id: `msg-thinking-regen-${Date.now()}`,
-        type: 'thinking',
-        content: 'Regenerating slide topics...',
+        type: "thinking",
+        content: "Regenerating slide topics...",
         timestamp: new Date().toISOString(),
       });
 
       // Call API to regenerate topics
-      const response = await fetch('/api/slides/workflow/regenerate-topics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/slides/workflow/regenerate-topics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ format, theme }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to regenerate topics');
+        throw new Error("Failed to regenerate topics");
       }
 
       // WebSocket will handle delivering new topics
     } catch (error) {
-      console.error('Error regenerating topics:', error);
+      console.error("Error regenerating topics:", error);
 
       // Add error message
       addMessage({
         id: `msg-error-${Date.now()}`,
-        type: 'result',
+        type: "result",
         content: {
-          error: error instanceof Error ? error.message : 'Failed to regenerate topics',
+          error: error instanceof Error ? error.message : "Failed to regenerate topics",
         },
         timestamp: new Date().toISOString(),
       });
@@ -181,49 +183,47 @@ export function TopicsMessage({ message }: TopicsMessageProps) {
   return (
     <div className="group flex flex-col items-start pl-12 sm:pl-16 md:pl-24 lg:pl-32">
       {/* Timestamp */}
-      <div className="text-[10px] text-pw-black/40 mb-1 px-1 text-left">
-        {timeString}
-      </div>
+      <div className="text-pw-black/40 mb-1 px-1 text-left text-[10px]">{timeString}</div>
 
       {/* Message Bubble */}
-      <div className="max-w-3xl w-full px-4 sm:px-6 py-4 sm:py-5 bg-white/90 border border-pw-black/10 text-pw-black shadow-sm rounded-2xl">
-        <h3 className="font-semibold mb-3 text-sm">Vorgeschlagene Folien:</h3>
+      <div className="border-pw-black/10 w-full max-w-3xl rounded-2xl border bg-white/90 px-4 py-4 text-pw-black shadow-sm sm:px-6 sm:py-5">
+        <h3 className="mb-3 text-sm font-semibold">Vorgeschlagene Folien:</h3>
 
-        <ol className="list-decimal list-inside space-y-3 mb-4">
+        <ol className="mb-4 list-inside list-decimal space-y-3">
           {topics.map((topic, index) => (
-            <li key={topic.order || index} className="text-sm text-pw-black leading-relaxed">
-              <div className="inline-block ml-2">
+            <li key={topic.order || index} className="text-sm leading-relaxed text-pw-black">
+              <div className="ml-2 inline-block">
                 <div className="font-medium">{topic.title}</div>
-                <div className="text-xs text-pw-black/60 mt-0.5">{topic.description}</div>
+                <div className="text-pw-black/60 mt-0.5 text-xs">{topic.description}</div>
               </div>
             </li>
           ))}
         </ol>
 
         {!message.approved && (
-          <div className="flex gap-2 pt-2 border-t border-pw-black/10">
+          <div className="border-pw-black/10 flex gap-2 border-t pt-2">
             <Button
               onClick={handleApprove}
               className="flex-1"
               disabled={isApproving || isRegenerating}
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              {isApproving ? 'Wird gestartet...' : 'Bestätigen & Erstellen'}
+              <CheckCircle className="mr-2 h-4 w-4" />
+              {isApproving ? "Wird gestartet..." : "Bestätigen & Erstellen"}
             </Button>
             <Button
               onClick={handleRegenerate}
               variant="outline"
               disabled={isApproving || isRegenerating}
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`mr-2 h-4 w-4 ${isRegenerating ? "animate-spin" : ""}`} />
               Neu generieren
             </Button>
           </div>
         )}
 
         {message.approved && (
-          <div className="flex items-center gap-2 pt-2 border-t border-pw-black/10 text-green-600">
-            <CheckCircle className="w-4 h-4" />
+          <div className="border-pw-black/10 flex items-center gap-2 border-t pt-2 text-green-600">
+            <CheckCircle className="h-4 w-4" />
             <p className="text-sm font-medium">Bestätigt - Erstellung gestartet</p>
           </div>
         )}

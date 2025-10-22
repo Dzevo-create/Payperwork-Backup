@@ -12,16 +12,16 @@
  * @phase Phase 4: ChatInput Integration (1:1)
  */
 
-'use client';
+"use client";
 
-import React, { useRef, useEffect } from 'react';
-import { useSlidesStore } from '@/hooks/slides/useSlidesStore';
-import { useUser } from '@/hooks/useUser';
-import { SlidesWelcome } from './SlidesWelcome';
-import { SlidesMessages } from './SlidesMessages';
-import { PayperworkPanel } from '../panel/PayperworkPanel';
-import { AgentStatusIndicator } from '../AgentStatusIndicator';
-import { SlidesInput } from './SlidesInput';
+import React, { useRef, useEffect } from "react";
+import { useSlidesStore } from "@/hooks/slides/useSlidesStore";
+import { useAuth } from "@/contexts/AuthContext";
+import { SlidesWelcome } from "./SlidesWelcome";
+import { SlidesMessages } from "./SlidesMessages";
+import { PayperworkPanel } from "../panel/PayperworkPanel";
+import { AgentStatusIndicator } from "../AgentStatusIndicator";
+import { SlidesInput } from "./SlidesInput";
 
 export function SlidesWorkflowContainer() {
   const messages = useSlidesStore((state) => state.messages);
@@ -50,31 +50,31 @@ export function SlidesWorkflowContainer() {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   }, [currentPrompt]);
 
   // Removed polling - using WebSocket updates from webhook handler instead
 
   const handleStopGeneration = () => {
-    console.log('Stopping generation...');
+    console.log("Stopping generation...");
 
     // Reset generation status to idle
-    setGenerationStatus('idle');
+    setGenerationStatus("idle");
 
     // Add a message to indicate generation was stopped
     addMessage({
       id: `msg-stopped-${Date.now()}`,
-      type: 'result',
+      type: "result",
       content: {
-        message: 'Generation stopped by user.',
+        message: "Generation stopped by user.",
       },
       timestamp: new Date().toISOString(),
     });
@@ -89,55 +89,56 @@ export function SlidesWorkflowContainer() {
     const setStoredCurrentPrompt = useSlidesStore.getState().setCurrentPrompt;
     setStoredCurrentPrompt(message);
 
-    setCurrentPrompt('');
+    setCurrentPrompt("");
 
     // Add user message
     addMessage({
       id: `msg-user-${Date.now()}`,
-      type: 'user',
+      type: "user",
       content: message,
       timestamp: new Date().toISOString(),
     });
 
-    setGenerationStatus('thinking');
+    setGenerationStatus("thinking");
 
     // Call API to generate topics
     try {
-      // Get userId from useUser hook
-      const { user } = useUser();
+      // Get userId from useAuth hook
+      const { user } = useAuth();
       const userId = user?.id;
 
       if (!userId) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
       // Step 1: Generate AI acknowledgment message
-      const ackResponse = await fetch('/api/slides/workflow/generate-acknowledgment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const ackResponse = await fetch("/api/slides/workflow/generate-acknowledgment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: message }),
       });
 
       const ackData = await ackResponse.json();
-      const acknowledgment = ackData.acknowledgment || 'Okay, ich erstelle dir einen Vorschlag für die Präsentation.';
+      const acknowledgment =
+        ackData.acknowledgment || "Okay, ich erstelle dir einen Vorschlag für die Präsentation.";
 
       // Add AI-generated thinking message
       addMessage({
         id: `msg-thinking-${Date.now()}`,
-        type: 'thinking',
+        type: "thinking",
         content: acknowledgment,
         timestamp: new Date().toISOString(),
       });
 
       // Step 2: Generate topics (OLD PIPELINE - no research)
-      const response = await fetch('/api/slides/workflow/generate-topics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/slides/workflow/generate-topics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: message, format, theme, userId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate topics');
+        throw new Error("Failed to generate topics");
       }
 
       const data = await response.json();
@@ -146,13 +147,13 @@ export function SlidesWorkflowContainer() {
       if (data.success && data.presentationId) {
         const setStoredPresentationId = useSlidesStore.getState().setCurrentPresentationId;
         setStoredPresentationId(data.presentationId);
-        console.log('✅ Topic generation started, presentationId:', data.presentationId);
+        console.log("✅ Topic generation started, presentationId:", data.presentationId);
 
         // Add new presentation to sidebar
         addPresentation({
           id: data.presentationId,
           prompt: message,
-          status: 'topics_generated',
+          status: "topics_generated",
           created_at: new Date().toISOString(),
         });
 
@@ -163,43 +164,40 @@ export function SlidesWorkflowContainer() {
 
           addMessage({
             id: `msg-topics-${Date.now()}`,
-            type: 'topics',
+            type: "topics",
             content: {
               topics: data.topics,
-              originalPrompt: message,  // Store original prompt for later use
+              originalPrompt: message, // Store original prompt for later use
             },
             timestamp: new Date().toISOString(),
           });
-          setGenerationStatus('idle');
+          setGenerationStatus("idle");
         }
       }
     } catch (error) {
-      console.error('Error generating topics:', error);
+      console.error("Error generating topics:", error);
 
       // Add error message
       addMessage({
         id: `msg-error-${Date.now()}`,
-        type: 'result',
+        type: "result",
         content: {
-          error: error instanceof Error ? error.message : 'Failed to generate topics',
+          error: error instanceof Error ? error.message : "Failed to generate topics",
         },
         timestamp: new Date().toISOString(),
       });
 
-      setGenerationStatus('error');
+      setGenerationStatus("error");
     }
   };
 
   const hasMessages = messages.length > 0;
-  const isGenerating =
-    generationStatus === 'thinking' || generationStatus === 'generating';
+  const isGenerating = generationStatus === "thinking" || generationStatus === "generating";
 
   return (
-    <div className="w-full h-full flex gap-2 overflow-hidden">
+    <div className="flex h-full w-full gap-2 overflow-hidden">
       {/* Messages Area (left/center) */}
-      <div
-        className={`flex flex-col ${showComputerPanel ? 'flex-1' : 'w-full'} overflow-hidden`}
-      >
+      <div className={`flex flex-col ${showComputerPanel ? "flex-1" : "w-full"} overflow-hidden`}>
         {/* Welcome or Messages */}
         {!hasMessages ? (
           <SlidesWelcome />
@@ -213,7 +211,7 @@ export function SlidesWorkflowContainer() {
         {/* Agent Status Indicator */}
         {hasMessages && (
           <div className="px-3 sm:px-4 md:px-6">
-            <div className={showComputerPanel ? "w-full" : "max-w-3xl mx-auto"}>
+            <div className={showComputerPanel ? "w-full" : "mx-auto max-w-3xl"}>
               <AgentStatusIndicator />
             </div>
           </div>
@@ -238,7 +236,7 @@ export function SlidesWorkflowContainer() {
 
       {/* Payperwork Panel (right side, conditional) - Modular dynamic panel */}
       {showComputerPanel && (
-        <div className="flex-1 min-w-[500px] max-w-[700px] flex-shrink-0 py-4 pr-3 sm:pr-4 md:pr-6">
+        <div className="min-w-[500px] max-w-[700px] flex-1 flex-shrink-0 py-4 pr-3 sm:pr-4 md:pr-6">
           <div className="h-full">
             <PayperworkPanel isGenerating={isGenerating} />
           </div>

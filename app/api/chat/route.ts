@@ -7,11 +7,25 @@ import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler"
 import { createChatStream } from "@/lib/api/providers/openai";
 import { processMessagesWithAttachments } from "@/lib/api/utils/messageFormatting";
 import { createStreamingResponse } from "@/lib/api/utils/streaming";
+import { requireAuth } from "@/lib/auth-api";
 
 export async function POST(req: NextRequest) {
   const clientId = getClientId(req);
 
   try {
+    // Authentication check
+    let user;
+    try {
+      user = await requireAuth(req);
+      apiLogger.info("Authenticated chat request", { userId: user.id });
+    } catch (authError) {
+      apiLogger.warn("Unauthorized chat request", { clientId });
+      return NextResponse.json(
+        { error: "Unauthorized", message: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     // API Key validation
     const keyValidation = validateApiKeys(["openai"]);
     if (!keyValidation.valid) {
@@ -34,7 +48,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse JSON with error handling
-    let messages, attachments, gptModel: "gpt-4o" | "gpt-5" = "gpt-4o";
+    let messages,
+      attachments,
+      gptModel: "gpt-4o" | "gpt-5" = "gpt-4o";
     try {
       const body = await req.json();
       messages = body.messages;
@@ -99,7 +115,7 @@ export async function POST(req: NextRequest) {
     apiLogger.error("OpenAI API Error", error instanceof Error ? error : undefined, { clientId });
 
     // Handle specific OpenAI errors
-    if (error && typeof error === 'object' && 'status' in error) {
+    if (error && typeof error === "object" && "status" in error) {
       const statusError = error as { status: number; message?: string };
 
       if (statusError.status === 429) {
@@ -139,9 +155,6 @@ export async function POST(req: NextRequest) {
     }
 
     const errorMessage = error instanceof Error ? error.message : "Ein Fehler ist aufgetreten";
-    return NextResponse.json(
-      { error: errorMessage, retryable: true },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage, retryable: true }, { status: 500 });
   }
 }
