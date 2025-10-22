@@ -1,5 +1,4 @@
 name: Lint & Type Check
-
 on:
   push:
     branches: [main, develop]
