@@ -234,11 +234,45 @@ export function generateReferencePromptWithStyleAnalysis(
   });
   prompt += `\n`;
 
+  // ✅ NEW: Window Style (CRITICAL!)
+  if (styleDescription.windowStyle) {
+    prompt += `WINDOW DESIGN (CRITICAL - Apply exact style from reference):\n`;
+    prompt += `${styleDescription.windowStyle}\n`;
+    prompt += `Apply this exact window design to the source building, maintaining the same frame style, colors, proportions, and arrangement.\n\n`;
+  }
+
+  // ✅ NEW: Facade Structure (CRITICAL!)
+  if (styleDescription.facadeStructure) {
+    prompt += `FACADE STRUCTURE (CRITICAL - Recreate 3D depth and relief):\n`;
+    prompt += `${styleDescription.facadeStructure}\n`;
+    prompt += `Recreate this facade structure with the same depth, relief, projections, and recesses as shown in the reference.\n\n`;
+  }
+
+  // ✅ NEW: Architectural Elements
+  if (styleDescription.architecturalElements && styleDescription.architecturalElements.length > 0) {
+    prompt += `ARCHITECTURAL ELEMENTS (Apply from reference):\n`;
+    styleDescription.architecturalElements.forEach((element) => {
+      prompt += `- ${element}\n`;
+    });
+    prompt += `Integrate these exact architectural elements into the design.\n\n`;
+  }
+
+  // ✅ NEW: Proportions
+  if (styleDescription.proportions) {
+    prompt += `PROPORTIONS & RHYTHM:\n`;
+    prompt += `${styleDescription.proportions}\n`;
+    prompt += `Match these proportions and spacing rhythms from the reference image.\n\n`;
+  }
+
   // ✅ SOURCE IMAGE TRANSFORMATION (no assumptions!)
   prompt += `TRANSFORMATION REQUIREMENTS:\n`;
   prompt += `Apply the following to the source image to create a FULLY PHOTOREALISTIC architectural rendering:\n`;
   prompt += `- All materials, textures, and colors listed above applied to appropriate surfaces\n`;
-  prompt += `- Detailed facade elements (windows with frames, doors, balconies, architectural details)\n`;
+  prompt += `- Window design exactly as specified (frames, colors, shapes, arrangement)\n`;
+  prompt += `- Facade structure with correct 3D depth and relief\n`;
+  prompt += `- All architectural elements as listed\n`;
+  prompt += `- Correct proportions and spacing rhythm\n`;
+  prompt += `- Detailed facade elements (balconies, canopies, sun shading, etc.)\n`;
   prompt += `- Realistic surrounding environment (ground, landscaping, trees, sky, neighboring context)\n`;
   prompt += `- Natural daylight lighting with soft shadows, ambient occlusion, and realistic reflections\n`;
   prompt += `- Atmospheric perspective and depth (sky gradients, distant haze, environmental context)\n`;

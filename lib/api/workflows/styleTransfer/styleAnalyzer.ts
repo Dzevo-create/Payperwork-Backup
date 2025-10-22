@@ -26,6 +26,10 @@ export interface StyleDescription {
   textures: string[]; // e.g., ["natural wood grain", "rough stone texture"]
   patterns: string[]; // e.g., ["vertical slats", "irregular stone pattern"]
   finishes: string[]; // e.g., ["matte wood finish", "weathered stone"]
+  windowStyle: string; // ✅ NEW: e.g., "Large floor-to-ceiling windows with thin black frames"
+  facadeStructure: string; // ✅ NEW: e.g., "Vertical relief elements creating depth and shadow play"
+  architecturalElements: string[]; // ✅ NEW: e.g., ["Rounded balcony edges", "Cantilevered overhangs", "Integrated sun shading"]
+  proportions: string; // ✅ NEW: e.g., "High window-to-wall ratio with narrow vertical panels between windows"
   overallStyle: string; // e.g., "Modern residential with natural materials"
   detailedDescription: string; // 2-3 sentence detailed description
 }
@@ -54,58 +58,94 @@ export async function analyzeReferenceImage(
   apiLogger.info("[Style Analyzer] Starting reference image analysis with GPT-4o Vision");
 
   try {
-    const analysisPrompt = `Analyze this architectural reference image and extract detailed style information for material transfer.
+    const analysisPrompt = `Analyze this architectural reference image and extract COMPREHENSIVE style information for accurate style transfer.
+
+CRITICAL: This analysis is used to recreate architectural design elements. Be extremely detailed about BOTH materials AND structural/formal elements.
 
 ANALYZE THE FOLLOWING:
 
 1. MATERIALS
-   - What building materials are visible? (wood, stone, metal, glass, concrete, brick, etc.)
-   - Be specific about material types (e.g., "vertical wood cladding" not just "wood")
+   - What building materials are visible? (wood, stone, metal, glass, concrete, brick, panels, etc.)
+   - Be specific about material types (e.g., "vertical terracotta panels" not just "panels")
    - List 2-5 main materials
 
 2. COLORS
    - What specific colors and tones are present?
-   - Be descriptive (e.g., "warm brown", "charcoal gray", "natural oak tones")
+   - Be descriptive (e.g., "warm orange-terracotta", "deep burgundy red", "natural oak tones")
    - List 3-6 main colors
 
 3. TEXTURES
    - What surface textures are visible?
-   - Be specific (e.g., "natural wood grain with visible knots", "smooth polished concrete")
+   - Be specific (e.g., "smooth painted panels", "rough stone texture", "ribbed metal cladding")
    - List 2-4 main textures
 
 4. PATTERNS
    - What patterns or rhythms are present in the facade?
-   - Examples: "vertical wood slats with even spacing", "horizontal window bands", "staggered brick pattern"
-   - List 1-3 main patterns
+   - Examples: "vertical panels with rounded top edges", "horizontal window bands", "alternating solid and glass sections"
+   - List 2-3 main patterns
 
 5. FINISHES
    - What surface finishes are used?
-   - Examples: "matte natural finish", "glossy lacquer", "weathered patina", "brushed metal"
+   - Examples: "matte painted finish", "glossy lacquer", "weathered patina", "brushed metal"
    - List 2-4 main finishes
 
-6. OVERALL STYLE
-   - Summarize the architectural style in one sentence
-   - Examples: "Modern minimalist with natural materials", "Contemporary industrial aesthetic", "Traditional residential with wood accents"
+6. WINDOW STYLE (✅ NEW - CRITICAL!)
+   - Describe the window design in detail
+   - Include: size (floor-to-ceiling, punched openings, ribbon windows)
+   - Include: frame type (thin black frames, deep reveals, frameless, colored frames)
+   - Include: shape (rectangular, arched, rounded corners, custom shapes)
+   - Include: arrangement (regular grid, irregular placement, grouped, single units)
+   - Example: "Large rectangular windows with red frames, arranged in vertical columns with rounded panel elements above each window"
 
-7. DETAILED DESCRIPTION
-   - Write 2-3 sentences describing the overall material aesthetic
-   - Be specific and descriptive for use in AI prompt generation
+7. FACADE STRUCTURE (✅ NEW - CRITICAL!)
+   - Describe the 3D structure and relief of the facade
+   - Is it flat or does it have depth/relief?
+   - Are there projecting elements (balconies, bays, fins)?
+   - Are there recessed elements (loggias, reveals)?
+   - Example: "Facade with strong vertical relief created by protruding orange panels between window columns, creating deep shadows and 3D effect"
+
+8. ARCHITECTURAL ELEMENTS (✅ NEW - CRITICAL!)
+   - List specific architectural features beyond basic materials
+   - Examples: "Rounded balcony edges", "Cantilevered overhangs", "Integrated sun shading", "Decorative rounded panels above windows"
+   - Include any unique design elements that define the building's character
+   - List 2-5 distinctive elements
+
+9. PROPORTIONS (✅ NEW - CRITICAL!)
+   - Describe the window-to-wall ratio
+   - Describe the vertical vs horizontal emphasis
+   - Describe spacing and rhythm
+   - Example: "High window coverage (60%) with narrow vertical panels between, creating strong vertical emphasis with 1:3 solid-to-void ratio"
+
+10. OVERALL STYLE
+    - Summarize the complete architectural style in one sentence
+    - Include both material AND formal characteristics
+    - Example: "Contemporary residential with orange terracotta panels, red window frames, and distinctive vertical relief structure with rounded decorative elements"
+
+11. DETAILED DESCRIPTION
+    - Write 3-4 sentences describing the COMPLETE architectural aesthetic
+    - Include materials, colors, structure, windows, and special elements
+    - Be extremely specific for AI image generation
 
 RESPOND IN THIS EXACT JSON FORMAT:
 {
-  "materials": ["material1", "material2", "material3"],
+  "materials": ["material1", "material2"],
   "colors": ["color1", "color2", "color3"],
   "textures": ["texture1", "texture2"],
   "patterns": ["pattern1", "pattern2"],
   "finishes": ["finish1", "finish2"],
-  "overallStyle": "Brief style summary in one sentence",
-  "detailedDescription": "Detailed 2-3 sentence description of materials and aesthetic"
+  "windowStyle": "Detailed description of windows including size, frames, shape, and arrangement",
+  "facadeStructure": "Detailed description of 3D facade structure, relief, depth, projections",
+  "architecturalElements": ["element1", "element2", "element3"],
+  "proportions": "Description of proportions, ratios, spacing, and rhythm",
+  "overallStyle": "Complete style summary including materials AND formal elements",
+  "detailedDescription": "Comprehensive 3-4 sentence description covering materials, structure, windows, and special features"
 }
 
-IMPORTANT:
-- Be specific and descriptive
-- Focus on transferable material qualities
-- Avoid mentioning specific building locations or contexts
+CRITICAL INSTRUCTIONS:
+- Be EXTREMELY specific about window design - this is often the defining feature
+- Describe 3D structure - flat vs relief facade makes huge difference
+- List ALL distinctive architectural elements (rounded edges, cantilevers, etc.)
+- Focus on what makes THIS building unique, not generic descriptions
 - Describe what you SEE, not what you assume`;
 
     const response = await openai.chat.completions.create({
@@ -161,18 +201,23 @@ IMPORTANT:
     if (
       !styleDescription.materials ||
       !styleDescription.colors ||
+      !styleDescription.windowStyle ||
+      !styleDescription.facadeStructure ||
       !styleDescription.detailedDescription
     ) {
       apiLogger.error("[Style Analyzer] Invalid response structure", {
         styleDescription,
       });
-      throw new Error("Invalid style analysis response structure");
+      throw new Error("Invalid style analysis response structure - missing required fields");
     }
 
     apiLogger.info("[Style Analyzer] GPT-4o Vision analysis complete", {
       materialsCount: styleDescription.materials.length,
       colorsCount: styleDescription.colors.length,
       texturesCount: styleDescription.textures.length,
+      hasWindowStyle: !!styleDescription.windowStyle,
+      hasFacadeStructure: !!styleDescription.facadeStructure,
+      architecturalElementsCount: styleDescription.architecturalElements?.length || 0,
       overallStyle: styleDescription.overallStyle,
     });
 
@@ -201,8 +246,18 @@ export function getDefaultStyleDescription(): StyleDescription {
     textures: ["natural wood grain", "smooth concrete surface", "reflective glass"],
     patterns: ["vertical wood slats", "regular window grid"],
     finishes: ["matte natural wood finish", "smooth concrete", "clear glass"],
+    windowStyle:
+      "Large rectangular windows with thin black frames arranged in a regular grid pattern",
+    facadeStructure: "Flat facade with minimal relief, clean modern lines",
+    architecturalElements: [
+      "Clean horizontal floor plates",
+      "Recessed balconies",
+      "Simple window reveals",
+    ],
+    proportions:
+      "Balanced window-to-wall ratio (approximately 40% glazing) with regular spacing and rhythm",
     overallStyle: "Contemporary residential with natural materials",
     detailedDescription:
-      "Contemporary architectural design featuring natural wood cladding with warm brown tones and visible grain patterns. Clean lines with a mix of natural materials including wood, concrete, and glass creating a modern yet warm aesthetic.",
+      "Contemporary architectural design featuring natural wood cladding with warm brown tones and visible grain patterns. Clean lines with a mix of natural materials including wood, concrete, and glass creating a modern yet warm aesthetic. Large rectangular windows with black frames provide ample natural light while maintaining the minimalist design language.",
   };
 }
