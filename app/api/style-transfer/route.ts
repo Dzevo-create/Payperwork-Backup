@@ -12,7 +12,14 @@ import { imageGenerationRateLimiter, getClientId } from "@/lib/rate-limit";
 import { apiLogger } from "@/lib/logger";
 import { validateApiKeys, validateContentType } from "@/lib/api-security";
 import { handleApiError, rateLimitErrorResponse } from "@/lib/api-error-handler";
-import { generateStyleTransferPrompt } from "@/lib/api/workflows/styleTransfer/promptGenerator";
+import {
+  generateStyleTransferPrompt,
+  generateReferencePromptWithStyleAnalysis,
+} from "@/lib/api/workflows/styleTransfer/promptGenerator";
+import {
+  analyzeReferenceImage,
+  getDefaultStyleDescription,
+} from "@/lib/api/workflows/styleTransfer/styleAnalyzer";
 import {
   geminiClient,
   GEMINI_MODELS,
@@ -56,10 +63,7 @@ export async function POST(req: NextRequest) {
 
     // Validate source image (design to transform)
     if (!sourceImage || !sourceImage.data) {
-      return NextResponse.json(
-        { error: "Source image (design) is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Source image (design) is required" }, { status: 400 });
     }
 
     // Reference image is optional - presets can be used without reference image
@@ -68,18 +72,74 @@ export async function POST(req: NextRequest) {
       clientId,
       hasPrompt: !!prompt,
       hasSettings: !!settings,
+      hasReferenceImage: !!referenceImage?.data,
     });
 
     // Generate enhanced prompt
-    const enhancedPrompt = generateStyleTransferPrompt(
-      settings as StyleTransferSettingsType,
-      prompt || ""
-    );
+    // ZWEI MODI:
+    // 1. Preset Mode (ohne Reference Image): Nutze Presets (Stil, Zeit, Wetter)
+    // 2. Reference Mode (mit Reference Image): Analysiere Reference, extrahiere Stil
+    let enhancedPrompt: string;
+    const hasReferenceImage = !!referenceImage?.data;
 
-    apiLogger.debug("Style-Transfer: Prompt generated", {
-      clientId,
-      promptLength: enhancedPrompt.length,
-    });
+    if (hasReferenceImage) {
+      // MODE 2: Reference Image Style Analysis
+      apiLogger.info(
+        "Style-Transfer: Reference mode - analyzing reference image for style extraction"
+      );
+
+      try {
+        // Analysiere Reference Image mit Gemini Vision
+        const styleDescription = await analyzeReferenceImage(
+          referenceImage.data,
+          referenceImage.mimeType || "image/jpeg"
+        );
+
+        apiLogger.info("Style-Transfer: Style analysis complete", {
+          materials: styleDescription.materials.length,
+          colors: styleDescription.colors.length,
+          overallStyle: styleDescription.overallStyle,
+        });
+
+        // Generiere Prompt MIT Stil-Beschreibung
+        enhancedPrompt = generateReferencePromptWithStyleAnalysis(
+          settings as StyleTransferSettingsType,
+          styleDescription,
+          prompt || ""
+        );
+
+        apiLogger.debug("Style-Transfer: Enhanced prompt generated from style analysis", {
+          promptLength: enhancedPrompt.length,
+          materials: styleDescription.materials.join(", "),
+        });
+      } catch (error) {
+        // Fallback: Wenn Analyse fehlschlägt, nutze Default-Beschreibung
+        apiLogger.warn(
+          "Style-Transfer: Style analysis failed, using default description",
+          error instanceof Error ? error : undefined
+        );
+
+        const defaultStyle = getDefaultStyleDescription();
+        enhancedPrompt = generateReferencePromptWithStyleAnalysis(
+          settings as StyleTransferSettingsType,
+          defaultStyle,
+          prompt || ""
+        );
+      }
+    } else {
+      // MODE 1: Preset Mode (ohne Reference Image)
+      apiLogger.info("Style-Transfer: Preset mode - using preset settings");
+
+      enhancedPrompt = generateStyleTransferPrompt(
+        settings as StyleTransferSettingsType,
+        false, // hasReferenceImage = false
+        prompt || ""
+      );
+
+      apiLogger.debug("Style-Transfer: Preset prompt generated", {
+        promptLength: enhancedPrompt.length,
+      });
+    }
 
     // Generate with Nano Banana
     const model = geminiClient.getGenerativeModel({
@@ -89,28 +149,28 @@ export async function POST(req: NextRequest) {
     // Build generation config
     const generationConfig = buildGenerationConfig(settings);
 
-    // Build content parts:
-    // 1. Text prompt first
-    // 2. Reference image (style to transfer) - OPTIONAL
-    // 3. Source image LAST (to preserve aspect ratio)
+    // Build content parts for Nano Banana:
+    // WICHTIG: Reference Image wird NICHT eingespeist!
+    // Reference Image wurde bereits analysiert und die Stil-Beschreibung ist im Prompt.
+    //
+    // Content Parts:
+    // 1. Text prompt (enthält Stil-Beschreibung aus Reference Image Analyse)
+    // 2. Source image (das Volumen-Modell, das transformiert werden soll)
     const parts: any[] = [{ text: enhancedPrompt }];
 
-    // Add reference image if provided
-    if (referenceImage?.data) {
-      parts.push({
-        inlineData: {
-          mimeType: referenceImage.mimeType || "image/jpeg",
-          data: referenceImage.data,
-        },
-      });
-    }
-
-    // Source image LAST to preserve aspect ratio
+    // ✅ NUR Source Image wird eingespeist
+    // Reference Image wird NICHT eingespeist (wurde nur für Analyse verwendet)
     parts.push({
       inlineData: {
         mimeType: sourceImage.mimeType || "image/jpeg",
         data: sourceImage.data,
       },
+    });
+
+    apiLogger.debug("Style-Transfer: Content parts built", {
+      partsCount: parts.length,
+      hasReferenceInParts: false, // ✅ Reference Image wird NICHT geschickt
+      hasSourceInParts: true,
     });
 
     apiLogger.info("Style-Transfer: Generating with Nano Banana", {
@@ -119,14 +179,7 @@ export async function POST(req: NextRequest) {
       imageCount: referenceImage?.data ? 2 : 1, // source + optional reference
     });
 
-    const result = await generateSingleImage(
-      model,
-      parts,
-      generationConfig,
-      0,
-      1,
-      clientId
-    );
+    const result = await generateSingleImage(model, parts, generationConfig, 0, 1, clientId);
     const generatedImage = parseImageFromResponse(result, 0, 1, clientId);
 
     if (!generatedImage) {

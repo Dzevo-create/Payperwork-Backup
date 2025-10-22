@@ -23,6 +23,7 @@ import {
   WEATHER_DESCRIPTIONS,
   RENDER_STYLE_DESCRIPTIONS,
 } from "@/types/workflows/styleTransferSettings";
+import { StyleDescription } from "./styleAnalyzer";
 
 /**
  * Hauptfunktion - Route zwischen Preset und Referenzbild-Modus
@@ -153,6 +154,128 @@ function generateReferencePrompt(settings: StyleTransferSettingsType, userPrompt
   // User Prompt anhängen
   if (userPrompt && userPrompt.trim()) {
     prompt += `\n\nADDITIONAL REQUIREMENTS:\n${userPrompt.trim()}`;
+  }
+
+  return prompt;
+}
+
+/**
+ * MODE 2 (ENHANCED): Referenzbild-basierter Prompt MIT Stil-Analyse
+ *
+ * Diese Funktion verwendet die extrahierte Stil-Beschreibung aus dem Reference Image
+ * um einen detaillierten, konkreten Prompt zu generieren.
+ *
+ * WICHTIG: Das Reference Image wird NICHT an Nano Banana geschickt!
+ * Nur das Source Image + dieser detaillierte Prompt.
+ *
+ * Use-Case:
+ * - Source: Weißes Volumen-Modell (simple 3D massing)
+ * - Reference: Holzfassade (für Stil-Extraktion)
+ * - Output: Hyper-realistisches Rendering mit Holzfassade
+ */
+export function generateReferencePromptWithStyleAnalysis(
+  settings: StyleTransferSettingsType,
+  styleDescription: StyleDescription,
+  userPrompt?: string
+): string {
+  const { structurePreservation, renderStyle } = settings;
+  const renderDescription = RENDER_STYLE_DESCRIPTIONS[renderStyle];
+
+  // Hauptprompt: Volumen-Modell → Photorealistic Rendering
+  let prompt = `Transform this white architectural volume model (simple massing study) into a fully photorealistic architectural rendering.\n\n`;
+
+  // Stil-Beschreibung aus Reference Image
+  prompt += `TARGET STYLE & MATERIALS (extracted from reference):\n`;
+  prompt += `${styleDescription.detailedDescription}\n\n`;
+
+  // Materialien detailliert auflisten
+  prompt += `MATERIALS TO APPLY:\n`;
+  styleDescription.materials.forEach((material) => {
+    prompt += `- ${material}\n`;
+  });
+  prompt += `\n`;
+
+  // Farb-Palette
+  prompt += `COLOR PALETTE:\n`;
+  styleDescription.colors.forEach((color) => {
+    prompt += `- ${color}\n`;
+  });
+  prompt += `\n`;
+
+  // Texturen & Muster
+  prompt += `TEXTURES & SURFACE QUALITIES:\n`;
+  styleDescription.textures.forEach((texture) => {
+    prompt += `- ${texture}\n`;
+  });
+  if (styleDescription.patterns.length > 0) {
+    prompt += `\nPATTERNS & RHYTHMS:\n`;
+    styleDescription.patterns.forEach((pattern) => {
+      prompt += `- ${pattern}\n`;
+    });
+  }
+  prompt += `\n`;
+
+  // Oberflächen-Finishes
+  prompt += `SURFACE FINISHES:\n`;
+  styleDescription.finishes.forEach((finish) => {
+    prompt += `- ${finish}\n`;
+  });
+  prompt += `\n`;
+
+  // SOURCE IMAGE KONTEXT: Volumen-Modell → Realistisches Rendering
+  prompt += `SOURCE IMAGE TRANSFORMATION:\n`;
+  prompt += `The source image is a SIMPLE WHITE VOLUME MODEL (massing study without details).\n`;
+  prompt += `Transform this into a FULLY PHOTOREALISTIC architectural rendering with:\n`;
+  prompt += `- All materials, textures, and colors listed above applied to appropriate surfaces\n`;
+  prompt += `- Detailed facade elements (windows with frames, doors, balconies, architectural details)\n`;
+  prompt += `- Realistic surrounding environment (ground, landscaping, trees, sky, neighboring context)\n`;
+  prompt += `- Natural daylight lighting with soft shadows, ambient occlusion, and realistic reflections\n`;
+  prompt += `- Atmospheric perspective and depth (sky gradients, distant haze, environmental context)\n`;
+  prompt += `- Professional architectural visualization quality with ${renderStyle} rendering\n\n`;
+
+  // STRUCTURE PRESERVATION - Sehr wichtig!
+  prompt += `CRITICAL STRUCTURE PRESERVATION (${structurePreservation}%):\n`;
+  if (structurePreservation >= 80) {
+    prompt += `MAINTAIN EXACT BUILDING GEOMETRY:\n`;
+    prompt += `- Keep PRECISE building proportions (height, width, depth)\n`;
+    prompt += `- Preserve ALL window and door openings in ORIGINAL positions\n`;
+    prompt += `- Maintain exact roof geometry and building footprint\n`;
+    prompt += `- Do NOT change the architectural composition, perspective, or building form\n`;
+    prompt += `- ONLY add materials, textures, realistic details, and environmental context\n`;
+    prompt += `- Think of this as "material application" not "redesign"\n`;
+  } else if (structurePreservation >= 50) {
+    prompt += `MAINTAIN GENERAL ARCHITECTURAL LAYOUT:\n`;
+    prompt += `- Keep main building proportions and overall form\n`;
+    prompt += `- Preserve key structural elements and major openings\n`;
+    prompt += `- Allow moderate adjustments to details for photorealism\n`;
+    prompt += `- Maintain general composition and perspective\n`;
+  } else {
+    prompt += `USE VOLUME MODEL AS CREATIVE GUIDE:\n`;
+    prompt += `- Maintain overall building form and general proportions\n`;
+    prompt += `- Allow creative interpretation of details and material application\n`;
+    prompt += `- Adjust elements as needed for realistic architectural coherence\n`;
+  }
+  prompt += `\n`;
+
+  // QUALITÄTS-ANFORDERUNGEN
+  prompt += `PHOTOREALISM REQUIREMENTS:\n`;
+  prompt += `- FULLY PHOTOREALISTIC rendering (NOT a sketch, drawing, or stylized image)\n`;
+  prompt += `- High detail in all materials, textures, and architectural elements\n`;
+  prompt += `- Realistic lighting with natural shadow casting and light bounce\n`;
+  prompt += `- Proper atmospheric perspective (distant elements fade, aerial perspective)\n`;
+  prompt += `- Professional architectural photography quality\n`;
+  prompt += `- Natural integration of building with realistic surroundings\n`;
+  prompt += `- ${renderDescription}\n`;
+
+  // Overall Style (als Summary)
+  if (styleDescription.overallStyle) {
+    prompt += `\nOVERALL ARCHITECTURAL CHARACTER:\n`;
+    prompt += `${styleDescription.overallStyle}\n`;
+  }
+
+  // User Prompt anhängen
+  if (userPrompt && userPrompt.trim()) {
+    prompt += `\n\nADDITIONAL USER REQUIREMENTS:\n${userPrompt.trim()}`;
   }
 
   return prompt;
