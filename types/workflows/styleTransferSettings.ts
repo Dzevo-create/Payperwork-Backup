@@ -177,8 +177,17 @@ export interface StyleTransferSettingsType extends Record<string, unknown> {
   // Render-Art
   renderStyle: RenderStyle;
 
-  // Structure Preservation (0-100%) - BEHALTEN!
+  // Structure Preservation (0-100%)
+  // Wie stark soll die FORM/STRUKTUR vom Ausgangsbild beibehalten werden?
+  // 100% = Exakte Geometrie beibehalten
+  // 0% = Nur als grobe Inspiration nutzen
   structurePreservation: number;
+
+  // Style Intensity (0-100%) - NEU!
+  // Wie stark soll der STIL vom Referenzbild übernommen werden?
+  // 100% = Komplette Style-Übernahme (Materialien, Farben, Fenster-Design, Fassaden-Details)
+  // 0% = Nur minimale Style-Elemente übernehmen
+  styleIntensity: number;
 }
 
 // ============================================================================
@@ -191,5 +200,6 @@ export const DEFAULT_STYLE_TRANSFER_SETTINGS: StyleTransferSettingsType = {
   timeOfDay: "mittag",
   weather: "sonnig",
   renderStyle: "fotorealistisch",
-  structurePreservation: 80,
+  structurePreservation: 80, // Geometrie vom Ausgangsbild beibehalten
+  styleIntensity: 70, // Mittlere Style-Intensität vom Referenzbild
 };

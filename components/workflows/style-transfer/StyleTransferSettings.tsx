@@ -1,14 +1,21 @@
 /**
  * Style-Transfer Settings Component
  *
- * Neues Preset-System:
+ * Settings System:
  * - Mode (Preset / Referenzbild)
+ *
+ * PRESET MODE:
  * - Bereich (Interieur / Exterieur)
  * - Stil (6 Optionen: mediterran, ikea, minimalistisch, modern, mittelalterlich, industrial)
  * - Tageszeit (6 Optionen: morgen, mittag, abend, nacht, daemmerung, golden_hour)
  * - Wetter (6 Optionen: sonnig, bewoelkt, regen, schnee, nebel, sturm)
- * - Render-Art (5 Optionen: fotorealistisch, skizze, wasserfarben, blaupause, kuenstlerisch)
- * - Structure Preservation (0-100%) - BLEIBT ERHALTEN!
+ * - Render-Art (5 Optionen)
+ * - Structure Preservation (0-100%)
+ *
+ * REFERENCE MODE:
+ * - Render-Art (5 Optionen)
+ * - Structure Preservation (0-100%) - Geometrie vom Ausgangsbild
+ * - Style Intensity (0-100%) - Style-Transfer vom Referenzbild
  */
 
 "use client";
@@ -25,7 +32,16 @@ import {
   RENDER_STYLES,
   SETTING_ICONS,
 } from "@/constants/styleTransferSettings";
-import { Building, Palette, Clock, Cloud, Paintbrush, Lock, LayoutGrid } from "lucide-react";
+import {
+  Building,
+  Palette,
+  Clock,
+  Cloud,
+  Paintbrush,
+  Lock,
+  LayoutGrid,
+  Sparkles,
+} from "lucide-react";
 
 interface StyleTransferSettingsProps {
   settings: StyleTransferSettingsType;
@@ -54,6 +70,7 @@ export function StyleTransferSettings({
     Cloud: Cloud,
     Paintbrush: Paintbrush,
     Lock: Lock,
+    Sparkles: Sparkles,
   };
 
   // Wenn Mode = "reference" ist, zeige nur Structure Preservation
@@ -131,16 +148,29 @@ export function StyleTransferSettings({
         align="right"
       />
 
-      {/* Structure Preservation (IMMER zeigen - Label ändert sich je nach Mode) */}
+      {/* Structure Preservation (IMMER zeigen) */}
       <SettingsSlider
         icon={iconMap[SETTING_ICONS.structurePreservation]}
-        label={settings.mode === "reference" ? "Ref-Struktur" : "Struktur"}
+        label="Struktur"
         value={settings.structurePreservation}
         onChange={(v) => updateSetting("structurePreservation", v)}
         min={0}
         max={100}
         unit="%"
       />
+
+      {/* Style Intensity (NUR zeigen wenn mode = "reference") */}
+      {settings.mode === "reference" && (
+        <SettingsSlider
+          icon={Sparkles}
+          label="Style-Int."
+          value={settings.styleIntensity}
+          onChange={(v) => updateSetting("styleIntensity", v)}
+          min={0}
+          max={100}
+          unit="%"
+        />
+      )}
     </div>
   );
 }

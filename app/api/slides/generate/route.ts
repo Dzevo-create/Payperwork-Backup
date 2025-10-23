@@ -35,16 +35,9 @@ import type { CreatePresentationRequest, CreatePresentationResponse } from "@/ty
 export async function POST(request: NextRequest) {
   try {
     // Authentication check
-    let user;
-    try {
-      user = await requireAuth(request);
-      apiLogger.info("Authenticated slides generation request", { userId: user.id });
-    } catch (authError) {
-      return NextResponse.json(
-        { error: "Unauthorized", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
+    apiLogger.info("Authenticated slides generation request", { userId: user.id });
+
     // Parse request body
     const body: CreatePresentationRequest = await request.json();
     const { prompt, format = "16:9", theme = "default" } = body;
@@ -58,22 +51,6 @@ export async function POST(request: NextRequest) {
           error: validation.error,
         },
         { status: 400 }
-      );
-    }
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized",
-        },
-        { status: 401 }
       );
     }
 
