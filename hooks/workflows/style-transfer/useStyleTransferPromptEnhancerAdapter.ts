@@ -26,8 +26,12 @@ export function useStyleTransferPromptEnhancerAdapter() {
 
   const enhance = useCallback(
     async (prompt: string): Promise<string> => {
+      // If no source image, return original prompt (T-Button should be disabled, but just in case)
       if (!sourceImage?.file || !sourceImage?.preview) {
-        throw new Error("Source image is required for prompt enhancement");
+        console.warn(
+          "Style Transfer T-Button: No source image available, returning original prompt"
+        );
+        return prompt;
       }
 
       const result = await enhancePrompt(prompt, sourceImage, settings, referenceImage);
