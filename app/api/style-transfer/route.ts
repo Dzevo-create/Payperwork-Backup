@@ -180,16 +180,19 @@ export async function POST(req: NextRequest) {
     const generationConfig = buildGenerationConfig(settings);
 
     // Build content parts for Nano Banana:
-    // WICHTIG: Reference Image wird NICHT eingespeist!
-    // Reference Image wurde bereits analysiert und die Stil-Beschreibung ist im Prompt.
+    // CRITICAL FIX: Reference Image MUSS eingespeist werden für Form-Transfer!
     //
-    // Content Parts:
-    // 1. Text prompt (enthält Stil-Beschreibung aus Reference Image Analyse)
+    // WARUM BEIDE?
+    // - Analyse → Textbeschreibung (Materialien, Farben, Stil-Namen)
+    // - Bild selbst → Visuelle Formen, Proportionen, Details
+    //
+    // Content Parts ORDER:
+    // 1. Text prompt (enthält Stil-Beschreibung + Transfer-Instruktionen)
     // 2. Source image (das Volumen-Modell, das transformiert werden soll)
+    // 3. Reference image (für visuelle Form-Übertragung) - ONLY if provided
     const parts: any[] = [{ text: enhancedPrompt }];
 
-    // ✅ NUR Source Image wird eingespeist
-    // Reference Image wird NICHT eingespeist (wurde nur für Analyse verwendet)
+    // ✅ Source Image (IMMER)
     parts.push({
       inlineData: {
         mimeType: sourceImage.mimeType || "image/jpeg",
@@ -197,9 +200,20 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // ✅ CRITICAL FIX: Reference Image einschließen (wenn vorhanden)
+    // Nano Banana braucht das Bild, um Formen/Strukturen zu übertragen!
+    if (hasReferenceImage) {
+      parts.push({
+        inlineData: {
+          mimeType: referenceImage.mimeType || "image/jpeg",
+          data: referenceImage.data,
+        },
+      });
+    }
+
     apiLogger.debug("Style-Transfer: Content parts built", {
       partsCount: parts.length,
-      hasReferenceInParts: false, // ✅ Reference Image wird NICHT geschickt
+      hasReferenceInParts: hasReferenceImage, // ✅ Reference Image wird geschickt wenn vorhanden
       hasSourceInParts: true,
     });
 
