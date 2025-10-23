@@ -1,19 +1,19 @@
 "use client";
 
-import { useCallback } from "react";
-import { StyleTransferSettingsType } from "@/types/workflows/styleTransferSettings";
+import { useCallback, useContext } from "react";
+import { StyleTransferContext } from "@/contexts/StyleTransferContext";
 import { useStyleTransferPromptEnhancer } from "./useStyleTransferPromptEnhancer";
-
-interface ImageData {
-  file: File | null;
-  preview: string | null;
-}
 
 /**
  * useStyleTransferPromptEnhancerAdapter
  *
  * Adapter for Style Transfer-specific T-Button
- * Returns a function that matches the WorkflowPage interface
+ * Returns a function that matches the WorkflowPage StandardEnhanceHook interface
+ *
+ * This adapter:
+ * 1. Gets sourceImage, referenceImage, and settings from StyleTransferContext
+ * 2. Calls Style Transfer-specific prompt enhancer
+ * 3. Returns enhanced prompt with imperative commands
  *
  * Usage in page.clean.tsx:
  * ```
@@ -21,27 +21,33 @@ interface ImageData {
  * ```
  */
 export function useStyleTransferPromptEnhancerAdapter() {
-  const { enhancePrompt, isEnhancing, error, metadata, clearError } =
-    useStyleTransferPromptEnhancer();
+  const context = useContext(StyleTransferContext);
+
+  if (!context) {
+    throw new Error(
+      "useStyleTransferPromptEnhancerAdapter must be used within StyleTransferProvider"
+    );
+  }
+
+  const { sourceImage, referenceImage, settings } = context;
+  const { enhancePrompt, isEnhancing, error, clearError } = useStyleTransferPromptEnhancer();
 
   const enhance = useCallback(
-    async (
-      prompt: string,
-      sourceImage: ImageData,
-      settings: StyleTransferSettingsType,
-      referenceImage?: ImageData
-    ): Promise<string> => {
+    async (prompt: string): Promise<string> => {
+      if (!sourceImage?.file || !sourceImage?.preview) {
+        throw new Error("Source image is required for prompt enhancement");
+      }
+
       const result = await enhancePrompt(prompt, sourceImage, settings, referenceImage);
       return result || prompt; // Fallback to original prompt if enhancement fails
     },
-    [enhancePrompt]
+    [enhancePrompt, sourceImage, referenceImage, settings]
   );
 
   return {
     enhance,
     isEnhancing,
     error,
-    metadata,
     clearError,
   };
 }
