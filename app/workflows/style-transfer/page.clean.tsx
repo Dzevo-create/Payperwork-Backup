@@ -9,11 +9,7 @@ import {
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { StyleTransferProvider } from "@/contexts/StyleTransferContext";
 import { useStyleTransferAdapterWithContext } from "@/hooks/workflows/style-transfer/useStyleTransferAdapterWithContext";
-import {
-  usePromptEnhancerAdapter,
-  useRenderEditAdapter,
-  useUpscaleAdapter,
-} from "@/hooks/workflows";
+import { useRenderEditAdapter, useUpscaleAdapter } from "@/hooks/workflows";
 
 const styleTransferConfig: WorkflowPageConfig<StyleTransferSettingsType> = {
   name: "Style Transfer",
@@ -24,7 +20,10 @@ const styleTransferConfig: WorkflowPageConfig<StyleTransferSettingsType> = {
 
   hooks: {
     useGenerate: () => useStyleTransferAdapterWithContext(),
-    useEnhance: (sourceImage, settings) => usePromptEnhancerAdapter(sourceImage, settings),
+    // ❌ REMOVED: useEnhance - Style Transfer generates prompts automatically in backend!
+    // The imperative prompts are generated in /app/api/style-transfer/route.ts using:
+    // - generateReferencePromptWithStyleAnalysis() for reference mode
+    // - generateStyleTransferPrompt() for preset mode
     useEdit: () => useRenderEditAdapter("/api/style-transfer/edit"), // ✅ Use style-transfer-specific edit endpoint
     useUpscale: useUpscaleAdapter,
   },
