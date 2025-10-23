@@ -136,13 +136,29 @@ function generateReferencePrompt(settings: StyleTransferSettingsType, userPrompt
   prompt += `RENDERING STYLE:\n`;
   prompt += `${renderDescription}\n\n`;
 
-  prompt += `STRUCTURE PRESERVATION:\n`;
+  prompt += `REFERENCE STRUCTURE TRANSFER (${structurePreservation}%):\n`;
   if (structurePreservation >= 80) {
-    prompt += `CRITICAL: Do NOT change the composition, perspective, or architectural forms of the target image. Only apply the materials from the reference image to the existing structures. Every wall, window, door, and architectural element must remain in its exact original position and proportion.\n`;
+    // ✅ HIGH (80-100%): Übernimm STRUKTUR/FORMEN vom Referenzbild
+    prompt += `CRITICAL: Transfer NOT ONLY materials but also ARCHITECTURAL FORMS from the reference image:\n`;
+    prompt += `- Adopt window shapes, sizes, and proportions from the reference (e.g., arched windows, floor-to-ceiling glazing)\n`;
+    prompt += `- Apply facade articulation patterns (e.g., relief depth, panel divisions, decorative elements)\n`;
+    prompt += `- Transfer balcony styles, canopy designs, and architectural details\n`;
+    prompt += `- Maintain the target's overall volume and perspective, but reshape details to match reference\n`;
+    prompt += `- Think: "Same building volume, but with reference's architectural language"\n`;
   } else if (structurePreservation >= 50) {
-    prompt += `Maintain the general architectural layout and key structural elements of the target image, while allowing moderate adjustments to details when applying the reference materials.\n`;
+    // ✅ MEDIUM (50-79%): Mix aus beiden Strukturen
+    prompt += `Balanced transfer approach:\n`;
+    prompt += `- Apply reference materials AND moderate architectural form adjustments\n`;
+    prompt += `- Adopt some window styling and facade patterns from reference\n`;
+    prompt += `- Keep target's general layout but allow creative interpretation of details\n`;
+    prompt += `- 50/50 balance between target structure and reference design language\n`;
   } else {
-    prompt += `Use the target image's composition as a guide, but allow creative freedom in how the reference materials are applied and interpreted across the architectural elements.\n`;
+    // ✅ LOW (0-49%): Nur Materialien, Struktur bleibt beim Hauptbild
+    prompt += `Material-focused transfer:\n`;
+    prompt += `- PRIMARY FOCUS: Transfer only materials, textures, and colors from reference\n`;
+    prompt += `- PRESERVE: Target image's architectural forms, window shapes, and facade structure\n`;
+    prompt += `- Apply reference materials to existing target geometry without changing proportions\n`;
+    prompt += `- Think: "Same architecture, different materials"\n`;
   }
 
   prompt += `\nQUALITY REQUIREMENTS:\n`;

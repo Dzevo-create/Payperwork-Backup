@@ -131,10 +131,10 @@ export function StyleTransferSettings({
         align="right"
       />
 
-      {/* Structure Preservation (IMMER zeigen - auch bei Referenzbild-Modus) */}
+      {/* Structure Preservation (IMMER zeigen - Label ändert sich je nach Mode) */}
       <SettingsSlider
         icon={iconMap[SETTING_ICONS.structurePreservation]}
-        label="Struktur"
+        label={settings.mode === "reference" ? "Ref-Struktur" : "Struktur"}
         value={settings.structurePreservation}
         onChange={(v) => updateSetting("structurePreservation", v)}
         min={0}
