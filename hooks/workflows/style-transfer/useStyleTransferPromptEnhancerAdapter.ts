@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useContext } from "react";
-import { StyleTransferContext } from "@/contexts/StyleTransferContext";
+import { useCallback } from "react";
+import { useStyleTransferContext } from "@/contexts/StyleTransferContext";
 import { useStyleTransferPromptEnhancer } from "./useStyleTransferPromptEnhancer";
 
 /**
@@ -21,15 +21,7 @@ import { useStyleTransferPromptEnhancer } from "./useStyleTransferPromptEnhancer
  * ```
  */
 export function useStyleTransferPromptEnhancerAdapter() {
-  const context = useContext(StyleTransferContext);
-
-  if (!context) {
-    throw new Error(
-      "useStyleTransferPromptEnhancerAdapter must be used within StyleTransferProvider"
-    );
-  }
-
-  const { sourceImage, referenceImage, settings } = context;
+  const { sourceImage, referenceImage, settings } = useStyleTransferContext();
   const { enhancePrompt, isEnhancing, error, clearError } = useStyleTransferPromptEnhancer();
 
   const enhance = useCallback(
