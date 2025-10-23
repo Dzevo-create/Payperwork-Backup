@@ -186,21 +186,13 @@ export async function POST(req: NextRequest) {
     // - Analyse → Textbeschreibung (Materialien, Farben, Stil-Namen)
     // - Bild selbst → Visuelle Formen, Proportionen, Details
     //
-    // Content Parts ORDER:
+    // Content Parts ORDER (WICHTIG für Aspect Ratio!):
     // 1. Text prompt (enthält Stil-Beschreibung + Transfer-Instruktionen)
-    // 2. Source image (das Volumen-Modell, das transformiert werden soll)
-    // 3. Reference image (für visuelle Form-Übertragung) - ONLY if provided
+    // 2. Reference image (für Style, wenn vorhanden) - FIRST image
+    // 3. Source image (für Struktur + Aspect Ratio) - LAST image (wird als Basis verwendet)
     const parts: any[] = [{ text: enhancedPrompt }];
 
-    // ✅ Source Image (IMMER)
-    parts.push({
-      inlineData: {
-        mimeType: sourceImage.mimeType || "image/jpeg",
-        data: sourceImage.data,
-      },
-    });
-
-    // ✅ CRITICAL FIX: Reference Image einschließen (wenn vorhanden)
+    // ✅ Reference Image ZUERST (wenn vorhanden)
     // Nano Banana braucht das Bild, um Formen/Strukturen zu übertragen!
     if (hasReferenceImage) {
       parts.push({
@@ -210,6 +202,15 @@ export async function POST(req: NextRequest) {
         },
       });
     }
+
+    // ✅ Source Image ALS LETZTES (WICHTIG!)
+    // Das letzte Bild bestimmt das Aspect Ratio!
+    parts.push({
+      inlineData: {
+        mimeType: sourceImage.mimeType || "image/jpeg",
+        data: sourceImage.data,
+      },
+    });
 
     apiLogger.debug("Style-Transfer: Content parts built", {
       partsCount: parts.length,
