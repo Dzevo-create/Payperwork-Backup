@@ -185,40 +185,61 @@ TASK: Transform Image 1 by applying architectural design from Image 2.
 
 `;
 
-  // Structure preservation with clear rules
+  // Structure preservation with granular control
   if (structurePreservation >= 80) {
+    // HIGH: Strict preservation
     prompt += `PRESERVE (DO NOT CHANGE):
-- Building height & form
-- Window positions & count
-- Overall proportions
-- Camera angle
+- Building height & form (exact)
+- Window positions & count (exact)
+- Overall proportions (exact)
+- Camera angle (exact)
+
+`;
+  } else if (structurePreservation >= 50) {
+    // MEDIUM: Moderate preservation
+    prompt += `PRESERVE (MOSTLY):
+- Approximate building height & form
+- General window layout
+- Similar proportions
+- Similar camera angle
+
+`;
+  } else {
+    // LOW: Loose preservation
+    prompt += `PRESERVE (LOOSELY):
+- General building concept
+- Approximate scale
+- Rough layout inspiration
 
 `;
   }
 
   // Style transfer with explicit instructions
   if (styleIntensity >= 80) {
-    // HIGH: Full architectural design transfer
-    prompt += `APPLY (CHANGE):
+    // HIGH: Full architectural design transfer (80-100%)
+    prompt += `APPLY FULL STYLE (HIGH INTENSITY):
 `;
 
     if (styleDescription.windowStyle) {
       prompt += `Windows: ${styleDescription.windowStyle}
-→ Transfer window DESIGN (shape, frames, details) to Image 1's window locations
-→ Example: Flat windows become arched windows at same positions
+→ FULLY transfer window DESIGN (shape, frames, details, colors)
+→ Example: Flat windows → arched windows at same positions
+→ Apply ALL decorative elements from reference windows
 
 `;
     }
 
     if (styleDescription.facadeStructure) {
       prompt += `Facade: ${styleDescription.facadeStructure}
-→ Add 3D relief, depth, sculptural elements
+→ FULLY add 3D relief, depth, sculptural elements
+→ Apply ALL ornamental details and patterns
 
 `;
     }
 
     if (styleDescription.architecturalElements?.length) {
       prompt += `Elements: ${styleDescription.architecturalElements.join(", ")}
+→ Add ALL architectural features
 
 `;
     }
@@ -226,22 +247,46 @@ TASK: Transform Image 1 by applying architectural design from Image 2.
     prompt += `Materials: ${styleDescription.materials.join(", ")}
 Colors: ${styleDescription.colors.join(", ")}
 
-METAPHOR: Keep Image 1's SKELETON (structure), apply Image 2's CLOTHING (design).
+METAPHOR: Keep Image 1's SKELETON, fully apply Image 2's CLOTHING.
 
 `;
   } else if (styleIntensity >= 50) {
-    // MEDIUM: Moderate transfer
-    prompt += `APPLY (MODERATE):
-Window frames & details, some facade relief
+    // MEDIUM: Moderate transfer (50-79%)
+    prompt += `APPLY MODERATE STYLE (MEDIUM INTENSITY):
+`;
+
+    if (styleDescription.windowStyle) {
+      prompt += `Windows: Partially adopt window frame styling and colors
+→ Keep basic shape similar to source, add decorative details from reference
+
+`;
+    }
+
+    if (styleDescription.facadeStructure) {
+      prompt += `Facade: Add some relief and texture
+→ Subtle 3D elements, not full ornamental detail
+
+`;
+    }
+
+    prompt += `Materials: ${styleDescription.materials.join(", ")}
+Colors: ${styleDescription.colors.join(", ")}
+
+`;
+  } else if (styleIntensity >= 20) {
+    // LOW: Materials & colors only (20-49%)
+    prompt += `APPLY MINIMAL STYLE (LOW INTENSITY):
+→ Keep architectural forms from source
+→ Apply only materials and colors from reference
 Materials: ${styleDescription.materials.join(", ")}
 Colors: ${styleDescription.colors.join(", ")}
 
 `;
   } else {
-    // LOW: Materials only
-    prompt += `APPLY (MINIMAL):
-Materials: ${styleDescription.materials.join(", ")}
-Colors: ${styleDescription.colors.join(", ")}
+    // VERY LOW: Almost no style transfer (0-19%)
+    prompt += `APPLY VERY MINIMAL STYLE:
+→ Keep almost everything from source
+→ Apply only accent colors: ${styleDescription.colors.slice(0, 2).join(", ")}
 
 `;
   }
