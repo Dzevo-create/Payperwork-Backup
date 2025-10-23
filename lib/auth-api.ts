@@ -49,7 +49,7 @@ export async function getAuthUser(request: NextRequest): Promise<AuthUser | null
 
     // Get token from Authorization header
     const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    let token = authHeader?.replace("Bearer ", "");
 
     if (!token) {
       // Try to get session from cookies
@@ -72,6 +72,26 @@ export async function getAuthUser(request: NextRequest): Promise<AuthUser | null
       );
 
       if (!authTokenKey) {
+        return null;
+      }
+
+      // ✅ FIX: Extract token from cookie value
+      const cookieValue = cookies[authTokenKey];
+      if (!cookieValue) {
+        return null;
+      }
+
+      // Cookie is URL-encoded JSON, decode and parse
+      try {
+        const decodedValue = decodeURIComponent(cookieValue);
+        const sessionData = JSON.parse(decodedValue);
+        token = sessionData.access_token;
+      } catch (e) {
+        logger.error("Failed to parse auth cookie", e as Error);
+        return null;
+      }
+
+      if (!token) {
         return null;
       }
     }
