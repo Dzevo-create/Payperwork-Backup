@@ -60,49 +60,55 @@ function generatePresetPrompt(settings: StyleTransferSettingsType, userPrompt?: 
   // Bereich-spezifische Einleitung
   const spaceIntro =
     spaceType === "interieur"
-      ? "Transform this interior space"
-      : "Transform this exterior architectural scene";
+      ? "TRANSFORM this interior space"
+      : "TRANSFORM this exterior building";
 
-  // Hauptprompt zusammenbauen
-  let prompt = `${spaceIntro} into a stunning ${renderStyle} rendering in ${styleDetails.name} style.\n\n`;
+  // Hauptprompt zusammenbauen - IMPERATIVE STYLE
+  let prompt = `${spaceIntro} into ${styleDetails.name} architectural style with ${renderStyle} rendering.
 
-  // Stil-Beschreibung
-  prompt += `ARCHITECTURAL STYLE:\n`;
-  prompt += `${styleDetails.beschreibung}\n\n`;
+APPLY STYLE: ${styleDetails.beschreibung}
 
-  prompt += `KEY CHARACTERISTICS:\n`;
-  prompt += `- ${styleDetails.charakteristik}\n`;
-  prompt += `- Materials: ${styleDetails.materialien.join(", ")}\n`;
-  prompt += `- Colors: ${styleDetails.farben.join(", ")}\n\n`;
+TARGET CHARACTERISTICS:
+- ${styleDetails.charakteristik}
+- USE materials: ${styleDetails.materialien.join(", ")}
+- APPLY colors: ${styleDetails.farben.join(", ")}
 
-  // Tageszeit & Beleuchtung
-  prompt += `LIGHTING & TIME OF DAY:\n`;
-  prompt += `${timeDescription}\n\n`;
+SET LIGHTING: ${timeDescription}
 
-  // Wetter & Atmosphäre
-  prompt += `WEATHER & ATMOSPHERE:\n`;
-  prompt += `${weatherDescription}\n\n`;
+CREATE ATMOSPHERE: ${weatherDescription}
 
-  // Render-Art Spezifikationen
-  prompt += `RENDERING STYLE:\n`;
-  prompt += `${renderDescription}\n\n`;
+RENDER AS: ${renderDescription}
 
-  // Structure Preservation
-  prompt += `COMPOSITION & STRUCTURE:\n`;
+`;
+
+  // Structure Preservation - IMPERATIVE COMMANDS
   if (structurePreservation >= 80) {
-    prompt += `Strictly preserve the exact composition, proportions, and perspective of the original image. Maintain all architectural elements in their precise positions and relationships.\n`;
+    prompt += `STRUCTURAL CONSTRAINTS:
+PRESERVE EXACTLY: composition, proportions, perspective, element positions
+MAINTAIN: all architectural relationships
+
+`;
   } else if (structurePreservation >= 50) {
-    prompt += `Maintain the general composition and key architectural elements while allowing moderate creative interpretation of details and materiality.\n`;
+    prompt += `STRUCTURAL CONSTRAINTS:
+MAINTAIN: general composition and key elements
+ALLOW: moderate reinterpretation of details and materials
+
+`;
   } else {
-    prompt += `Use the original composition as inspiration, but allow significant creative freedom in interpretation, proportions, and architectural details.\n`;
+    prompt += `STRUCTURAL CONSTRAINTS:
+USE original as inspiration only
+ALLOW: significant creative freedom in form and details
+
+`;
   }
 
-  // Technische Qualitätsanforderungen
-  prompt += `\nQUALITY REQUIREMENTS:\n`;
-  prompt += `- High attention to architectural detail and material accuracy\n`;
-  prompt += `- Proper scale and proportions consistent with ${styleDetails.name} architecture\n`;
-  prompt += `- Realistic shadows and reflections appropriate for the chosen lighting conditions\n`;
-  prompt += `- Atmospheric depth and environmental context\n`;
+  // Technische Qualitätsanforderungen - IMPERATIVE
+  prompt += `QUALITY REQUIREMENTS:
+ENSURE: Architectural detail accuracy and material realism
+MATCH: ${styleDetails.name} architecture scale and proportions
+CREATE: Realistic shadows and reflections
+INCLUDE: Atmospheric depth and environmental context
+`;
 
   // User Prompt anhängen
   if (userPrompt && userPrompt.trim()) {
@@ -124,26 +130,26 @@ function generateReferencePrompt(settings: StyleTransferSettingsType, userPrompt
   // Render-Art Beschreibung
   const renderDescription = RENDER_STYLE_DESCRIPTIONS[renderStyle];
 
-  let prompt = `Transfer the materials, textures, colors, and surface qualities from the reference image to this architectural scene.\n\n`;
+  let prompt = `MATERIAL TRANSFER TASK: ANALYZE reference image, then APPLY its materials to the target building.
 
-  prompt += `MATERIAL TRANSFER INSTRUCTIONS:\n`;
-  prompt += `- Analyze the materials visible in the reference image (e.g., wood grain, stone texture, metal finishes, fabric patterns, surface colors)\n`;
-  prompt += `- Apply these exact materials and textures to the corresponding surfaces in the target image\n`;
-  prompt += `- Maintain the color palette and material characteristics from the reference\n`;
-  prompt += `- Preserve lighting properties and reflectance qualities of the reference materials\n\n`;
+STEP 1 - ANALYZE REFERENCE:
+IDENTIFY materials (wood grain, stone texture, metal finishes, surface colors)
+EXTRACT color palette and material characteristics
+NOTE lighting properties and surface qualities
 
-  // Render-Art Spezifikation (NEU!)
-  prompt += `RENDERING STYLE:\n`;
-  prompt += `${renderDescription}\n\n`;
+STEP 2 - TRANSFER TO TARGET:
+REPLACE target materials with reference materials
+APPLY exact textures to corresponding surfaces
+MATCH color palette from reference
+PRESERVE reference material lighting properties
 
-  // ⚠️ DEPRECATED - This slider is no longer used in reference mode
-  // Use styleIntensity instead (see generateReferencePromptWithStyleAnalysis)
+RENDER AS: ${renderDescription}
 
-  prompt += `\nQUALITY REQUIREMENTS:\n`;
-  prompt += `- Seamless material application that respects the target architecture's geometry\n`;
-  prompt += `- Consistent lighting that matches the reference material properties\n`;
-  prompt += `- Natural integration of textures that follows architectural surfaces correctly\n`;
-  prompt += `- ${renderStyle} rendering of all transferred materials\n`;
+QUALITY REQUIREMENTS:
+ENSURE seamless material application respecting geometry
+MAINTAIN consistent lighting matching reference properties
+INTEGRATE textures naturally following architectural surfaces
+`;
 
   // User Prompt anhängen
   if (userPrompt && userPrompt.trim()) {
@@ -175,119 +181,132 @@ export function generateReferencePromptWithStyleAnalysis(
 ): string {
   const { structurePreservation, styleIntensity, renderStyle } = settings;
 
-  // ✅ BALANCED PROMPT: Clear instructions with examples (Target: 1000-1500 chars)
-  let prompt = `ARCHITECTURAL STYLE TRANSFER
+  // ✅ IMPERATIVE PROMPT: Action-oriented commands (Target: 1000-1500 chars)
+  let prompt = `ARCHITECTURAL STYLE TRANSFER - INSTRUCTION SET
 
-SOURCE (Image 1): ${sourceImageDescription || "Architectural building"}
+SOURCE: ${sourceImageDescription || "Architectural building"}
+REFERENCE STYLE: ${styleDescription.detailedDescription || styleDescription.overallStyle}
 
-REFERENCE (Image 2): ${styleDescription.detailedDescription || styleDescription.overallStyle}
-
-TASK: Transform Image 1 by applying architectural design from Image 2.
+ANALYZE both images, then TRANSFORM the source building by APPLYING the reference architectural style.
 
 `;
 
-  // Structure preservation with granular control
+  // Structure preservation with granular control - IMPERATIVE COMMANDS
   if (structurePreservation >= 80) {
     // HIGH: Strict preservation
-    prompt += `PRESERVE (DO NOT CHANGE):
-- Building height & form (exact)
-- Window positions & count (exact)
-- Overall proportions (exact)
-- Camera angle (exact)
+    prompt += `STRUCTURAL CONSTRAINTS (STRICT):
+DO NOT CHANGE: Building height, form, window positions/count, proportions, camera angle
+KEEP EXACTLY: All structural dimensions and spatial relationships
 
 `;
   } else if (structurePreservation >= 50) {
     // MEDIUM: Moderate preservation
-    prompt += `PRESERVE (MOSTLY):
-- Approximate building height & form
-- General window layout
-- Similar proportions
-- Similar camera angle
+    prompt += `STRUCTURAL CONSTRAINTS (MODERATE):
+MAINTAIN: Approximate building height and general form
+PRESERVE: Overall window count and rough positioning
+ALLOW: Minor adjustments to proportions for style consistency
 
 `;
   } else {
     // LOW: Loose preservation
-    prompt += `PRESERVE (LOOSELY):
-- General building concept
-- Approximate scale
-- Rough layout inspiration
+    prompt += `STRUCTURAL CONSTRAINTS (LOOSE):
+KEEP: General building concept and approximate scale
+ALLOW: Significant reinterpretation of proportions and layout
 
 `;
   }
 
-  // Style transfer with explicit instructions
+  // Style transfer with IMPERATIVE, ACTION-ORIENTED instructions
   if (styleIntensity >= 80) {
     // HIGH: Full architectural design transfer (80-100%)
-    prompt += `APPLY FULL STYLE (HIGH INTENSITY):
+    prompt += `TRANSFORMATION COMMANDS (HIGH INTENSITY):
 `;
 
     if (styleDescription.windowStyle) {
-      prompt += `Windows: ${styleDescription.windowStyle}
-→ FULLY transfer window DESIGN (shape, frames, details, colors)
-→ Example: Flat windows → arched windows at same positions
-→ Apply ALL decorative elements from reference windows
+      prompt += `WINDOWS - CHANGE COMPLETELY:
+IDENTIFY current windows in source building
+REPLACE window shapes with: ${styleDescription.windowStyle}
+MODIFY frames, mullions, reveals to match reference exactly
+ADD all decorative elements (arches, surrounds, trim, details)
+APPLY reference window colors and finishes
+MAINTAIN window positions from source (unless structure preservation is low)
 
 `;
     }
 
     if (styleDescription.facadeStructure) {
-      prompt += `Facade: ${styleDescription.facadeStructure}
-→ FULLY add 3D relief, depth, sculptural elements
-→ Apply ALL ornamental details and patterns
+      prompt += `FACADE - RESTRUCTURE FULLY:
+ANALYZE reference facade: ${styleDescription.facadeStructure}
+ADD 3D relief elements, projections, recesses
+CREATE depth and shadow play as seen in reference
+APPLY ornamental details, moldings, sculptural elements
+TRANSFORM flat surfaces into articulated facade
 
 `;
     }
 
     if (styleDescription.architecturalElements?.length) {
-      prompt += `Elements: ${styleDescription.architecturalElements.join(", ")}
-→ Add ALL architectural features
+      prompt += `ARCHITECTURAL ELEMENTS - ADD ALL:
+INCORPORATE these features: ${styleDescription.architecturalElements.join(", ")}
+PLACE elements appropriately on facade
+MATCH scale and proportion to reference
 
 `;
     }
 
-    prompt += `Materials: ${styleDescription.materials.join(", ")}
-Colors: ${styleDescription.colors.join(", ")}
+    prompt += `MATERIALS & COLORS - APPLY FULLY:
+REPLACE source materials with: ${styleDescription.materials.join(", ")}
+APPLY color palette: ${styleDescription.colors.join(", ")}
+MATCH textures, finishes, and surface qualities from reference
 
-METAPHOR: Keep Image 1's SKELETON, fully apply Image 2's CLOTHING.
+GOAL: Transform source structure into reference architectural style while preserving source layout.
 
 `;
   } else if (styleIntensity >= 50) {
     // MEDIUM: Moderate transfer (50-79%)
-    prompt += `APPLY MODERATE STYLE (MEDIUM INTENSITY):
+    prompt += `TRANSFORMATION COMMANDS (MEDIUM INTENSITY):
 `;
 
     if (styleDescription.windowStyle) {
-      prompt += `Windows: Partially adopt window frame styling and colors
-→ Keep basic shape similar to source, add decorative details from reference
+      prompt += `WINDOWS - MODIFY PARTIALLY:
+KEEP basic window shape from source
+ADD decorative frame details from reference: ${styleDescription.windowStyle}
+APPLY reference colors to frames
+INCORPORATE subtle design elements
 
 `;
     }
 
     if (styleDescription.facadeStructure) {
-      prompt += `Facade: Add some relief and texture
-→ Subtle 3D elements, not full ornamental detail
+      prompt += `FACADE - ADD MODERATE DETAIL:
+INTRODUCE some 3D relief elements
+ADD subtle texture and articulation
+KEEP overall flatness closer to source
 
 `;
     }
 
-    prompt += `Materials: ${styleDescription.materials.join(", ")}
-Colors: ${styleDescription.colors.join(", ")}
+    prompt += `MATERIALS & COLORS - APPLY MODERATELY:
+USE materials: ${styleDescription.materials.join(", ")}
+APPLY colors: ${styleDescription.colors.join(", ")}
+BLEND with source architectural character
 
 `;
   } else if (styleIntensity >= 20) {
     // LOW: Materials & colors only (20-49%)
-    prompt += `APPLY MINIMAL STYLE (LOW INTENSITY):
-→ Keep architectural forms from source
-→ Apply only materials and colors from reference
-Materials: ${styleDescription.materials.join(", ")}
-Colors: ${styleDescription.colors.join(", ")}
+    prompt += `TRANSFORMATION COMMANDS (LOW INTENSITY):
+KEEP all architectural forms from source
+CHANGE ONLY surface materials to: ${styleDescription.materials.join(", ")}
+APPLY ONLY color palette: ${styleDescription.colors.join(", ")}
+DO NOT modify window shapes, facade structure, or architectural elements
 
 `;
   } else {
     // VERY LOW: Almost no style transfer (0-19%)
-    prompt += `APPLY VERY MINIMAL STYLE:
-→ Keep almost everything from source
-→ Apply only accent colors: ${styleDescription.colors.slice(0, 2).join(", ")}
+    prompt += `TRANSFORMATION COMMANDS (MINIMAL):
+KEEP almost everything from source unchanged
+APPLY ONLY accent colors: ${styleDescription.colors.slice(0, 2).join(", ")}
+MAKE minimal material adjustments
 
 `;
   }
