@@ -9,6 +9,7 @@ import {
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { StyleTransferProvider } from "@/contexts/StyleTransferContext";
 import { useStyleTransferAdapterWithContext } from "@/hooks/workflows/style-transfer/useStyleTransferAdapterWithContext";
+import { useStyleTransferPromptEnhancerAdapter } from "@/hooks/workflows/style-transfer/useStyleTransferPromptEnhancerAdapter";
 import { useRenderEditAdapter, useUpscaleAdapter } from "@/hooks/workflows";
 
 const styleTransferConfig: WorkflowPageConfig<StyleTransferSettingsType> = {
@@ -20,11 +21,14 @@ const styleTransferConfig: WorkflowPageConfig<StyleTransferSettingsType> = {
 
   hooks: {
     useGenerate: () => useStyleTransferAdapterWithContext(),
-    // ❌ REMOVED: useEnhance - Style Transfer generates prompts automatically in backend!
-    // The imperative prompts are generated in /app/api/style-transfer/route.ts using:
-    // - generateReferencePromptWithStyleAnalysis() for reference mode
-    // - generateStyleTransferPrompt() for preset mode
-    useEdit: () => useRenderEditAdapter("/api/style-transfer/edit"), // ✅ Use style-transfer-specific edit endpoint
+    // ✅ Style Transfer-specific T-Button with IMPERATIVE PROMPTS
+    // Calls /api/style-transfer/generate-prompt which:
+    // 1. Analyzes source image (WHAT IS in the building)
+    // 2. Analyzes reference style (if provided)
+    // 3. Generates imperative, action-oriented commands (HOW TO transform)
+    // Example: "WINDOWS - CHANGE COMPLETELY: IDENTIFY current windows, REPLACE shapes..."
+    useEnhance: () => useStyleTransferPromptEnhancerAdapter(),
+    useEdit: () => useRenderEditAdapter("/api/style-transfer/edit"),
     useUpscale: useUpscaleAdapter,
   },
 
