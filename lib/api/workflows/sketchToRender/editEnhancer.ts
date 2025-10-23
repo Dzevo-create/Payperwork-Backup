@@ -281,21 +281,38 @@ CRITICAL QUALITY:
       userMessage += `\n\nORIGINAL PROMPT (for context): "${originalPrompt}"`;
     }
 
-    userMessage += `\n\nINSTRUCTIONS:
-1. Analyze the REFERENCE image (second image) to identify the specific features mentioned in the edit request
-2. Analyze the CURRENT image (first image) to understand what exists now
-3. Create a detailed prompt that:
-   - PRESERVES: Current building structure, volume, form, camera angle, composition (100% preservation)
-   - EXTRACTS: Specific features from reference image (be extremely detailed about what to extract)
-   - APPLIES: How to integrate extracted features seamlessly into current building
+    userMessage += `\n\n📸 IMAGE ORDER:
+- Image 1 (FIRST): Current building to edit
+- Image 2 (SECOND): Reference image for feature extraction
 
-CRITICAL:
-- Be VERY specific about what features to extract from reference (don't just say "windows", say "round window forms with red frames and decorative rounded panels above")
-- Clearly state what to preserve from current building
-- Ensure seamless, photorealistic integration
-- Think: "Keep current building, just add/change [specific feature] from reference"
+INSTRUCTIONS:
+1. Analyze the CURRENT building (Image 1) - understand what exists now and what to preserve
+2. Analyze the REFERENCE image (Image 2) - identify the specific features mentioned in the edit request
+3. Create a detailed prompt that tells the AI generator:
+   - PRESERVE: Current building's structure, volume, form, camera angle, composition (100% preservation)
+   - EXTRACT: Specific features from reference image (be extremely detailed about what to extract)
+   - APPLY: How to integrate extracted features seamlessly into current building
 
-Provide ONLY the enhanced edit prompt in the 3-section structure (PRESERVE / EXTRACT / APPLY), no explanations.`;
+CRITICAL - Be Extremely Specific:
+- DON'T say: "apply window style from reference"
+- DO say: "extract the rounded window forms with deep red frames and decorative curved panels above each window from reference, and apply these exact window frame styles and decorative elements to the existing window openings in the current building"
+
+- DON'T say: "use facade from reference"
+- DO say: "extract the vertical terracotta panel relief system with 20cm depth that creates shadow play from reference, and apply this surface treatment to the current building's flat facade while maintaining the current building's exact dimensions and window positions"
+
+OUTPUT FORMAT:
+Provide ONLY the enhanced edit prompt in this 3-section structure:
+
+PRESERVE:
+[List everything to keep from current building]
+
+EXTRACT:
+[Detailed description of features to extract from reference - be VERY specific]
+
+APPLY:
+[Instructions for seamless integration - how to apply extracted features to current building]
+
+No explanations, just the prompt.`;
 
     const messages: ChatMessage[] = [
       { role: "system", content: systemMessage },
