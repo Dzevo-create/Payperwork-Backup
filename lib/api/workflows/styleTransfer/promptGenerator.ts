@@ -179,7 +179,8 @@ export function generateReferencePromptWithStyleAnalysis(
   let prompt = `ARCHITECTURAL STYLE TRANSFER
 
 SOURCE (Image 1): ${sourceImageDescription || "Architectural building"}
-REFERENCE (Image 2): ${styleDescription.overallStyle}
+
+REFERENCE (Image 2): ${styleDescription.detailedDescription || styleDescription.overallStyle}
 
 TASK: Transform Image 1 by applying architectural design from Image 2.
 
