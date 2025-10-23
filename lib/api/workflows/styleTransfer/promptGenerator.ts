@@ -175,46 +175,82 @@ export function generateReferencePromptWithStyleAnalysis(
 ): string {
   const { structurePreservation, styleIntensity, renderStyle } = settings;
 
-  // ✅ CONCISE BUT EXPLICIT PROMPT (Target: <2000 chars)
-  let prompt = `Transform Image 1 by applying Image 2's architectural style.\n\n`;
+  // ✅ BALANCED PROMPT: Clear instructions with examples (Target: 1000-1500 chars)
+  let prompt = `ARCHITECTURAL STYLE TRANSFER
 
-  // Structure preservation (concise)
+SOURCE (Image 1): ${sourceImageDescription || "Architectural building"}
+REFERENCE (Image 2): ${styleDescription.overallStyle}
+
+TASK: Transform Image 1 by applying architectural design from Image 2.
+
+`;
+
+  // Structure preservation with clear rules
   if (structurePreservation >= 80) {
-    prompt += `PRESERVE: Building form, height, footprint, window positions/count, camera angle.\n\n`;
+    prompt += `PRESERVE (DO NOT CHANGE):
+- Building height & form
+- Window positions & count
+- Overall proportions
+- Camera angle
+
+`;
   }
 
-  // Style transfer (concise but explicit)
+  // Style transfer with explicit instructions
   if (styleIntensity >= 80) {
-    // HIGH: Full design transfer
-    prompt += `APPLY FROM IMAGE 2:\n`;
+    // HIGH: Full architectural design transfer
+    prompt += `APPLY (CHANGE):
+`;
 
     if (styleDescription.windowStyle) {
-      prompt += `Windows: ${styleDescription.windowStyle} - Transfer window DESIGN (shape, frames, details) to Image 1's window locations.\n`;
+      prompt += `Windows: ${styleDescription.windowStyle}
+→ Transfer window DESIGN (shape, frames, details) to Image 1's window locations
+→ Example: Flat windows become arched windows at same positions
+
+`;
     }
 
     if (styleDescription.facadeStructure) {
-      prompt += `Facade: ${styleDescription.facadeStructure} - Add 3D relief and depth.\n`;
+      prompt += `Facade: ${styleDescription.facadeStructure}
+→ Add 3D relief, depth, sculptural elements
+
+`;
     }
 
     if (styleDescription.architecturalElements?.length) {
-      prompt += `Elements: ${styleDescription.architecturalElements.join(", ")}\n`;
+      prompt += `Elements: ${styleDescription.architecturalElements.join(", ")}
+
+`;
     }
 
-    prompt += `Materials: ${styleDescription.materials.join(", ")}\n`;
-    prompt += `Colors: ${styleDescription.colors.join(", ")}\n\n`;
+    prompt += `Materials: ${styleDescription.materials.join(", ")}
+Colors: ${styleDescription.colors.join(", ")}
+
+METAPHOR: Keep Image 1's SKELETON (structure), apply Image 2's CLOTHING (design).
+
+`;
   } else if (styleIntensity >= 50) {
     // MEDIUM: Moderate transfer
-    prompt += `APPLY: Window frame styling, some facade relief, materials (${styleDescription.materials.join(", ")}), colors (${styleDescription.colors.join(", ")})\n\n`;
+    prompt += `APPLY (MODERATE):
+Window frames & details, some facade relief
+Materials: ${styleDescription.materials.join(", ")}
+Colors: ${styleDescription.colors.join(", ")}
+
+`;
   } else {
     // LOW: Materials only
-    prompt += `APPLY ONLY: Materials (${styleDescription.materials.join(", ")}) and colors (${styleDescription.colors.join(", ")})\n\n`;
+    prompt += `APPLY (MINIMAL):
+Materials: ${styleDescription.materials.join(", ")}
+Colors: ${styleDescription.colors.join(", ")}
+
+`;
   }
 
-  // Output (concise)
-  prompt += `OUTPUT: ${renderStyle} rendering, match Image 1 aspect ratio, photorealistic.`;
+  // Output requirements
+  prompt += `OUTPUT: ${renderStyle} photorealistic rendering, match Image 1 aspect ratio`;
 
   if (userPrompt?.trim()) {
-    prompt += ` ${userPrompt.trim()}`;
+    prompt += `\n\n${userPrompt.trim()}`;
   }
 
   return prompt;
