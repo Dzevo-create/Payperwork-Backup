@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { compressAndConvertToBase64 } from "@/lib/imageCompression";
 import { useToast } from "@/hooks/useToast";
-import { logger } from '@/lib/logger';
-import type { Attachment } from '@/types/chat';
+import { logger } from "@/lib/logger";
+import type { Attachment } from "@/types/chat";
 
 export function useFileUpload() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -35,6 +35,7 @@ export function useFileUpload() {
     const uploadResponse = await fetch("/api/upload", {
       method: "POST",
       body: formData,
+      credentials: "include", // ✅ Include cookies for authentication
       signal,
     });
 
@@ -63,6 +64,7 @@ export function useFileUpload() {
       const parseResponse = await fetch("/api/parse-pdf", {
         method: "POST",
         body: pdfFormData,
+        credentials: "include", // ✅ Include cookies for authentication
         signal,
       });
 
@@ -92,11 +94,11 @@ export function useFileUpload() {
         setAttachments((prev) => [...prev, uploadData]);
       }
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        logger.debug('File upload aborted');
+      if (error instanceof Error && error.name === "AbortError") {
+        logger.debug("File upload aborted");
         return;
       }
-      logger.error('File upload error:', error);
+      logger.error("File upload error:", error);
       toast.error("Datei-Upload fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setIsUploading(false);
@@ -118,11 +120,11 @@ export function useFileUpload() {
         setAttachments((prev) => [...prev, uploadData]);
       }
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        logger.debug('File drop upload aborted');
+      if (error instanceof Error && error.name === "AbortError") {
+        logger.debug("File drop upload aborted");
         return;
       }
-      logger.error('File upload error:', error);
+      logger.error("File upload error:", error);
       toast.error("Datei-Upload fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setIsUploading(false);
