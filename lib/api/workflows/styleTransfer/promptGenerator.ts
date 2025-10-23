@@ -198,19 +198,31 @@ export function generateReferencePromptWithStyleAnalysis(
   const { structurePreservation, renderStyle } = settings;
   const renderDescription = RENDER_STYLE_DESCRIPTIONS[renderStyle];
 
-  // ✅ PHASE 1: WHAT IS (beschreibe was IST)
-  let prompt = `SOURCE IMAGE DESCRIPTION:\n`;
+  // ✅ CRITICAL: IMAGE ROLES - Nano Banana bekommt 2 Bilder!
+  let prompt = `📸 IMAGE INPUTS (2 images provided):\n\n`;
+
+  prompt += `IMAGE 1 - TARGET (Source Image):\n`;
+  prompt += `This is the BASE image to TRANSFORM.\n`;
+  prompt += `- Keep its volume, perspective, composition, camera angle\n`;
+  prompt += `- This is what you will OUTPUT (transformed version)\n`;
   if (sourceImageDescription) {
-    // Use actual analysis of source image
-    prompt += `${sourceImageDescription}\n\n`;
+    prompt += `- Description: ${sourceImageDescription}\n`;
   } else {
-    // Fallback (should not happen with 2-phase approach)
-    prompt += `A white architectural volume model (simple massing study)\n\n`;
+    prompt += `- Description: A white architectural volume model (simple massing study)\n`;
   }
+  prompt += `\n`;
+
+  prompt += `IMAGE 2 - STYLE REFERENCE (Reference Image):\n`;
+  prompt += `This is the STYLE SOURCE for inspiration only.\n`;
+  prompt += `- DO NOT copy this building's volume/form\n`;
+  prompt += `- DO NOT output this building\n`;
+  prompt += `- ONLY extract: materials, colors, window styles, facade patterns\n`;
+  prompt += `- Use this as a visual reference for the style to apply to IMAGE 1\n\n`;
 
   // ✅ PHASE 2: WHAT SHOULD BECOME (beschreibe was werden soll)
-  prompt += `TRANSFORMATION GOAL:\n`;
-  prompt += `Transform the source image into a fully photorealistic architectural rendering with the following specifications.\n\n`;
+  prompt += `🎯 TRANSFORMATION GOAL:\n`;
+  prompt += `Transform IMAGE 1 (target) using the style from IMAGE 2 (reference).\n`;
+  prompt += `OUTPUT = Image 1's architecture + Image 2's style/materials.\n\n`;
 
   // Stil-Beschreibung aus Reference Image
   prompt += `TARGET STYLE & MATERIALS (extracted from reference):\n`;
@@ -353,6 +365,16 @@ export function generateReferencePromptWithStyleAnalysis(
   if (userPrompt && userPrompt.trim()) {
     prompt += `\n\nADDITIONAL USER REQUIREMENTS:\n${userPrompt.trim()}`;
   }
+
+  // ✅ CRITICAL FINAL REMINDER - Prevent outputting reference image itself
+  prompt += `\n\n⚠️ CRITICAL OUTPUT INSTRUCTION:\n`;
+  prompt += `YOUR OUTPUT MUST BE:\n`;
+  prompt += `- IMAGE 1 (source/target) as the BASE\n`;
+  prompt += `- Transformed with style from IMAGE 2 (reference)\n`;
+  prompt += `- DO NOT output IMAGE 2 itself\n`;
+  prompt += `- DO NOT copy IMAGE 2's building form/volume\n`;
+  prompt += `- RESULT = IMAGE 1's architecture + IMAGE 2's style/materials\n`;
+  prompt += `\nThink: "Transform the FIRST image using inspiration from the SECOND image"\n`;
 
   return prompt;
 }
