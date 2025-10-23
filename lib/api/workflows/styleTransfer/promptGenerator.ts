@@ -174,90 +174,47 @@ export function generateReferencePromptWithStyleAnalysis(
   sourceImageDescription?: string // ✅ NEW: Phase 1 - WHAT IS in source image
 ): string {
   const { structurePreservation, styleIntensity, renderStyle } = settings;
-  const renderDescription = RENDER_STYLE_DESCRIPTIONS[renderStyle];
 
-  // ✅ EXPLICIT ARCHITECTURAL TRANSFER PROMPT
-  let prompt = `ARCHITECTURAL STYLE TRANSFER TASK:\n`;
-  prompt += `Transform Image 1 (source) by applying Image 2's (reference) architectural design.\n\n`;
+  // ✅ CONCISE BUT EXPLICIT PROMPT (Target: <2000 chars)
+  let prompt = `Transform Image 1 by applying Image 2's architectural style.\n\n`;
 
-  // CRITICAL: Structure preservation
-  prompt += `PRESERVE FROM SOURCE (Image 1):\n`;
+  // Structure preservation (concise)
   if (structurePreservation >= 80) {
-    prompt += `✅ Building height (exact number of floors)\n`;
-    prompt += `✅ Building width and depth (footprint)\n`;
-    prompt += `✅ Overall building form (rectangular, L-shape, etc.)\n`;
-    prompt += `✅ Window COUNT and GRID POSITIONS\n`;
-    prompt += `✅ Camera angle and viewpoint\n\n`;
+    prompt += `PRESERVE: Building form, height, footprint, window positions/count, camera angle.\n\n`;
   }
 
-  // CRITICAL: Style transfer based on intensity
-  prompt += `TRANSFORM FROM REFERENCE (Image 2):\n`;
-
+  // Style transfer (concise but explicit)
   if (styleIntensity >= 80) {
-    // HIGH intensity: Full architectural design transfer
-    prompt += `🔥 FULL ARCHITECTURAL DESIGN TRANSFER:\n\n`;
+    // HIGH: Full design transfer
+    prompt += `APPLY FROM IMAGE 2:\n`;
 
-    // Windows - MOST CRITICAL
     if (styleDescription.windowStyle) {
-      prompt += `WINDOW TRANSFORMATION (CRITICAL!):\n`;
-      prompt += `Reference windows: ${styleDescription.windowStyle}\n`;
-      prompt += `ACTION: Replace source's window DESIGN with reference's window DESIGN:\n`;
-      prompt += `- If reference has arched windows → Make source windows arched\n`;
-      prompt += `- If reference has red frames → Make source window frames red\n`;
-      prompt += `- If reference has rounded panel elements → Add them to source\n`;
-      prompt += `- Keep source's window POSITIONS and COUNT unchanged\n`;
-      prompt += `- Only change the STYLE/APPEARANCE of each window\n\n`;
+      prompt += `Windows: ${styleDescription.windowStyle} - Transfer window DESIGN (shape, frames, details) to Image 1's window locations.\n`;
     }
 
-    // Facade - SECOND MOST CRITICAL
     if (styleDescription.facadeStructure) {
-      prompt += `FACADE TRANSFORMATION (CRITICAL!):\n`;
-      prompt += `Reference facade: ${styleDescription.facadeStructure}\n`;
-      prompt += `ACTION: Add 3D relief and articulation to source facade:\n`;
-      prompt += `- If reference has vertical relief elements → Add them to source\n`;
-      prompt += `- If reference has panel depth → Create same depth on source\n`;
-      prompt += `- If reference has decorative elements → Apply to source\n`;
-      prompt += `- Create shadow play similar to reference\n\n`;
+      prompt += `Facade: ${styleDescription.facadeStructure} - Add 3D relief and depth.\n`;
     }
 
-    // Architectural elements
-    if (
-      styleDescription.architecturalElements &&
-      styleDescription.architecturalElements.length > 0
-    ) {
-      prompt += `ARCHITECTURAL ELEMENTS:\n`;
-      styleDescription.architecturalElements.forEach((element) => {
-        prompt += `- Add: ${element}\n`;
-      });
-      prompt += `\n`;
+    if (styleDescription.architecturalElements?.length) {
+      prompt += `Elements: ${styleDescription.architecturalElements.join(", ")}\n`;
     }
 
-    // Materials & Colors
-    prompt += `MATERIALS & COLORS:\n`;
-    prompt += `Apply: ${styleDescription.materials.join(", ")}\n`;
+    prompt += `Materials: ${styleDescription.materials.join(", ")}\n`;
     prompt += `Colors: ${styleDescription.colors.join(", ")}\n\n`;
   } else if (styleIntensity >= 50) {
-    // MEDIUM intensity: Moderate transfer
-    prompt += `⚖️ MODERATE DESIGN TRANSFER:\n`;
-    prompt += `- Apply window frame STYLING from reference (not full shape change)\n`;
-    prompt += `- Add SOME facade relief elements\n`;
-    prompt += `- Apply materials and colors from reference\n\n`;
+    // MEDIUM: Moderate transfer
+    prompt += `APPLY: Window frame styling, some facade relief, materials (${styleDescription.materials.join(", ")}), colors (${styleDescription.colors.join(", ")})\n\n`;
   } else {
-    // LOW intensity: Material only
-    prompt += `🪶 MATERIAL TRANSFER ONLY:\n`;
-    prompt += `- Keep source's window shapes unchanged\n`;
-    prompt += `- Keep source's facade flat\n`;
-    prompt += `- ONLY apply materials/colors: ${styleDescription.materials.join(", ")}\n\n`;
+    // LOW: Materials only
+    prompt += `APPLY ONLY: Materials (${styleDescription.materials.join(", ")}) and colors (${styleDescription.colors.join(", ")})\n\n`;
   }
 
-  // Output requirements
-  prompt += `OUTPUT REQUIREMENTS:\n`;
-  prompt += `- ${renderStyle} rendering, fully photorealistic\n`;
-  prompt += `- Match source image's aspect ratio\n`;
-  prompt += `- Professional architectural visualization\n`;
+  // Output (concise)
+  prompt += `OUTPUT: ${renderStyle} rendering, match Image 1 aspect ratio, photorealistic.`;
 
-  if (userPrompt && userPrompt.trim()) {
-    prompt += `\n${userPrompt.trim()}\n`;
+  if (userPrompt?.trim()) {
+    prompt += ` ${userPrompt.trim()}`;
   }
 
   return prompt;
